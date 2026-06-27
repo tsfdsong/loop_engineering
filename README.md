@@ -21,7 +21,7 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 
 | 平台 | 安装命令 |
 |------|---------|
-| **Claude Code** | `/plugin install loopengine@tsfdsong` |
+| **Claude Code** | `claude plugin marketplace add https://github.com/tsfdsong/loop_engineering` 然后 `claude plugin install loopengine` |
 | **ZCode** | `zcode plugin install tsfdsong/loop_engineering` |
 | **Codex** | 插件市场搜索 `loopengine` |
 | **Cursor** | `/add-plugin tsfdsong/loop_engineering` |
