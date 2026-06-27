@@ -3,13 +3,13 @@
 # 自动检测 AI 编程工具并执行对应安装命令
 #
 # 用法:
-#   curl -fsSL https://raw.githubusercontent.com/tsfdsong/loopengine/main/install.sh | bash
+#   curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
 #   或
 #   bash install.sh
 
 set -euo pipefail
 
-REPO_URL="https://github.com/tsfdsong/loopengine"
+REPO_URL="https://github.com/tsfdsong/loop_engineering"
 BOLD="\033[1m"
 GREEN="\033[32m"
 YELLOW="\033[33m"
@@ -131,12 +131,12 @@ fi
 
 # Cursor (manual guidance)
 echo -e "${CYAN}▶  Cursor IDE${RESET}"
-echo -e "  ${YELLOW}ℹ️${RESET}  在 Cursor 中执行: /add-plugin tsfdsong/loopengine"
+echo -e "  ${YELLOW}ℹ️${RESET}  在 Cursor 中执行: /add-plugin tsfdsong/loop_engineering"
 echo ""
 
 # ZCode (manual guidance)
 echo -e "${CYAN}▶  ZCode${RESET}"
-echo -e "  ${YELLOW}ℹ️${RESET}  执行: zcode plugin install tsfdsong/loopengine"
+echo -e "  ${YELLOW}ℹ️${RESET}  执行: zcode plugin install tsfdsong/loop_engineering"
 echo ""
 
 # OpenCode (manual guidance)
