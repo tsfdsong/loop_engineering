@@ -1,78 +1,47 @@
-# 编排层工具路由规则(v1 静态路由)
-# v2 演进为能力声明匹配(详见设计文档§6)
+# 编排层工具路由规则 v3.0 — ZCode 纯血版
+# 使用 Feature Branch + Git Worktree 实现并发编码隔离
 #
 # 匹配规则: 从上往下,首个命中的规则生效
-# task_type 可在子任务拆分时由编排层标注
 
 routing:
-  # ─── 后端 CRUD/测试/重构 → ZCode + loop --auto（主力 · 80%+场景）───
+  # ─── 主力执行: ZCode --prompt (80%+ 场景) ───
   - match:
-      task_type: [backend, api, crud, test, testing, refactor, database, config, migration, fix, docs, documentation, readme, changelog]
+      task_type: [backend, api, crud, test, testing, refactor, 
+                  database, config, migration, fix, docs, 
+                  documentation, readme, changelog, frontend, 
+                  ui, page, component, css, animation,
+                  architecture, review, audit, design-review]
     tool: zcode
-    mode: cli_auto               # zcode.cjs --prompt 非交互
-    skill_required: loop         # 强制注入 loop --auto 技能
-    fallback: deepseek_config    # loop exhausted → 降级 ZCode 直连
+    mode: worktree_concurrent      # 新: worktree 隔离 + 并发
+    skill_required: null           # 由 go SKILL.md 注入
+    fallback: zcode_serial         # 降级: 串行执行
+    completion_signal: git_commit  # 完成信号: git commit
 
-  # ─── 前端任务 → Cursor 半自动协作(v1) ───
-  - match:
-      task_type: [frontend, ui, page, component, css, animation]
-    tool: cursor
-    mode: semi_auto
-    skill_required: loop         # 注入 loop --auto（v2 自动化后会生效）
-    fallback: deepseek_api
-
-  # ─── 架构/审查任务 → Trae 半自动协作(v1) ───
-  - match:
-      task_type: [architecture, review, audit, design-review]
-    tool: trae
-    mode: semi_auto
-    skill_required: loop
-    fallback: deepseek_api
-
-  # ─── 兜底: 未匹配的默认走 ZCode ───
+  # ─── 降级: ZCode 串行(worktree 不可用时的兜底) ───
   - match:
       task_type: "*"
     tool: zcode
-    mode: cli_auto
+    mode: serial
     skill_required: null
-    fallback: deepseek_config
+    fallback: deepseek_direct
 
 # ─── ZCode CLI 调用配置 ───
 zcode_cli:
-  # CLI 入口(实测路径)
   path: "C:/Users/admin/AppData/Local/Programs/ZCode/resources/glm/zcode.cjs"
-  # 非交互执行模板
-  # {path} = zcode_cli.path
-  # {task} = 子任务的具体 prompt(需转义引号)
-  # {project} = 项目根目录
-  # {mode} = 权限模式(L1用yolo, L2/L3用build需确认)
-  exec_template: "node {path} --prompt \"{task}\" --cwd {project} --mode {mode}"
-  # 默认权限模式
+  exec_template: "node {path} --prompt \"{task}\" --cwd {project} --mode yolo"
   default_mode: "yolo"
+  model: "4f14f683-2d01-4ee4-802f-51bdfc87cc5b/deepseek-v4-pro-260425"
+
+# ─── Worktree 配置 ───
+worktree:
+  base_dir: ".go/worktrees"       # worktree 根目录(相对于项目根)
+  branch_prefix: "go-"            # worktree 分支名前缀
+  max_concurrent: 4               # 最大并发数
+  auto_cleanup: true              # 完成后自动清理 worktree
 
 # ─── DeepSeek 降级配置 ───
 deepseek:
-  # 方案A: ZCode config 切换(保留 ZCode 工具能力)
   provider_config:
     kind: "openai-compatible"
     baseURL: "https://api.deepseek.com"
-    model_main: "deepseek/deepseek-chat"
-  # 方案C: API 直连(零干扰)
-  api:
-    endpoint: "https://api.deepseek.com/chat/completions"
-    models:
-      main: "deepseek-chat"
-      pro: "deepseek-v4-pro"
-      flash: "deepseek-v4-flash"
-  # 降级触发条件
-  triggers:
-    - "429"                    # rate limit
-    - "quota_exceeded"         # 配额耗尽
-    - "insufficient_quota"     # 额度不足
-    - "model_overloaded"       # 模型过载
-
-# ─── GLM-5.2 推理模式分层(与执行级别联动) ───
-glm_reasoning:
-  L1: "off"     # 不思考: 直接快速响应,省最多 token
-  L2: "high"    # High: 日常编码,CoT推理,速度与可靠性兼顾
-  L3: "max"     # Max: 分配额外算力,复杂长程任务更强推理
+    model_main: "deepseek-chat"

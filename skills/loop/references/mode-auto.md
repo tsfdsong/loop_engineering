@@ -31,10 +31,14 @@ Step ②-③ 复杂度评估 + 计划拆分
   • 自动拆分(不需要用户确认轮次)
     │
     ▼
-Step ④ Git 隔离（自动）
-  • 遵循 using-git-worktrees 技能
-  • loop/<功能slug>-<MMDD> 分支
-  • 主分支不受影响
+Step ④ Git 隔离（自动 · 上下文感知）
+  • 检测: 当前分支是否以 "go-" 开头?
+    ├─ 是 → 已处于 go 编排层的 worktree 中
+    │       跳过创建,复用已有隔离环境
+    │       (go 已保证主分支不受影响)
+    └─ 否 → 独立执行,创建 loop/<功能slug>-<MMDD> 分支
+            遵循 using-git-worktrees 技能
+            主分支不受影响
     │
     ▼
 Step ⑤ 闭环编码（纯自动）

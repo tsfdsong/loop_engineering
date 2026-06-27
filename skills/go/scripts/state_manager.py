@@ -86,6 +86,8 @@ def create_state(project_dir, orchestrate_id, feature, tier, acceptance_criteria
         "status": STATUS_PLANNING,
         "acceptance_criteria": acceptance_criteria or [],
         "tasks": [],
+        "feature_branch": "",  # feature 分支名(断点恢复用)
+        "base_branch": "",     # 从哪个分支切出(回滚用)
         "owner": {
             "pid": os.getpid(),
             "session_id": "",
