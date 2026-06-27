@@ -23,7 +23,7 @@ escape_for_json() {
 }
 
 skill_hub_escaped=$(escape_for_json "$skill_hub_content")
-session_context="<EXTREMELY_IMPORTANT>\nYou have LoopEngine — the full-stack development engine with 56 skills.\n\n**Below is the full content of your 'loopengine:skill-hub' skill — your skill routing hub. For all other skills, use the 'Skill' tool:**\n\n${skill_hub_escaped}\n</EXTREMELY_IMPORTANT>"
+session_context="<EXTREMELY_IMPORTANT>\nYou have LoopEngine — the full-stack development engine with 55 skills.\n\n**Below is the full content of your 'loopengine:skill-hub' skill — your skill routing hub. For all other skills, use the 'Skill' tool:**\n\n${skill_hub_escaped}\n</EXTREMELY_IMPORTANT>"
 
 # Codex-specific format
 printf '{\n  "additionalContext": "%s"\n}\n' "$session_context" | cat
