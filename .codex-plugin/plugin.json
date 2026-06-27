@@ -1,0 +1,46 @@
+{
+  "name": "loopengine",
+  "version": "1.0.0",
+  "description": "LoopEngine — 循环工程全家桶：loop闭环编码 + go全自动编排 + skill-hub 56技能智能调度",
+  "author": {
+    "name": "tsfdsong"
+  },
+  "homepage": "https://github.com/tsfdsong/loopengine",
+  "repository": "https://github.com/tsfdsong/loopengine",
+  "license": "MIT",
+  "keywords": [
+    "loop-engineering",
+    "orchestration",
+    "skills",
+    "planning",
+    "tdd",
+    "debugging",
+    "code-review",
+    "workflow",
+    "skill-routing",
+    "closed-loop"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks-codex.json",
+  "interface": {
+    "displayName": "LoopEngine",
+    "shortDescription": "Loop闭环编码 + go全自动编排 + 56技能智能调度",
+    "longDescription": "LoopEngine 是开发引擎全家桶：/loop 闭环编码自动完成需求→计划→门禁→自愈→交付全流程；/go 全自动多工具编排；skill-hub 根据意图自动从56个技能中调度最精准的一个。涵盖编码、架构、重构、测试、调试、API、安全、数据库、CI/CD等全领域。",
+    "developerName": "tsfdsong",
+    "category": "Coding",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "/loop 帮我实现一个功能，描述需求",
+      "/go 全自动编排开发任务"
+    ],
+    "websiteURL": "https://github.com/tsfdsong/loopengine",
+    "privacyPolicyURL": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
+    "termsOfServiceURL": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
+    "brandColor": "#3B82F6",
+    "screenshots": []
+  }
+}
