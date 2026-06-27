@@ -150,11 +150,12 @@ fi
 
 # ── 手动引导平台 ─────────────────────────────────────────
 echo -e "${CYAN}▶  Cursor IDE${RESET}"
-echo -e "  ${YELLOW}ℹ️${RESET}  执行: /add-plugin tsfdsong/loop_engineering"
+echo -e "  ${YELLOW}ℹ️${RESET}  在 Cursor 中执行: /add-plugin tsfdsong/loop_engineering"
 echo ""
 
 echo -e "${CYAN}▶  ZCode${RESET}"
-echo -e "  ${YELLOW}ℹ️${RESET}  执行: zcode plugin install tsfdsong/loop_engineering"
+echo -e "  ${YELLOW}ℹ️${RESET}  ZCode 桌面版需手动安装："
+echo -e "  ${YELLOW}ℹ️${RESET}  git clone $REPO_URL %USERPROFILE%/.zcode/cli/plugins/cache/loopengine-local/loopengine/1.0.0"
 echo ""
 
 echo -e "${CYAN}▶  OpenCode${RESET}"

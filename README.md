@@ -19,17 +19,17 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 
 ## 📦 各平台安装命令
 
-| 平台 | 安装命令 |
-|------|---------|
-| **Claude Code** | `claude plugin marketplace add https://github.com/tsfdsong/loop_engineering` 然后 `claude plugin install loopengine` |
-| **ZCode** | `zcode plugin install tsfdsong/loop_engineering` |
-| **Codex** | 插件市场搜索 `loopengine` |
-| **Cursor** | `/add-plugin tsfdsong/loop_engineering` |
-| **Gemini CLI** | `gemini extensions install https://github.com/tsfdsong/loop_engineering` |
-| **Copilot CLI** | `copilot plugin install loopengine@tsfdsong` |
-| **Kimi Code** | `/plugins install https://github.com/tsfdsong/loop_engineering` |
-| **OpenCode** | `opencode.json` 中添加 `"plugin": ["loopengine@git+https://github.com/tsfdsong/loop_engineering.git"]` |
-| **Pi** | `pi install git:https://github.com/tsfdsong/loop_engineering` |
+| 平台 | 安装命令 | 验证 |
+|------|---------|:--:|
+| **Claude Code** | `claude plugin marketplace add https://github.com/tsfdsong/loop_engineering` 然后 `claude plugin install loopengine` | ✅ 实机 |
+| **ZCode** | `git clone https://github.com/tsfdsong/loop_engineering %USERPROFILE%/.zcode/cli/plugins/cache/loopengine-local/loopengine/1.0.0` | ⚠️ 手动 |
+| **Codex** | 插件市场搜索 `loopengine` | ⏳ |
+| **Cursor** | `/add-plugin tsfdsong/loop_engineering` | ⏳ 应用内 |
+| **Gemini CLI** | `gemini extensions install https://github.com/tsfdsong/loop_engineering` | ⏳ |
+| **Copilot CLI** | `copilot plugin install loopengine@tsfdsong` | ⏳ |
+| **Kimi Code** | `/plugins install https://github.com/tsfdsong/loop_engineering` | ⏳ |
+| **OpenCode** | `opencode.json` 中添加 `"plugin": ["loopengine@git+https://github.com/tsfdsong/loop_engineering.git"]` | ⏳ |
+| **Pi** | `pi install git:https://github.com/tsfdsong/loop_engineering` | ⏳ |
 
 ---
 
