@@ -7,7 +7,7 @@ loop 技能的持续积累教训库。每次任务启动时按需注入相关经
 ```
 loop-library/lessons/
 ├── README.md          ← 格式规范
-├── frontend.md        ← 前端类教训（渲染/交互/Playwright）
+├── frontend.md        ← 前端类教训（渲染/交互/agent-browser）
 ├── backend.md         ← 后端类教训（API/ORM/逻辑）
 ├── environment.md     ← 环境/部署类教训（DB/Redis/Docker）
 ├── verification.md    ← 验证/门禁类教训（测试/构建/断言）

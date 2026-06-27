@@ -7,11 +7,18 @@
 | 场景 | 启用维度 |
 |------|---------|
 | 纯后端 API | G1-G8（G1 必选，纯 Python 时 G3 独立启用） |
-| 含前端页面 | G1-G8 + F1-F4 |
-| 含前端+样本URL | G1-G8 + F1-F5 |
+| 含前端页面 | **G0** + G1-G8 + F1-F4 |
+| 含前端+样本URL | **G0** + G1-G8 + F1-F5 |
 | 纯配置/文档 | G2, G7（轻量） |
 
 ## 维度定义
+
+### G0 agent-browser 环境 🔴 阻塞红线（前端任务强制前置）
+- **检查**: `bash skills/loop/scripts/check-agent-browser.sh` 退出码 = 0
+- **判据**: CLI 安装 + 版本 ≥ 0.29.0 + Chrome 可用 + 启动成功 + MCP 配置正确
+- **失败处置**: 阻塞汇报，提示修复命令，禁止继续前端验证
+- **红线**: 环境不通 ≠ 验证通过，必须先修通
+- **跳过条件**: 纯后端/纯文档任务（不涉及 F1-F5）
 
 ### G1 依赖可达 🔴 阻塞红线
 - **检查**: DB 可达、Redis 可达、外部 API 可达
@@ -54,17 +61,17 @@
 - **判据**: 容器健康检查通过
 
 ### F1 控制台 🟡 分级触发
-- **检查**: `browser_console_messages(level=error)`
-- **判据**: error 数量 = 0
+- **检查**: `agent_browser_errors` + `agent_browser_console`
+- **判据**: error 数量 = 0（warning 不计入 F1 失败）
 - **红线**: console error 数组长度=0，禁止肉眼截图判断
 
 ### F2 网络 🟡 分级触发
-- **检查**: `browser_network_requests()`
+- **检查**: `agent_browser_network_requests`
 - **判据**: 全部 2xx/3xx
 - **红线**: 逐条状态码检查，4xx/5xx 逐条归类
 
 ### F3 渲染 🟡 分级触发
-- **检查**: `browser_snapshot` 元素存在
+- **检查**: `agent_browser_snapshot` 元素存在（@eN 紧凑引用）
 - **判据**: 验收条件要求的元素全部命中
 
 ### F4 交互 🟡 分级触发
