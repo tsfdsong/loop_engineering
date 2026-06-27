@@ -1,0 +1,6 @@
+{
+  "name": "loopengine",
+  "description": "LoopEngine: loop 闭环编码 + go 全自动编排 + skill-hub 56技能智能调度",
+  "version": "1.0.0",
+  "contextFileName": "GEMINI.md"
+}

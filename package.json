@@ -1,0 +1,33 @@
+{
+  "name": "loopengine",
+  "version": "1.0.0",
+  "description": "LoopEngine — 循环工程全家桶：loop 闭环编码 + go 全自动编排 + skill-hub 56技能智能调度，一站式开发引擎",
+  "type": "module",
+  "main": ".opencode/plugins/loopengine.js",
+  "keywords": [
+    "pi-package",
+    "skills",
+    "loop-engineering",
+    "orchestration",
+    "tdd",
+    "debugging",
+    "collaboration",
+    "workflow",
+    "skill-routing",
+    "closed-loop"
+  ],
+  "pi": {
+    "extensions": [
+      "./.pi/extensions/loopengine.ts"
+    ],
+    "skills": [
+      "./skills"
+    ]
+  },
+  "author": {
+    "name": "tsfdsong"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/tsfdsong/loopengine",
+  "repository": "https://github.com/tsfdsong/loopengine"
+}
