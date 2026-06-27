@@ -1,0 +1,25 @@
+{
+  "name": "loopengine",
+  "displayName": "LoopEngine",
+  "description": "LoopEngine: loop闭环编码 + go全自动编排 + skill-hub 56技能智能调度",
+  "version": "1.0.0",
+  "author": {
+    "name": "tsfdsong"
+  },
+  "homepage": "https://github.com/tsfdsong/loopengine",
+  "repository": "https://github.com/tsfdsong/loopengine",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "loop-engineering",
+    "orchestration",
+    "tdd",
+    "debugging",
+    "collaboration",
+    "best-practices",
+    "workflows",
+    "skill-routing"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks-cursor.json"
+}
