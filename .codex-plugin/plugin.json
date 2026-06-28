@@ -1,6 +1,6 @@
 {
   "name": "loopengine",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "LoopEngine — 循环工程全家桶：loop闭环编码 + go全自动编排 + skill-hub 56技能智能调度",
   "author": {
     "name": "tsfdsong"

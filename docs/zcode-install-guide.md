@@ -121,7 +121,7 @@ mkdir "$env:USERPROFILE\.zcode\cli\plugins\data\loopengine@zcode-plugins-officia
     { "cachePath": "...", "name": "android-emulator", "source": "filesystem", "version": "0.1.0" },
     { "cachePath": "...", "name": "document-skills", "source": "filesystem", "version": "0.1.0" },
     { "cachePath": "...", "name": "ios-simulator", "source": "filesystem", "version": "0.1.0" },
-    { "cachePath": "...", "name": "loopengine", "source": "filesystem", "version": "1.0.0" },
+    { "cachePath": "...", "name": "loopengine", "source": "filesystem", "version": "1.0.1" },
     { "cachePath": "...", "name": "restore-legacy-sessions", "source": "filesystem", "version": "0.1.0" },
     { "cachePath": "...", "name": "skill-creator", "source": "filesystem", "version": "0.1.0" },
     { "cachePath": "...", "name": "superpowers", "source": "filesystem", "version": "5.1.0" }

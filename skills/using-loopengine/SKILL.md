@@ -58,7 +58,7 @@ description: Use when users are new to LoopEngine or need guidance on how the lo
 | 测试 | 3 | test-driven-development, e2e-testing-patterns |
 | 调试 | 1 | systematic-debugging |
 | API/安全 | 4 | api-design-principles, api-security-best-practices |
-| 文档 | 3 | code-documentation-doc-generate, docx, pdf |
+| 文档 | 1 | code-documentation-doc-generate |
 | 代码审查 | 3 | code-reviewer, requesting-code-review |
 | 工程流程 | 7 | github-actions-templates, using-git-worktrees |
 | 规划执行 | 5 | brainstorming, writing-plans |

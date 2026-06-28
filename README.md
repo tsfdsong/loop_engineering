@@ -111,13 +111,13 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/update.sh | bas
 | 🧪 测试 | 3 | `test-driven-development` `testing-patterns` `e2e-testing-patterns` |
 | 🐛 调试 | 1 | `systematic-debugging` |
 | 🔌 API/安全 | 5 | `api-design-principles` `api-security-best-practices` `auth-implementation-patterns` |
-| 📄 文档 | 5 | `code-documentation-doc-generate` `docx` `pdf` `api-documentation-generator` |
+| 📄 文档 | 2 | `code-documentation-doc-generate` `api-documentation-generator` |
 | 🔍 代码审查 | 3 | `code-reviewer` `requesting-code-review` `receiving-code-review` |
 | ✅ 验证 | 1 | `verification-before-completion` |
 | 🚀 工程流程 | 7 | `github-actions-templates` `using-git-worktrees` `release-it` |
 | 📋 规划执行 | 5 | `brainstorming` `writing-plans` `executing-plans` `subagent-driven-development` |
 | 📋 产品管理 | 2 | `product-manager` `to-prd` |
-| 🛠️ 技能管理 | 4 | `writing-skills` `skill-creator` `find-skills` `agent-skill-architecture` |
+| 🛠️ 技能管理 | 3 | `writing-skills` `find-skills` `agent-skill-architecture` |
 | 🗄️ 数据库 | 1 | `database-design` |
 | 🛠️ 工具 | 3 | `drawio-skill` `agent-browser` `using-loopengine` |
 | 🧭 路由 | 3 | `loop` `loop-library` `skill-router` |

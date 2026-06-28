@@ -104,7 +104,7 @@
 - **跳过条件**: L1 轻量模式可跳过 G9（用户决定）
 
 ### G10 系统审查 🔴 一次性（特性分支级，不在 loop 重复）
-- **说明**: G10 实际在 go 的 Step 6 交付前触发，**不在 loop 的门禁矩阵中执行**
+- **说明**: G10 实际在 go 的 **Step ⑦.5** 交付前触发，**不在 loop 的门禁矩阵中执行**
 - **loop 中只需声明**: G10 的检查结果会通过 `handoff.gate_result` 字段回传，loop 在 Step 6 读取并展示
 - **职责**: 见 `skills/system-review/SKILL.md`，调用的是 system-review 技能，不是 G10 本地函数
 

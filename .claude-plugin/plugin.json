@@ -1,7 +1,7 @@
 {
   "name": "loopengine",
   "description": "LoopEngine for Claude Code: loop闭环编码 + go全自动编排 + skill-hub 56技能智能调度",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": {
     "name": "tsfdsong"
   },

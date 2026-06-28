@@ -2,7 +2,7 @@
 name: go
 description: /go 全自动编排 —— 输入功能描述,全自动任务分级→深度需求分析→最佳方案推荐→拆分→多工具调度→断点恢复→降级兜底→全局回归→交付。全程无人干预。
 metadata:
-  version: "3.1"
+  version: "4.0"
   type: slash-command
   mode: multi-tool-orchestration-auto
 ---

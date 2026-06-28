@@ -184,4 +184,4 @@ When recommending skills from ai-hub, verify downloads, version history, file co
 
 ### When no ai-hub skill matches
 
-Follow the upstream guidance: help directly, then suggest creating a skill via `/dashboard/publish` or the `skill-creator` seed skill.
+Follow the upstream guidance: help directly, then suggest creating a skill via `/dashboard/publish` or following the local `writing-skills` skill workflow.
