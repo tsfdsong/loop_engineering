@@ -150,11 +150,6 @@ def create_worktree(project_dir, task_id):
     return worktree_dir
 
 
-def commit_worktree(worktree_dir, message):
-    """已废弃 — 请使用 force_commit() 替代。保留仅为向后兼容。"""
-    return force_commit(worktree_dir, message)
-
-
 def merge_worktree_to_feature(project_dir, task_id):
     """
     将 worktree 分支合并回 feature 分支,并清理 worktree。

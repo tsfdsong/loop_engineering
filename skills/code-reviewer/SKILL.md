@@ -4,6 +4,13 @@ description: "Elite code review expert specializing in modern AI-powered code"
 risk: unknown
 source: community
 date_added: "2026-02-27"
+metadata:
+  review_level: code
+  scope: per-subtask
+  invoked_by:
+    - loop (gate G9)
+    - manual user request
+  not_invoked_by: go (go 调 system-review，不调本技能)
 ---
 
 ## Use this skill when

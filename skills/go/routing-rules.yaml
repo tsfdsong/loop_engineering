@@ -4,7 +4,7 @@
 
 # ─── ZCode CLI 调用配置 ───
 zcode_cli:
-  path: "C:/Users/admin/AppData/Local/Programs/ZCode/resources/glm/zcode.cjs"
+  path: "${HOME}/AppData/Local/Programs/ZCode/resources/glm/zcode.cjs"
   exec_template: "node {path} --prompt \"{task}\" --cwd {project} --mode yolo"
   default_mode: "yolo"
   model: "4f14f683-2d01-4ee4-802f-51bdfc87cc5b/deepseek-v4-pro-260425"
