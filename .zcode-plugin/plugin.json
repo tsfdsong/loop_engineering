@@ -9,5 +9,19 @@
   "homepage": "https://github.com/tsfdsong/loop_engineering",
   "repository": "https://github.com/tsfdsong/loop_engineering",
   "license": "MIT",
-  "skills": "skills"
+  "skills": "skills",
+  "mcpServers": {
+    "jcodemunch": {
+      "command": "jcodemunch-mcp",
+      "args": ["serve"]
+    },
+    "repomix": {
+      "command": "repomix",
+      "args": ["--mcp"]
+    },
+    "headroom": {
+      "command": "headroom",
+      "args": ["mcp", "serve"]
+    }
+  }
 }
