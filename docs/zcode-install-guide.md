@@ -237,6 +237,18 @@ rm -r "$env:USERPROFILE\.zcode\cli\plugins\data\loopengine@zcode-plugins-officia
 
 ## 七、更新
 
+### 7.1 一键更新（推荐）
+
+```bash
+# 方式 1：在线更新
+curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/update.sh | bash
+
+# 方式 2：install.sh --update
+curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash -s -- --update
+```
+
+### 7.2 手动更新
+
 ```powershell
 cd "$env:LOCALAPPDATA\Programs\ZCode\resources\glm\packages\loopengine-plugin"
 git pull
@@ -246,3 +258,26 @@ xcopy "$env:LOCALAPPDATA\Programs\ZCode\resources\glm\packages\loopengine-plugin
 
 # 重启 ZCode
 ```
+
+### 7.3 更新链路说明
+
+```
+源仓库 (GitHub)  ← 红线规则在此定义
+  ↓ git pull
+内置包目录 (glm/packages/loopengine-plugin/)
+  ↓ xcopy 同步
+CLI 缓存 (cache/zcode-plugins-official/loopengine/1.0.0/)
+  ↓ SessionStart hook 注入
+AI 会话生效 ✅
+```
+
+**关键**：更新后必须**重启 ZCode 桌面版**，因为 SessionStart hook 在启动时加载技能内容到内存。
+
+### 7.4 验证更新是否生效
+
+打开新的 ZCode 会话，发送：
+```
+告诉我 MCP 红线规则是什么
+```
+
+如果 AI 代理能准确回答红线规则的内容（适用范围、标准流程、违规判定），说明更新已生效。

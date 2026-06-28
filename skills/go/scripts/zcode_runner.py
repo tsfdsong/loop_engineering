@@ -20,6 +20,9 @@ sys.path.insert(0, str(Path(__file__).parent))
 import git_ops
 import state_manager
 
+# 获取 state_manager 的全局锁 (复用, 不重复创建)
+_config_write_lock = state_manager._global_locks_guard
+
 
 # ─── 配置 (从环境变量读取,不硬编码) ───
 
@@ -94,32 +97,45 @@ def ensure_zcode_config(preferred_provider=None):
     """
     确保 ZCode config.json 包含正确的 model 和 provider 配置。
 
+    多线程安全: 用全局锁串行化对 config.json 的写操作,
+    避免并发任务间互相覆盖 model 设置。
+
     Args:
         preferred_provider: 指定优先 provider ID (来自 task.model)
     """
-    config_dir = Path.home() / ".zcode" / "cli"
-    config_dir.mkdir(parents=True, exist_ok=True)
-    config_path = config_dir / "config.json"
+    with _config_write_lock:
+        config_dir = Path.home() / ".zcode" / "cli"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        config_path = config_dir / "config.json"
 
-    providers = _load_providers()
-    model_main = _load_model_main(preferred_provider)
+        providers = _load_providers()
+        model_main = _load_model_main(preferred_provider)
 
-    config = {
-        "model": {"main": model_main},
-        "provider": providers,
-    }
+        # ZCode 要求 provider.enabled === true (不是 falsy)
+        # v2/config.json 中很多 provider 缺 enabled 字段, 这里补上
+        if preferred_provider and preferred_provider in providers:
+            providers = dict(providers)
+            providers[preferred_provider] = dict(providers[preferred_provider])
+            providers[preferred_provider]["enabled"] = True
 
-    if config_path.exists():
-        try:
-            with open(config_path, "r") as f:
-                existing = json.load(f)
-            if existing.get("model", {}).get("main") == model_main:
-                return
-        except (json.JSONDecodeError, OSError):
-            pass
+        config = {
+            "model": {"main": model_main},
+            "provider": providers,
+        }
 
-    with open(config_path, "w") as f:
-        json.dump(config, f, ensure_ascii=False, indent=2)
+        if config_path.exists():
+            try:
+                with open(config_path, "r") as f:
+                    existing = json.load(f)
+                if existing.get("model", {}).get("main") == model_main:
+                    return
+            except (json.JSONDecodeError, OSError):
+                pass
+
+        # ZCode 严格检查 config.json: JSON.parse 不接受多行 (Extra data 错误)
+        # 必须用紧凑单行格式
+        with open(config_path, "w") as f:
+            json.dump(config, f, ensure_ascii=False, separators=(",", ":"))
 
 
 def build_prompt(task, worktree_dir, handoff_summaries=None):
@@ -139,12 +155,12 @@ def build_prompt(task, worktree_dir, handoff_summaries=None):
         "",
     ]
 
-    # per-task model 指令
+    # per-task model 指令 (经实测: /model 必须直接跟参数, 用 ";" 分隔后续指令)
     task_model = task.get("model")
     if task_model:
         parts.append("## 模型要求")
-        parts.append(f"此任务请使用 model: `{task_model}`")
-        parts.append("如需切换,在回复中调用 /model 切换。")
+        parts.append(f"**首先执行**: `/model {task_model}`")
+        parts.append("**然后**执行下面的任务。")
         parts.append("")
 
     task_files = task.get("files", [])

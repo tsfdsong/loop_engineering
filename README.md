@@ -13,7 +13,13 @@
 curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
 ```
 
-脚本自动检测已安装的 AI 编程工具（Claude Code / Codex / Gemini CLI / Copilot CLI / Pi）并执行对应安装。
+## 🔄 一键更新
+
+```bash
+curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/update.sh | bash
+```
+
+脚本自动检测已安装的 AI 编程工具（Claude Code / Codex / Gemini CLI / Copilot CLI / Pi / ZCode）并执行对应安装/更新。
 
 ---
 
