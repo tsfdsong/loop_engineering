@@ -32,18 +32,18 @@ STATUS_COMPLETED = "completed"
 STATUS_FAILED = "failed"
 STATUS_PAUSED = "paused"
 
-# 线程锁 (同一进程内的并发线程安全)
-_local = threading.local()
+# 全局锁字典 (跨线程共享,不是 threading.local)
+_global_locks = {}
+_global_locks_guard = threading.Lock()
 
 
 def _get_lock(project_dir):
-    """获取项目级线程锁"""
+    """获取项目级线程锁 (跨线程共享)"""
     key = str(project_dir)
-    if not hasattr(_local, 'locks'):
-        _local.locks = {}
-    if key not in _local.locks:
-        _local.locks[key] = threading.Lock()
-    return _local.locks[key]
+    with _global_locks_guard:
+        if key not in _global_locks:
+            _global_locks[key] = threading.Lock()
+        return _global_locks[key]
 
 
 def get_state_path(project_dir):
@@ -66,22 +66,28 @@ def state_exists(project_dir):
 def write_state(project_dir, state):
     """
     原子写入状态文件(检查点机制)。
-    写临时文件 → os.replace 原子替换。
+    Windows 上 os.replace 可能被其他线程占用,加重试。
     """
     state["updated_at"] = datetime.now(timezone.utc).isoformat()
     path = get_state_path(project_dir)
 
-    fd, tmp = tempfile.mkstemp(dir=str(path.parent), suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(state, f, ensure_ascii=False, indent=2)
-        os.replace(tmp, str(path))
-    except Exception:
+    for attempt in range(5):
         try:
-            os.unlink(tmp)
-        except OSError:
-            pass
-        raise
+            fd, tmp = tempfile.mkstemp(dir=str(path.parent), suffix=".tmp")
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(state, f, ensure_ascii=False, indent=2)
+            os.replace(tmp, str(path))
+            return
+        except (PermissionError, OSError):
+            # Windows 上可能被其他线程占用,等待重试
+            try:
+                os.unlink(tmp)
+            except (OSError, UnboundLocalError):
+                pass
+            if attempt < 4:
+                time.sleep(0.05 * (attempt + 1))
+            else:
+                raise
 
 
 def read_state(project_dir):
