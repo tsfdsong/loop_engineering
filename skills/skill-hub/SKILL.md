@@ -3,7 +3,9 @@ name: skill-hub
 description: 技能调度中心 —— 根据用户意图自动路由到最合适的技能，涵盖编码、架构、重构、测试、调试、API、安全、数据库、CI/CD、规划执行、文档等领域。每次对话自动加载，智能匹配意图并调度单个技能。
 metadata:
   version: "5.3"
-  installed_skills: 57
+  installed_skills: 56
+  cross_plugin_skills: 3
+  cross_plugin_refs: "docx, pdf (document-skills), skill-creator"
   purpose: auto-routing
 ---
 
@@ -120,6 +122,10 @@ metadata:
 
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
+| **`docx`** (外部) | Word、docx、文档编辑、批注 | 创建/编辑 Word 文档（ZCode 官方 `document-skills` 插件） |
+| **`pdf`** (外部) | PDF、报告、海帖、论文、合并 | PDF 创建/处理/提取（ZCode 官方 `document-skills` 插件） |
+
+> 注：`docx`/`pdf` 由 `document-skills` 官方插件提供，需先安装该插件。
 
 ### 🔍 代码审查（4个有重叠 ⚠️）
 
@@ -174,7 +180,10 @@ metadata:
 |------|-----------|----------|
 | **`agent-skill-architecture`** | 技能设计、技能审查、改造技能、新建技能 | **设计/审查 Agent 技能时强制执行架构规范** |
 | **`writing-skills`** | 创建技能、编写技能、编辑技能 | 创建或编辑 agent 技能 |
+| **`skill-creator`** (外部) | 创建技能、新建技能 | 创建新技能的引导流程（ZCode 官方 `skill-creator` 插件） |
 | **`find-skills`** | 找技能、安装技能、搜索技能 | 发现和安装新技能 |
+
+> 注：`skill-creator` 由 ZCode 官方 `skill-creator` 插件提供，需先安装该插件。
 
 ### 🗄️ 数据库（1个）
 
