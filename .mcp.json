@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "jcodemunch": {
+      "command": "jcodemunch-mcp",
+      "args": ["serve"],
+      "cwd": "${workspaceFolder}"
+    },
+    "repomix": {
+      "command": "repomix",
+      "args": ["--mcp"],
+      "cwd": "${workspaceFolder}"
+    },
+    "headroom": {
+      "command": "headroom",
+      "args": ["mcp", "serve"],
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}
