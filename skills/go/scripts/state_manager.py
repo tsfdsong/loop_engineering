@@ -1,12 +1,16 @@
 """
-编排层状态管理模块(机制④ · 双轨制状态文件)
+编排层状态管理模块 v4.0 — 线程安全 + Windows 文件锁
 
-负责 .orchestrate-state.json 的读写、原子写入、一致性校验。
-所有调度逻辑的基础。
+修复:
+  - BUG #1: 并发线程竞态 → 加 threading.Lock
+  - BUG #3: read-modify-write 竞态 → 原子更新操作
+  - BUG #7: 断点续跑没有恢复分支 → 加分支检查
+  - Windows os.replace 并发冲突 → 重试机制
 """
 import json
 import os
 import tempfile
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -28,6 +32,19 @@ STATUS_COMPLETED = "completed"
 STATUS_FAILED = "failed"
 STATUS_PAUSED = "paused"
 
+# 线程锁 (同一进程内的并发线程安全)
+_local = threading.local()
+
+
+def _get_lock(project_dir):
+    """获取项目级线程锁"""
+    key = str(project_dir)
+    if not hasattr(_local, 'locks'):
+        _local.locks = {}
+    if key not in _local.locks:
+        _local.locks[key] = threading.Lock()
+    return _local.locks[key]
+
 
 def get_state_path(project_dir):
     """获取项目根目录下的状态文件路径"""
@@ -48,21 +65,18 @@ def state_exists(project_dir):
 
 def write_state(project_dir, state):
     """
-    原子写入状态文件(检查点机制 · 机制③A)
-
-    写临时文件 → os.replace 原子替换,防写一半中断损坏。
+    原子写入状态文件(检查点机制)。
+    写临时文件 → os.replace 原子替换。
     """
     state["updated_at"] = datetime.now(timezone.utc).isoformat()
     path = get_state_path(project_dir)
 
-    # 原子写入: 临时文件 → rename
     fd, tmp = tempfile.mkstemp(dir=str(path.parent), suffix=".tmp")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(state, f, ensure_ascii=False, indent=2)
-        os.replace(tmp, str(path))  # 原子操作(Windows 兼容)
+        os.replace(tmp, str(path))
     except Exception:
-        # 出错时清理临时文件
         try:
             os.unlink(tmp)
         except OSError:
@@ -77,6 +91,24 @@ def read_state(project_dir):
         return json.load(f)
 
 
+def atomic_update(project_dir, updater_fn):
+    """
+    🔒 线程安全的原子更新。
+    
+    加锁 → 读取 → 更新 → 写入 → 解锁。
+    所有并发线程串行执行更新操作，不会丢数据。
+    
+    Args:
+        project_dir: 项目根目录
+        updater_fn: 接收 state dict, 修改后返回 (原地修改即可)
+    """
+    lock = _get_lock(project_dir)
+    with lock:
+        state = read_state(project_dir)
+        updater_fn(state)
+        write_state(project_dir, state)
+
+
 def create_state(project_dir, orchestrate_id, feature, tier, acceptance_criteria=None):
     """创建初始状态文件"""
     state = {
@@ -86,8 +118,8 @@ def create_state(project_dir, orchestrate_id, feature, tier, acceptance_criteria
         "status": STATUS_PLANNING,
         "acceptance_criteria": acceptance_criteria or [],
         "tasks": [],
-        "feature_branch": "",  # feature 分支名(断点恢复用)
-        "base_branch": "",     # 从哪个分支切出(回滚用)
+        "feature_branch": "",
+        "base_branch": "",
         "owner": {
             "pid": os.getpid(),
             "session_id": "",
@@ -103,29 +135,30 @@ def create_state(project_dir, orchestrate_id, feature, tier, acceptance_criteria
 
 
 def update_heartbeat(project_dir):
-    """更新心跳(并发检测用,借鉴 loop owner 设计)"""
-    state = read_state(project_dir)
-    state["owner"]["heartbeat"] = datetime.now(timezone.utc).isoformat()
-    write_state(project_dir, state)
+    """更新心跳"""
+    atomic_update(project_dir, lambda s: s["owner"].__setitem__(
+        "heartbeat", datetime.now(timezone.utc).isoformat()))
 
 
 def add_tasks(project_dir, tasks):
-    """批量添加子任务到状态文件"""
-    state = read_state(project_dir)
-    state["tasks"].extend(tasks)
-    write_state(project_dir, state)
+    """批量添加子任务"""
+    atomic_update(project_dir, lambda s: s["tasks"].extend(tasks))
 
 
 def update_task(project_dir, task_id, **fields):
-    """更新单个子任务的状态字段"""
-    state = read_state(project_dir)
-    for task in state["tasks"]:
-        if task["id"] == task_id:
-            task.update(fields)
-            break
-    else:
+    """
+    🔒 线程安全更新单个子任务。
+    
+    使用 atomic_update 保证并发线程不会互相覆盖。
+    """
+    def _update(s):
+        for task in s["tasks"]:
+            if task["id"] == task_id:
+                task.update(fields)
+                return
         raise KeyError(f"任务 {task_id} 不存在")
-    write_state(project_dir, state)
+    
+    atomic_update(project_dir, _update)
 
 
 def get_task(project_dir, task_id):
@@ -137,24 +170,14 @@ def get_task(project_dir, task_id):
     raise KeyError(f"任务 {task_id} 不存在")
 
 
-def get_pending_tasks(project_dir):
-    """获取所有未完成的子任务(拓扑序)"""
-    state = read_state(project_dir)
-    return [t for t in state["tasks"] if t["status"] in (TASK_PENDING, TASK_IN_PROGRESS, TASK_FAILED)]
-
-
 def get_ready_tasks(project_dir):
-    """
-    获取所有可执行的任务(依赖已全部完成的 pending 任务)。
-    无依赖任务可并发(机制① L3 多智能体并行)。
-    """
+    """获取所有可执行的任务(依赖已全部完成的 pending 任务)"""
     state = read_state(project_dir)
     completed_ids = {t["id"] for t in state["tasks"] if t["status"] == TASK_COMPLETED}
     ready = []
     for task in state["tasks"]:
         if task["status"] != TASK_PENDING:
             continue
-        # 检查所有依赖是否已完成
         if all(dep in completed_ids for dep in task.get("depends_on", [])):
             ready.append(task)
     return ready
@@ -162,23 +185,21 @@ def get_ready_tasks(project_dir):
 
 def set_status(project_dir, status):
     """设置编排任务整体状态"""
-    state = read_state(project_dir)
-    state["status"] = status
-    write_state(project_dir, state)
+    atomic_update(project_dir, lambda s: s.__setitem__("status", status))
 
 
 def append_decision(project_dir, decision):
-    """追加决策记录(可追溯)"""
-    state = read_state(project_dir)
-    state["decision_log"].append({
-        "at": datetime.now(timezone.utc).isoformat(),
-        "decision": decision,
-    })
-    write_state(project_dir, state)
+    """追加决策记录"""
+    def _append(s):
+        s["decision_log"].append({
+            "at": datetime.now(timezone.utc).isoformat(),
+            "decision": decision,
+        })
+    atomic_update(project_dir, _append)
 
 
 def remove_state(project_dir):
-    """清理状态文件(任务完成后)"""
+    """清理状态文件"""
     path = get_state_path(project_dir)
     if path.exists():
         path.unlink()

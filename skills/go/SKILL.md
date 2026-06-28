@@ -30,6 +30,7 @@ metadata:
 3. **测试闸门**：合并后自动跑测试，失败则阻断
 4. **分支保护**：保护分支上有未提交改动时，/go 直接拒绝执行
 5. **G9/G10 审查**：每个子任务 commit 前通过 G9 代码审查（loop 内），整个特性分支交付前通过 G10 系统审查（go Step ⑦.5）
+6. **MCP 优先于 Read**：修改代码前，先用 `mcp__jcodemunch__get_file_outline` / `search_symbols` / `get_repo_map` 理解结构，避免全量 Read 浪费 token（省 ~90%）。Read 仅用于 MCP 不可用、需精确行内容、文件小于 50 行。
 
 ## 命令格式
 

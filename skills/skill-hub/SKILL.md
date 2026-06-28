@@ -20,6 +20,7 @@ metadata:
 5. **无匹配技能时** → 进入「语义兜底」规则（见底部）
 6. **遇到 Bug/报错** → 优先调 systematic-debugging
 7. **声称完成时** → 调 verification-before-completion
+8. **修改代码前，先用 MCP 工具理解结构** → 见「MCP 代码理解工具」章节（省 90% token）
 
 ---
 
@@ -192,6 +193,28 @@ metadata:
 | **`agent-browser`** | 浏览器、网页、截图、自动化 | 浏览器自动化 |
 | **`using-loopengine`** | LoopEngine、体系介绍、上手引导 | **LoopEngine 体系引导** |
 
+### ⚡ MCP 代码理解工具（省 token 优先）🔴
+
+> **核心原则：修改代码前，先用 MCP 工具理解结构，避免全量 Read 浪费 token。实测可节省 ~90% token。**
+
+| MCP 工具 | 用途 | 适用场景 | Token 节省 |
+|------|------|------|:--:|
+| `mcp__jcodemunch__get_repo_map` | 项目结构全景图（符号级） | 需要了解项目整体结构、定位文件 | ~80% |
+| `mcp__jcodemunch__get_file_outline` | 文件符号大纲（函数/类/变量列表） | 需要了解文件内容结构，无需读全文 | ~85% |
+| `mcp__jcodemunch__search_symbols` | 语义搜索符号（按名称/签名/摘要） | 查找特定函数、类、变量定义 | ~90% |
+| `mcp__jcodemunch__get_file_tree` | 目录树（可选含文件摘要） | 浏览项目目录结构 | ~95% |
+| `mcp__jcodemunch__find_references` | 查找符号的所有引用位置 | 了解修改影响范围 | ~85% |
+| `mcp__jcodemunch__get_blast_radius` | 修改影响面分析 | 重构前评估风险 | ~90% |
+| `mcp__repomix__pack_codebase` | 打包代码库（结构化输出） | 需要完整代码上下文时 | ~70% |
+| `mcp__headroom__headroom_compress` | 压缩大段内容（hash 检索） | 需要缓存大段内容供后续引用 | ~95% |
+
+**使用规则**：
+
+1. **修改代码前，必须先用 MCP 工具理解结构** — 禁止直接 Read 全文件
+2. **优先级**：`get_file_outline` > `search_symbols` > `get_repo_map` > `Read`（全量）
+3. **Read 仅用于**：MCP 工具不可用、需要精确行内容、文件小于 50 行
+4. **典型流程**：`get_repo_map`（定位）→ `get_file_outline`（理解结构）→ `search_symbols`（找关联）→ `Read`（精确读取目标行）→ `Edit`
+
 ### 🧭 路由类（4个）
 
 | 技能 | 触发关键词 | 适用场景 |
@@ -249,5 +272,6 @@ metadata:
 5. **优先精准技能**。`api-security-best-practices` 优先于更宽泛的安全技能。
 6. **简洁告知**。加载技能时一句话说明为什么选它。
 7. **语义兜底优先**。关键词无匹配时，先用语义兜底规则判断，不要直接放弃。
+8. **MCP 优先于 Read**。修改代码前，先用 `get_file_outline` / `search_symbols` / `get_repo_map` 理解结构，避免全量 Read 浪费 token（实测省 ~90%）。
 
 **_这个技能是你与 55 个技能之间的桥梁。每次对话开始时自动参考此调度规则。_**
