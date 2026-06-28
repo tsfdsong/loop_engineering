@@ -2,7 +2,7 @@
 name: loop
 description: 循环工程斜杠命令 —— /loop [--auto] 功能描述 + 验收条件，自动完成闭环编码→门禁矩阵→自愈→交付全流程。--auto 模式供 go 编排层调用。
 metadata:
-  version: "4.0"
+  version: "4.1"
   type: slash-command
   mode: closed-loop-with-git-isolation
 ---

@@ -151,13 +151,8 @@ def create_worktree(project_dir, task_id):
 
 
 def commit_worktree(worktree_dir, message):
-    """在 worktree 中提交所有改动"""
-    try:
-        run_git(worktree_dir, "add", "-A")
-        run_git(worktree_dir, "commit", "-m", message)
-    except RuntimeError:
-        # 可能没有改动,不算错误
-        pass
+    """已废弃 — 请使用 force_commit() 替代。保留仅为向后兼容。"""
+    return force_commit(worktree_dir, message)
 
 
 def merge_worktree_to_feature(project_dir, task_id):

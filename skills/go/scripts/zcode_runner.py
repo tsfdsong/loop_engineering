@@ -76,14 +76,13 @@ def ensure_zcode_config():
         json.dump(config, f, ensure_ascii=False, indent=2)
 
 
-def build_prompt(task, project_dir, skill_content=None, handoff_summaries=None):
+def build_prompt(task, project_dir, handoff_summaries=None):
     """
-    构造子任务的 prompt(含技能注入 + 上下文交接 + 文件边界约束)。
+    构造子任务的 prompt(含 per-task 技能注入 + 上下文交接 + 文件边界约束)。
 
     Args:
         task: 子任务 dict(id/name/skills/files/prompt)
         project_dir: 项目根目录
-        skill_content: 注入的 skill-hub 技能内容(机制② · 已废弃,改用 task.skills)
         handoff_summaries: 前置任务的 handoff 摘要列表(机制⑥)
     """
     parts = [
@@ -187,7 +186,7 @@ def _detect_degradation(output):
 # 并发 Worktree 执行(方案C · 混合模式)
 # ═══════════════════════════════════════════════════════════
 
-def execute_task_in_worktree(project_dir, task, tier="L2", skill_content=None):
+def execute_task_in_worktree(project_dir, task, tier="L2"):
     """
     在隔离的 git worktree 中执行单个子任务。
     
@@ -195,12 +194,12 @@ def execute_task_in_worktree(project_dir, task, tier="L2", skill_content=None):
     1. 创建 worktree (基于 feature 分支)
     2. 在 worktree 中调用 ZCode
     3. 降级: ZCode 失败 → ZCode CLI 直连 → DeepSeek API
-    4. 提交 worktree 改动
+    4. 强制 commit + 回归保护
     5. 返回结果(合并由上层统一处理)
     """
     # 准备工作
     ensure_zcode_config()
-    prompt = build_prompt(task, str(project_dir), skill_content)
+    prompt = build_prompt(task, str(project_dir))
     head_before = git_ops.get_head(project_dir)
     
     state_manager.update_task(project_dir, task["id"],
@@ -288,7 +287,7 @@ def _is_quota_error(stderr):
     return any(kw in stderr.lower() for kw in keywords)
 
 
-def execute_tasks_concurrent(project_dir, tasks, tier="L2", skill_content=None):
+def execute_tasks_concurrent(project_dir, tasks, tier="L2"):
     """
     并发执行无依赖的子任务(Worktree 隔离模式)。
     
@@ -299,7 +298,6 @@ def execute_tasks_concurrent(project_dir, tasks, tier="L2", skill_content=None):
         project_dir: 项目根目录(已在 feature 分支)
         tasks: 所有子任务列表
         tier: 执行级别
-        skill_content: 注入的技能内容
     """
     ensure_zcode_config()
     
@@ -324,7 +322,7 @@ def execute_tasks_concurrent(project_dir, tasks, tier="L2", skill_content=None):
         if len(ready) == 1:
             # 单任务,直接执行
             task = ready[0]
-            result = execute_task_in_worktree(project_dir, task, tier, skill_content)
+            result = execute_task_in_worktree(project_dir, task, tier)
             all_results[task["id"]] = result
             
             if result.get("status") == "completed":
@@ -337,7 +335,7 @@ def execute_tasks_concurrent(project_dir, tasks, tier="L2", skill_content=None):
             # 多任务并发执行
             with concurrent.futures.ThreadPoolExecutor(max_workers=len(ready)) as executor:
                 futures = {
-                    executor.submit(execute_task_in_worktree, project_dir, t, tier, skill_content): t["id"]
+                    executor.submit(execute_task_in_worktree, project_dir, t, tier): t["id"]
                     for t in ready
                 }
                 for future in concurrent.futures.as_completed(futures):

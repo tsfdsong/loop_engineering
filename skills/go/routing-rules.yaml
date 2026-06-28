@@ -1,29 +1,6 @@
-# 编排层工具路由规则 v3.0 — ZCode 纯血版
-# 使用 Feature Branch + Git Worktree 实现并发编码隔离
-#
-# 匹配规则: 从上往下,首个命中的规则生效
-
-routing:
-  # ─── 主力执行: ZCode --prompt (80%+ 场景) ───
-  - match:
-      task_type: [backend, api, crud, test, testing, refactor, 
-                  database, config, migration, fix, docs, 
-                  documentation, readme, changelog, frontend, 
-                  ui, page, component, css, animation,
-                  architecture, review, audit, design-review]
-    tool: zcode
-    mode: worktree_concurrent      # 新: worktree 隔离 + 并发
-    skill_required: null           # 由 go SKILL.md 注入
-    fallback: zcode_serial         # 降级: 串行执行
-    completion_signal: git_commit  # 完成信号: git commit
-
-  # ─── 降级: ZCode 串行(worktree 不可用时的兜底) ───
-  - match:
-      task_type: "*"
-    tool: zcode
-    mode: serial
-    skill_required: null
-    fallback: deepseek_direct
+# 编排层工具配置 v3.1 — ZCode 纯血版
+# 所有子任务统一走 ZCode --prompt + Worktree 隔离
+# 不再区分 task_type 路由(已统一为 zcode)
 
 # ─── ZCode CLI 调用配置 ───
 zcode_cli:
@@ -39,9 +16,16 @@ worktree:
   max_concurrent: 4               # 最大并发数
   auto_cleanup: true              # 完成后自动清理 worktree
 
-# ─── DeepSeek 降级配置 ───
-deepseek:
-  provider_config:
-    kind: "openai-compatible"
+# ─── 降级链路(ZCode 失败时) ───
+degradation:
+  chain:
+    - zcode_cli_direct            # 降级1: ZCode CLI 直连(无 loop 门禁)
+    - deepseek_api                # 降级2: DeepSeek API 兜底
+  triggers:
+    - "429"
+    - "quota_exceeded"
+    - "insufficient_quota"
+    - "rate_limit"
+  deepseek:
     baseURL: "https://api.deepseek.com"
     model_main: "deepseek-chat"

@@ -20,13 +20,17 @@
 **决策**: 直接跳 DeepSeek,不做三级降级链(简单,且 ZCode Coding Plan 不含 DeepSeek,切换零成本)。
 
 ```
-正常态: 各工具用主力模型
-  GLM-5.2(ZCode) / Sonnet(Cursor) / Claude4(Trae)
+正常态: ZCode 用主力模型 (deepseek-v4-pro / GLM-5.2)
         │
    捕获 429/quota_exceeded/model_overloaded
         │
         ▼
-自动切 DeepSeek(deepseek-v4-pro/flash)
+降级1: ZCode CLI 直连 (无 loop 门禁, 快速)
+        │
+   仍失败?
+        │
+        ▼
+降级2: DeepSeek API (deepseek-chat)
         │
    执行任务(不打断用户)
         │
