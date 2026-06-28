@@ -73,7 +73,7 @@ git clone https://github.com/tsfdsong/loop_engineering.git "$env:LOCALAPPDATA\Pr
 验证：
 ```powershell
 ls "$env:LOCALAPPDATA\Programs\ZCode\resources\glm\packages\loopengine-plugin\skills\" | Measure-Object | Select-Object -ExpandProperty Count
-# 应输出: 55
+# 应输出: 53
 ```
 
 ### 步骤 2：复制到 CLI 缓存
@@ -88,7 +88,7 @@ xcopy "$src\*" "$dst\" /E /I /Y
 验证：
 ```powershell
 ls "$env:USERPROFILE\.zcode\cli\plugins\cache\zcode-plugins-official\loopengine\1.0.0\skills\" | Measure-Object | Select-Object -ExpandProperty Count
-# 应输出: 55
+# 应输出: 53
 ```
 
 ### 步骤 3：创建 data 目录
@@ -213,7 +213,7 @@ foreach ($c in $checks) {
 
 | 症状 | 排查 |
 |------|------|
-| skill-hub 不工作 | 检查缓存目录中 `skills/` 是否包含 55 个技能目录 |
+| skill-hub 不工作 | 检查缓存目录中 `skills/` 是否包含 53 个技能目录 |
 | | 检查 `.zcode-plugin/plugin.json` 中 `"skills": "skills"` 字段是否存在 |
 
 ### 4.3 常见错误
@@ -267,7 +267,7 @@ rm -r "$env:USERPROFILE\.zcode\cli\plugins\data\loopengine@zcode-plugins-officia
 | 内置包目录 | `glm/packages/superpowers-plugin/` | `glm/packages/loopengine-plugin/` |
 | 缓存路径 | `cache/zcode-plugins-official/superpowers/5.1.0/` | `cache/zcode-plugins-official/loopengine/1.0.0/` |
 | marketplace | `zcode-plugins-official` | `zcode-plugins-official` |
-| 技能数 | 14 | 55 |
+| 技能数 | 14 | 50 |
 | hooks | ✅ SessionStart | ✅ SessionStart（注入 skill-hub） |
 | MCP 红线 | ❌ 无 | ✅ 全局强制执行 |
 | 更新方式 | 随 ZCode 升级 | `update.sh` 一键更新 / 手动 git pull |

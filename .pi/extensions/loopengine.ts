@@ -65,7 +65,7 @@ function getBootstrapContent(): string | null {
 		cachedBootstrap = `${EXTREMELY_IMPORTANT_MARKER}
 ${BOOTSTRAP_MARKER}
 
-You have LoopEngine — the full-stack development engine with 55 skills.
+You have LoopEngine — the full-stack development engine with 53 skills.
 
 The skill-hub skill content is included below and is already loaded for this Pi session. Follow it now. Do not try to load skill-hub again.
 

@@ -1,7 +1,7 @@
 {
   "name": "loopengine",
   "version": "1.0.1",
-  "description": "LoopEngine — 循环工程全家桶：loop 闭环编码 + go 全自动编排 + skill-hub 56技能智能调度，一站式开发引擎",
+  "description": "LoopEngine — 循环工程全家桶：loop 闭环编码 + go 全自动编排 + skill-hub 53技能智能调度，一站式开发引擎",
   "type": "module",
   "main": ".opencode/plugins/loopengine.js",
   "keywords": [

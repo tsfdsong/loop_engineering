@@ -14,7 +14,7 @@ Add loopengine to the `plugin` array in your `opencode.json`:
 }
 ```
 
-Restart OpenCode. The plugin installs through OpenCode's plugin manager and registers all 55 skills.
+Restart OpenCode. The plugin installs through OpenCode's plugin manager and registers all 53 skills.
 
 Verify by asking: "Tell me about LoopEngine"
 

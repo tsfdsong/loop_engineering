@@ -22,7 +22,7 @@ RESET="\033[0m"
 echo ""
 echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════╗${RESET}"
 echo -e "${BOLD}${CYAN}║       LoopEngine — 循环工程全家桶 安装脚本       ║${RESET}"
-echo -e "${BOLD}${CYAN}║    loop闭环 + go编排 + skill-hub 55技能调度      ║${RESET}"
+echo -e "${BOLD}${CYAN}║    loop闭环 + go编排 + skill-hub 53技能调度      ║${RESET}"
 echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════╝${RESET}"
 echo ""
 

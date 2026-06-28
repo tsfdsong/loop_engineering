@@ -3,3 +3,9 @@
 .go/worktrees/
 __pycache__/
 node_modules/
+
+# 历史遗留空目录（test-page 内容已迁移；Windows 文件锁无法直接 rmdir）
+test-page/
+
+# IDE 配置
+.idea/

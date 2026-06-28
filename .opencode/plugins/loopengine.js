@@ -82,7 +82,7 @@ When skills request actions, substitute OpenCode equivalents:
 Use OpenCode's native \`skill\` tool to list and load skills.`;
 
     _bootstrapCache = `<EXTREMELY_IMPORTANT>
-You have LoopEngine — the full-stack development engine with 55 skills.
+You have LoopEngine — the full-stack development engine with 53 skills.
 
 **IMPORTANT: The skill-hub skill content is included below. It is ALREADY LOADED - you are currently following it. Do NOT use the skill tool to load "skill-hub" again — that would be redundant.**
 

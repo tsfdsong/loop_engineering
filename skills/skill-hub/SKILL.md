@@ -1,11 +1,11 @@
 ---
 name: skill-hub
-description: 技能调度中心 —— 根据用户意图自动路由到最合适的技能，涵盖编码、架构、重构、测试、调试、API、安全、数据库、CI/CD、规划执行、文档等领域。每次对话自动加载，智能匹配意图并调度单个技能。
+description: 技能调度中心 —— 根据用户意图自动路由到最合适的技能，涵盖编码、架构、重构、测试、调试、API、安全、数据库、CI/CD、规划执行等领域。每次对话自动加载，智能匹配意图并调度单个技能。
 metadata:
-  version: "5.3"
-  installed_skills: 56
-  cross_plugin_skills: 3
-  cross_plugin_refs: "docx, pdf (document-skills), skill-creator"
+  version: "5.4"
+  installed_skills: 53
+  cross_plugin_skills: 1
+  cross_plugin_refs: "skill-creator (官方 skill-creator 插件)"
   purpose: auto-routing
 ---
 
@@ -96,13 +96,12 @@ metadata:
 |------|-----------|----------|
 | **`systematic-debugging`** | 调试、报错、Bug、不工作、排查、修一下、修好了吗 | 遇到任何 bug 或测试失败时，**优先调用此技能** |
 
-### 🔌 API 开发（3个互补）
+### 🔌 API 开发（2个互补）
 
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
 | **`api-design-principles`** | API 设计、REST、GraphQL、接口 | 设计新 API |
 | **`api-security-best-practices`** | API 安全、限流、输入验证 | 加固 API 安全 |
-| **`api-documentation-generator`** | API 文档、OpenAPI、Swagger | 生成 API 文档 |
 
 ### 🔐 安全（2个互补）
 
@@ -111,21 +110,7 @@ metadata:
 | **`auth-implementation-patterns`** | 登录、JWT、OAuth、认证、权限 | 认证授权实现 |
 | **`api-security-best-practices`** | API 安全、CORS、CSRF | API 层安全 |
 
-### 📄 文档（2个互补）
-
-| 技能 | 触发关键词 | 适用场景 |
-|------|-----------|----------|
-| **`code-documentation-doc-generate`** | 代码文档、架构图、README | 代码/架构文档 |
-| **`api-documentation-generator`** | API 文档、OpenAPI | API 文档 |
-
-### 📑 文档处理（2个，独占）
-
-| 技能 | 触发关键词 | 适用场景 |
-|------|-----------|----------|
-| **`docx`** (外部) | Word、docx、文档编辑、批注 | 创建/编辑 Word 文档（ZCode 官方 `document-skills` 插件） |
-| **`pdf`** (外部) | PDF、报告、海帖、论文、合并 | PDF 创建/处理/提取（ZCode 官方 `document-skills` 插件） |
-
-> 注：`docx`/`pdf` 由 `document-skills` 官方插件提供，需先安装该插件。
+> 注：本项目**不**包含文档生成类技能（`code-documentation-doc-generate`、`api-documentation-generator`）和文档处理类技能（`docx`、`pdf`）——它们与软件开发流程非直接相关，已被剥离。需要时自行安装对应官方插件。
 
 ### 🔍 代码审查（4个有重叠 ⚠️）
 
@@ -174,16 +159,15 @@ metadata:
 
 > ⚠️ `brainstorming` 覆盖了产品需求的**发散阶段**（需求探索、想法发散、创意讨论），此处不再重复列出。
 
-### 🛠️ 技能管理（4个，独占）
+### 🛠️ 技能管理（3个，独占）
 
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
 | **`agent-skill-architecture`** | 技能设计、技能审查、改造技能、新建技能 | **设计/审查 Agent 技能时强制执行架构规范** |
 | **`writing-skills`** | 创建技能、编写技能、编辑技能 | 创建或编辑 agent 技能 |
 | **`skill-creator`** (外部) | 创建技能、新建技能 | 创建新技能的引导流程（ZCode 官方 `skill-creator` 插件） |
-| **`find-skills`** | 找技能、安装技能、搜索技能 | 发现和安装新技能 |
 
-> 注：`skill-creator` 由 ZCode 官方 `skill-creator` 插件提供，需先安装该插件。
+> 注：`skill-creator` 由 ZCode 官方 `skill-creator` 插件提供，需先安装该插件。本项目**不**包含 `find-skills`（元技能，与开发流程无关，已剥离）。
 
 ### 🗄️ 数据库（1个）
 
@@ -291,4 +275,4 @@ metadata:
 7. **简洁告知**。加载技能时一句话说明为什么选它。
 8. **语义兜底优先**。关键词无匹配时，先用语义兜底规则判断，不要直接放弃。
 
-**_这个技能是你与 55 个技能之间的桥梁。每次对话开始时自动参考此调度规则。_**
+**_这个技能是你与 53 个技能之间的桥梁。每次对话开始时自动参考此调度规则。_**
