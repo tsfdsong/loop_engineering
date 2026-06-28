@@ -29,7 +29,7 @@ ZCODE_CLI_PATH = os.path.expandvars(
 
 # Provider 配置从 ~/.zcode/v2/config.json 动态读取
 def _load_providers():
-    """从 v2/config.json 读取 provider 配置"""
+    """从 v2/config.json 读取全部 provider 配置 (不限 enabled, 供后续选择)"""
     v2_path = Path.home() / ".zcode" / "v2" / "config.json"
     if v2_path.exists():
         with open(v2_path, "r") as f:
@@ -38,18 +38,44 @@ def _load_providers():
     return {}
 
 
-def _load_model_main():
-    """确定主模型"""
+def _load_model_main(preferred_provider=None):
+    """
+    确定主模型。
+
+    优先级:
+      1. 指定的 preferred_provider (来自 task.model)
+      2. enabled=True 的 provider
+      3. 有模型配置的 provider
+      4. 回退到 Doubao deepseek
+    """
     v2_path = Path.home() / ".zcode" / "v2" / "config.json"
-    if v2_path.exists():
-        with open(v2_path, "r") as f:
-            v2 = json.load(f)
-        # 找 enabled 的 provider
-        for pid, p in v2.get("provider", {}).items():
-            if p.get("enabled", False) and p.get("models"):
-                first_model = list(p["models"].keys())[0]
-                return f"{pid}/{first_model}"
-    # 回退到 Doubao deepseek
+    if not v2_path.exists():
+        return "4f14f683-2d01-4ee4-802f-51bdfc87cc5b/deepseek-v4-pro-260425"
+
+    with open(v2_path, "r") as f:
+        v2 = json.load(f)
+    providers = v2.get("provider", {})
+
+    # 1. 指定 provider 优先
+    if preferred_provider and preferred_provider in providers:
+        p = providers[preferred_provider]
+        if p.get("models"):
+            first_model = list(p["models"].keys())[0]
+            return f"{preferred_provider}/{first_model}"
+
+    # 2. enabled=True 的 provider
+    for pid, p in providers.items():
+        if p.get("enabled", False) and p.get("models"):
+            first_model = list(p["models"].keys())[0]
+            return f"{pid}/{first_model}"
+
+    # 3. 任何一个有 model 的 provider
+    for pid, p in providers.items():
+        if p.get("models"):
+            first_model = list(p["models"].keys())[0]
+            return f"{pid}/{first_model}"
+
+    # 4. 回退
     return "4f14f683-2d01-4ee4-802f-51bdfc87cc5b/deepseek-v4-pro-260425"
 
 
@@ -64,14 +90,19 @@ MAX_RETRIES = 2
 RETRY_DELAYS = [2, 8]  # 指数退避: 2s, 8s
 
 
-def ensure_zcode_config():
-    """确保 ZCode config.json 包含正确的 model 和 provider 配置"""
+def ensure_zcode_config(preferred_provider=None):
+    """
+    确保 ZCode config.json 包含正确的 model 和 provider 配置。
+
+    Args:
+        preferred_provider: 指定优先 provider ID (来自 task.model)
+    """
     config_dir = Path.home() / ".zcode" / "cli"
     config_dir.mkdir(parents=True, exist_ok=True)
     config_path = config_dir / "config.json"
 
     providers = _load_providers()
-    model_main = _load_model_main()
+    model_main = _load_model_main(preferred_provider)
 
     config = {
         "model": {"main": model_main},
@@ -108,6 +139,14 @@ def build_prompt(task, worktree_dir, handoff_summaries=None):
         "",
     ]
 
+    # per-task model 指令
+    task_model = task.get("model")
+    if task_model:
+        parts.append("## 模型要求")
+        parts.append(f"此任务请使用 model: `{task_model}`")
+        parts.append("如需切换,在回复中调用 /model 切换。")
+        parts.append("")
+
     task_files = task.get("files", [])
     if task_files:
         parts.append("## 文件操作边界(并发安全)")
@@ -139,14 +178,21 @@ def build_prompt(task, worktree_dir, handoff_summaries=None):
     return "\n".join(parts)
 
 
-def call_zcode(prompt, worktree_dir, mode="yolo", timeout=600):
+def call_zcode(prompt, worktree_dir, mode="yolo", timeout=600, model=None):
     """
     调用 ZCode CLI 非交互执行。
+
+    Args:
+        prompt: 任务提示词
+        worktree_dir: worktree 工作目录
+        mode: 权限模式
+        timeout: 超时秒数
+        model: 可选, 指定 provider ID (如 "4f14f683-...")
 
     Returns:
         dict: {success, stdout, stderr, returncode, degraded}
     """
-    ensure_zcode_config()
+    ensure_zcode_config(preferred_provider=model)
 
     cmd = [
         "node", ZCODE_CLI_PATH,
@@ -181,16 +227,19 @@ def call_zcode(prompt, worktree_dir, mode="yolo", timeout=600):
         }
 
 
-def call_zcode_with_retry(prompt, worktree_dir, mode="yolo", timeout=600):
+def call_zcode_with_retry(prompt, worktree_dir, mode="yolo", timeout=600, model=None):
     """
     调用 ZCode CLI,带指数退避重试。
 
     修复 BUG #2: 不再无限重试,最多 MAX_RETRIES 次。
+
+    Args:
+        model: 可选, 指定 provider ID
     """
     last_result = None
 
     for attempt in range(MAX_RETRIES + 1):
-        result = call_zcode(prompt, worktree_dir, mode, timeout)
+        result = call_zcode(prompt, worktree_dir, mode, timeout, model=model)
         last_result = result
 
         if result["success"]:
@@ -252,7 +301,8 @@ def execute_task_in_worktree(project_dir, task, tier="L2"):
     head_before = git_ops.get_head(project_dir)
     state_manager.update_task(project_dir, task["id"],
                               status=state_manager.TASK_IN_PROGRESS,
-                              git_head_before=head_before)
+                              git_head_before=head_before,
+                              model=task.get("model"))
 
     # 创建 worktree
     try:
@@ -261,8 +311,11 @@ def execute_task_in_worktree(project_dir, task, tier="L2"):
         return {"status": "failed", "error": f"创建 worktree 失败: {e}"}
 
     try:
-        # 调用 ZCode (带重试,修复 BUG #2)
-        result = call_zcode_with_retry(prompt, worktree_dir, mode="yolo")
+        # 调用 ZCode (带重试 + per-task model)
+        result = call_zcode_with_retry(
+            prompt, worktree_dir, mode="yolo",
+            model=task.get("model")
+        )
 
         if not result["success"]:
             state_manager.update_task(project_dir, task["id"],
