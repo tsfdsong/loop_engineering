@@ -186,14 +186,15 @@ def build_prompt(task, worktree_dir, handoff_summaries=None):
                 parts.append(f"- 提示: {hs['next_task_hint']}")
             parts.append("")
 
-    # Token 优化指令 (减少上下文膨胀, 避免会话中断)
-    parts.append("## Token 优化（必须遵守）")
-    parts.append("- **读代码结构**: 使用 `repomix` MCP 打包模块目录，不要用 `ls`/`find` 逐文件读")
-    parts.append("- **读代码片段**: 使用 `jcodemunch` MCP 按符号精准获取代码，不要用 `Read` 全文件")
-    parts.append("- **大段输出**: 使用 `headroom` MCP 压缩工具输出后再分析")
-    parts.append("- **搜索代码**: 使用 `jcodemunch` 语义搜索，不要用 `grep` 全量匹配")
-    parts.append("- **原则**: 按需拉取，不预打包全量。优先用 MCP 工具，减少 token 消耗。")
-    parts.append("")
+    # 注入 repomix 代码结构 (Python 层调用 CLI, 节省 token)
+    repo_structure = _get_repomix_structure(worktree_dir, task.get("files", []))
+    if repo_structure:
+        parts.append("## 项目代码结构 (repomix 打包)")
+        parts.append("以下是与本任务相关的代码文件内容，可直接参考，无需重复读取:")
+        parts.append("```")
+        parts.append(repo_structure)
+        parts.append("```")
+        parts.append("")
 
     parts.append("## 你的任务")
     parts.append(task.get("prompt", task.get("name", "")))
@@ -201,6 +202,53 @@ def build_prompt(task, worktree_dir, handoff_summaries=None):
     parts.append("完成后请 git add + commit。")
 
     return "\n".join(parts)
+
+
+def _get_repomix_structure(worktree_dir, task_files):
+    """
+    调用 repomix CLI 打包代码结构。
+    
+    Returns:
+        str: repomix 输出 (截断到 8000 字符), 失败返回 None
+    """
+    try:
+        worktree_dir = Path(worktree_dir)
+        # Windows 上 repomix 是 .cmd 文件, 需要用 shell=True 或直接调 .cmd
+        repomix_cmd = os.path.expandvars(r"%APPDATA%\npm\repomix.cmd")
+        if not os.path.exists(repomix_cmd):
+            import shutil
+            found = shutil.which("repomix.cmd") or shutil.which("repomix")
+            if found:
+                repomix_cmd = found
+            else:
+                return None
+        
+        cmd = [repomix_cmd, "--stdout", "--quiet"]
+        
+        if task_files:
+            existing_files = [f for f in task_files if (worktree_dir / f).exists()]
+            if not existing_files:
+                return None
+            cmd.extend(["--include", ",".join(existing_files)])
+        
+        cmd.append(str(worktree_dir.resolve()))
+        
+        result = subprocess.run(
+            cmd,
+            capture_output=True, text=True, encoding="utf-8",
+            timeout=30, cwd=str(worktree_dir),
+            shell=False,
+        )
+        
+        if result.returncode == 0 and result.stdout:
+            output = result.stdout.strip()
+            if len(output) > 8000:
+                output = output[:8000] + "\n... (截断)"
+            return output
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        pass
+    
+    return None
 
 
 def call_zcode(prompt, worktree_dir, mode="yolo", timeout=600, model=None):
