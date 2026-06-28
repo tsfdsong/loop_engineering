@@ -68,6 +68,15 @@ def orchestrate(feature, project_dir, acceptance_criteria=None, explicit_flag=No
     result = zcode_runner.execute_tasks_concurrent(project_dir, tasks, tier)
 
     if result["all_completed"]:
+        # Step ⑦.5: G10 系统审查 (每个特性分支 1 次)
+        print(f"\n🔍 G10 系统审查...")
+        review_result = _run_system_review(project_dir)
+        if review_result["severity"] == "error":
+            print(f"❌ 系统审查发现 ERROR 级问题,暂停交付")
+            state_manager.set_status(project_dir, state_manager.STATUS_FAILED)
+            return {"status": "review_failed", "branch": branch, "review": review_result}
+        print(f"✅ 系统审查通过 (severity={review_result['severity']})")
+
         # Step ⑦: 安全闸 — 跑测试 (一次性, 修复 BUG #5)
         print(f"\n🧪 安全闸: 运行测试...")
         tests_ok = git_ops.run_tests(project_dir)
@@ -228,6 +237,72 @@ def _resume_orchestration(project_dir):
             return {"status": "completed"}
 
     return {"status": "failed"}
+
+
+def _run_system_review(project_dir):
+    """
+    Step ⑦.5: G10 系统审查。
+    
+    按变更范围自动判断深度:
+    - < 3 文件且未跨模块 → 仅 Step 1 自洽性
+    - ≥ 3 文件或跨模块 → Step 1 + 2
+    - 跨架构级 → 全三步
+    
+    调用 ZCode 加载 system-review 技能执行。
+    """
+    # 获取变更范围
+    try:
+        base_branch = "main"
+        state = state_manager.read_state(project_dir)
+        if state.get("base_branch"):
+            base_branch = state["base_branch"]
+        
+        changed_files = git_ops.get_changed_files(project_dir, base_branch)
+        file_count = len(changed_files)
+        
+        # 判断跨模块
+        dirs = set()
+        for f in changed_files:
+            parts = f.split("/")
+            if len(parts) > 1:
+                dirs.add(parts[0])
+        cross_module = len(dirs) > 1
+    except Exception:
+        changed_files = []
+        file_count = 0
+        cross_module = False
+
+    # 确定深度
+    if file_count < 3 and not cross_module:
+        depth = "仅自洽性检查"
+        review_prompt = "加载 system-review 技能，用快速模式审查当前项目的变更，仅执行 Step 1（横向自洽性检查）。"
+    elif file_count >= 10 or cross_module:
+        depth = "完整三步审查"
+        review_prompt = "加载 system-review 技能，用完整模式审查当前项目的所有变更，执行全部三步（自洽性+架构深度+持续改进）。"
+    else:
+        depth = "自洽性+架构"
+        review_prompt = "加载 system-review 技能，审查当前项目的变更，执行 Step 1（自洽性）+ Step 2（架构深度）。"
+
+    print(f"   深度: {depth} (变更 {file_count} 文件, 跨模块={cross_module})")
+
+    result = zcode_runner.call_zcode(review_prompt, project_dir, mode="yolo", timeout=300)
+
+    # 从输出判断严重度
+    output = result.get("stdout", "") + result.get("stderr", "")
+    if "CRITICAL" in output or "ERROR" in output.upper():
+        severity = "error"
+    elif "WARNING" in output.upper() or "⚠️" in output:
+        severity = "warning"
+    else:
+        severity = "pass"
+
+    return {
+        "severity": severity,
+        "depth": depth,
+        "file_count": file_count,
+        "cross_module": cross_module,
+        "output": output[-500:] if output else "",
+    }
 
 
 def _slugify(text):

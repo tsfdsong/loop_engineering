@@ -1,13 +1,13 @@
-# 编排层工具配置 v3.1 — ZCode 纯血版
+# 编排层工具配置 v4.0 — ZCode 纯血版
 # 所有子任务统一走 ZCode --prompt + Worktree 隔离
-# 不再区分 task_type 路由(已统一为 zcode)
+# model/provider 从 ~/.zcode/v2/config.json 动态读取,不在此硬编码
 
 # ─── ZCode CLI 调用配置 ───
 zcode_cli:
   path: "${HOME}/AppData/Local/Programs/ZCode/resources/glm/zcode.cjs"
   exec_template: "node {path} --prompt \"{task}\" --cwd {project} --mode yolo"
   default_mode: "yolo"
-  model: "4f14f683-2d01-4ee4-802f-51bdfc87cc5b/deepseek-v4-pro-260425"
+  # model 从 ~/.zcode/v2/config.json 动态读取 (zcode_runner._load_model_main)
 
 # ─── Worktree 配置 ───
 worktree:
@@ -16,16 +16,12 @@ worktree:
   max_concurrent: 4               # 最大并发数
   auto_cleanup: true              # 完成后自动清理 worktree
 
-# ─── 降级链路(ZCode 失败时) ───
-degradation:
-  chain:
-    - zcode_cli_direct            # 降级1: ZCode CLI 直连(无 loop 门禁)
-    - deepseek_api                # 降级2: DeepSeek API 兜底
+# ─── 重试配置 (v4.0 替代旧降级链路) ───
+retry:
+  max_retries: 2                  # 最大重试次数
+  delays: [2, 8]                  # 指数退避间隔(秒)
   triggers:
     - "429"
     - "quota_exceeded"
     - "insufficient_quota"
     - "rate_limit"
-  deepseek:
-    baseURL: "https://api.deepseek.com"
-    model_main: "deepseek-chat"
