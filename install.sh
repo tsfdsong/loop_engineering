@@ -78,43 +78,106 @@ INSTALLED=0
 FAILED=0
 
 # ═══════════════════════════════════════════════════════════
-# MCP 依赖检查与安装
+# MCP 三件套依赖检查与安装
+# ───────────────────────────────────────────────────────────
+# jCodeMunch (Python, pip) — 符号级代码检索，省 95% token
+# Repomix    (Node.js, npm) — 代码库打包压缩，省 70% token
+# Headroom   (Python, pip) — 上下文压缩，省 60-95% token
 # ═══════════════════════════════════════════════════════════
-echo -e "${BOLD}🔌 检查 MCP 依赖...${RESET}"
+echo -e "${BOLD}🔌 检查 MCP 三件套依赖...${RESET}"
 MCP_INSTALLED=0
 MCP_MISSING=()
+MCP_PATH_FIXED=false
 
-# 检查 Node.js（MCP server 运行依赖）
+# 检测平台（用于 PATH 修复）
+detect_os() {
+    case "$OSTYPE" in
+        msys*|cygwin*|mingw*|win32*) echo "windows" ;;
+        darwin*)                     echo "macos"   ;;
+        linux-gnu*|linux*)           echo "linux"   ;;
+        *)                           echo "unknown" ;;
+    esac
+}
+CURRENT_OS=$(detect_os)
+
+# ── Python 用户目录检测（pip install --user 的 Scripts 路径）
+detect_python_scripts_dir() {
+    if command -v python &> /dev/null; then
+        python -c "import sys, os; print(os.path.join(sys.prefix, 'Scripts' if os.name == 'nt' else 'bin'))" 2>/dev/null
+    fi
+}
+PYTHON_SCRIPTS_DIR=$(detect_python_scripts_dir || echo "")
+
+# ── PATH 修复：把 pip --user / npm global 加入 PATH（仅当前会话 + 当前用户的 rc 文件）
+fix_python_path() {
+    if [ -z "$PYTHON_SCRIPTS_DIR" ] || [ ! -d "$PYTHON_SCRIPTS_DIR" ]; then
+        return 1
+    fi
+    case ":$PATH:" in
+        *":$PYTHON_SCRIPTS_DIR:"*) return 0 ;;  # 已在 PATH 中
+    esac
+    export PATH="$PYTHON_SCRIPTS_DIR:$PATH"
+    # 持久化到用户 rc 文件（Linux/macOS）
+    if [ "$CURRENT_OS" = "linux" ] || [ "$CURRENT_OS" = "macos" ]; then
+        for rc in "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.profile"; do
+            if [ -f "$rc" ] && ! grep -q "PYTHON_SCRIPTS_DIR" "$rc" 2>/dev/null; then
+                echo "" >> "$rc"
+                echo "# LoopEngine MCP: Python Scripts in PATH" >> "$rc"
+                echo "export PATH=\"$PYTHON_SCRIPTS_DIR:\$PATH\"" >> "$rc"
+            fi
+        done
+    fi
+    # Windows: 用 setx 持久化到用户 PATH（提示用户重启 shell 生效）
+    if [ "$CURRENT_OS" = "windows" ] && command -v setx &> /dev/null; then
+        # 把 POSIX 路径转 Windows 路径
+        WIN_PATH=$(echo "$PYTHON_SCRIPTS_DIR" | sed 's|^/\([a-z]\)/|\1:/|')
+        CURRENT_USER_PATH=$(reg query "HKCU\Environment" /v PATH 2>/dev/null | grep -oP '(?<=REG_SZ\s+).*' || echo "")
+        case ";$CURRENT_USER_PATH;" in
+            *";$WIN_PATH;"*) ;;  # 已存在
+            *) setx PATH "$WIN_PATH;%PATH%" >/dev/null 2>&1 ;;
+        esac
+    fi
+    MCP_PATH_FIXED=true
+    return 0
+}
+
+# 检查 Node.js（repomix 与部分 MCP server 的运行依赖）
 if ! command -v node &> /dev/null; then
-    echo -e "  ${RED}❌${RESET} Node.js 未安装（MCP server 运行依赖）"
+    echo -e "  ${RED}❌${RESET} Node.js 未安装（repomix 运行依赖）"
     MCP_MISSING+=("node")
 else
     NODE_VER=$(node -v 2>&1)
     echo -e "  ${GREEN}✅${RESET} Node.js ${NODE_VER}"
 fi
 
-# 检查 repomix
+# 检查 repomix（Node.js 包，通过 npm 全局安装）
 if command -v repomix &> /dev/null || command -v repomix.cmd &> /dev/null; then
-    REPOXIM_VER=$(repomix --version 2>/dev/null || echo "已安装")
-    echo -e "  ${GREEN}✅${RESET} repomix ${REPOXIM_VER}"
+    REPOMIX_VER=$(repomix --version 2>/dev/null || echo "已安装")
+    echo -e "  ${GREEN}✅${RESET} repomix ${REPOMIX_VER} (代码打包压缩，省 70% token)"
 else
     echo -e "  ${YELLOW}⚠️${RESET}  repomix 未安装"
     MCP_MISSING+=("repomix")
 fi
 
-# 检查 jcodemunch（语义代码搜索 MCP）
-if command -v jcodemunch &> /dev/null || command -v jcodemunch.cmd &> /dev/null; then
-    echo -e "  ${GREEN}✅${RESET} jcodemunch"
+# 检查 jcodemunch-mcp（Python 包，通过 pip 安装）
+# 注意：实际包名是 jcodemunch-mcp（pip），命令名是 jcodemunch-mcp（exe）
+# jcodemunch 是 npm 包名（不存在的别名），不能用 npm 安装
+if command -v jcodemunch-mcp &> /dev/null || command -v jcodemunch-mcp.exe &> /dev/null || \
+   [ -f "$PYTHON_SCRIPTS_DIR/jcodemunch-mcp.exe" ] || [ -f "$PYTHON_SCRIPTS_DIR/jcodemunch-mcp" ]; then
+    JCODE_VER=$(jcodemunch-mcp --version 2>/dev/null || echo "已安装")
+    echo -e "  ${GREEN}✅${RESET} jcodemunch-mcp ${JCODE_VER} (符号级代码检索，省 95% token)"
 else
-    echo -e "  ${YELLOW}⚠️${RESET}  jcodemunch 未安装（语义代码搜索 MCP）"
-    MCP_MISSING+=("jcodemunch")
+    echo -e "  ${YELLOW}⚠️${RESET}  jcodemunch-mcp 未安装（Python pip 包）"
+    MCP_MISSING+=("jcodemunch-mcp")
 fi
 
-# 检查 headroom（输出压缩 MCP）
-if command -v headroom &> /dev/null || command -v headroom.cmd &> /dev/null; then
-    echo -e "  ${GREEN}✅${RESET} headroom"
+# 检查 headroom（Python 包，通过 pip 安装）
+if command -v headroom &> /dev/null || command -v headroom.exe &> /dev/null || \
+   [ -f "$PYTHON_SCRIPTS_DIR/headroom.exe" ] || [ -f "$PYTHON_SCRIPTS_DIR/headroom" ]; then
+    HEADROOM_VER=$(headroom --version 2>/dev/null || echo "已安装")
+    echo -e "  ${GREEN}✅${RESET} headroom ${HEADROOM_VER} (上下文压缩，省 60-95% token)"
 else
-    echo -e "  ${YELLOW}⚠️${RESET}  headroom 未安装（输出压缩 MCP）"
+    echo -e "  ${YELLOW}⚠️${RESET}  headroom 未安装（Python pip 包）"
     MCP_MISSING+=("headroom")
 fi
 
@@ -123,6 +186,8 @@ MCP_CONFIG_EXISTS=false
 [ -f "$HOME/.codex/config.toml" ] && MCP_CONFIG_EXISTS=true
 [ -f "$HOME/.zcode/config.json" ] && MCP_CONFIG_EXISTS=true
 [ -f "$HOME/.zcode/cli/mcp-servers.json" ] && MCP_CONFIG_EXISTS=true
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+[ -f "$SCRIPT_DIR/.mcp.json" ] && MCP_CONFIG_EXISTS=true
 if ${MCP_CONFIG_EXISTS}; then
     echo -e "  ${GREEN}✅${RESET} MCP server 配置文件存在"
 else
@@ -130,49 +195,120 @@ else
     MCP_MISSING+=("mcp-config")
 fi
 
-# 自动安装缺失的 MCP 依赖
+# ── 自动安装缺失的 MCP 依赖 ─────────────────────────────────
 if [ ${#MCP_MISSING[@]} -gt 0 ]; then
     echo ""
-    echo -e "${CYAN}▶  自动安装 MCP 依赖...${RESET}"
+    echo -e "${CYAN}▶  自动安装 MCP 三件套依赖...${RESET}"
+
+    # 在执行安装前先尝试修复 PATH（避免 pip --user 安装后命令找不到）
+    fix_python_path || true
+
     for dep in "${MCP_MISSING[@]}"; do
         case "$dep" in
             node)
                 echo -e "  ${RED}⏭${RESET}  跳过: 请手动安装 Node.js https://nodejs.org/"
                 ;;
-            repomix|jcodemunch|headroom)
+            repomix)
+                # repomix 是 Node.js 包，用 npm 全局安装
                 if command -v npm &> /dev/null; then
-                    echo -e "  📦 安装 ${dep}..."
-                    if npm install -g "${dep}" 2>/dev/null; then
-                        echo -e "  ${GREEN}✅${RESET} ${dep} 安装成功"
+                    echo -e "  📦 npm install -g repomix ..."
+                    if npm install -g repomix 2>&1 | tail -5; then
+                        echo -e "  ${GREEN}✅${RESET} repomix 安装成功"
                         ((MCP_INSTALLED++)) || true
                     else
-                        echo -e "  ${RED}❌${RESET} ${dep} 安装失败"
+                        echo -e "  ${RED}❌${RESET} repomix 安装失败"
                     fi
                 else
-                    echo -e "  ${YELLOW}⚠️${RESET}  npm 未安装，跳过 ${dep}"
+                    echo -e "  ${YELLOW}⚠️${RESET}  npm 未安装，跳过 repomix（需先安装 Node.js）"
+                fi
+                ;;
+            jcodemunch-mcp)
+                # jcodemunch-mcp 是 Python 包，用 pip 安装
+                if command -v pip &> /dev/null || command -v pip3 &> /dev/null || command -v python &> /dev/null; then
+                    echo -e "  📦 pip install --upgrade jcodemunch-mcp ..."
+                    PIP_CMD=$(command -v pip || command -v pip3 || echo "python -m pip")
+                    if $PIP_CMD install --upgrade jcodemunch-mcp 2>&1 | tail -5; then
+                        echo -e "  ${GREEN}✅${RESET} jcodemunch-mcp 安装成功"
+                        ((MCP_INSTALLED++)) || true
+                        # 重新检测 Python Scripts（pip 可能写到 --user 目录）
+                        PYTHON_SCRIPTS_DIR=$(detect_python_scripts_dir || echo "")
+                        fix_python_path || true
+                    else
+                        echo -e "  ${RED}❌${RESET} jcodemunch-mcp 安装失败"
+                    fi
+                else
+                    echo -e "  ${YELLOW}⚠️${RESET}  pip 未安装，跳过 jcodemunch-mcp（需先安装 Python）"
+                fi
+                ;;
+            headroom)
+                # headroom 是 Python 包，用 pip 安装
+                if command -v pip &> /dev/null || command -v pip3 &> /dev/null || command -v python &> /dev/null; then
+                    echo -e "  📦 pip install --upgrade headroom-ai ..."
+                    PIP_CMD=$(command -v pip || command -v pip3 || echo "python -m pip")
+                    if $PIP_CMD install --upgrade headroom-ai 2>&1 | tail -5; then
+                        echo -e "  ${GREEN}✅${RESET} headroom-ai 安装成功"
+                        ((MCP_INSTALLED++)) || true
+                        PYTHON_SCRIPTS_DIR=$(detect_python_scripts_dir || echo "")
+                        fix_python_path || true
+                    else
+                        echo -e "  ${RED}❌${RESET} headroom-ai 安装失败"
+                    fi
+                else
+                    echo -e "  ${YELLOW}⚠️${RESET}  pip 未安装，跳过 headroom（需先安装 Python）"
                 fi
                 ;;
             mcp-config)
+                # 写入项目根 .mcp.json（LoopEngine 推荐方式）
+                if [ -f "$SCRIPT_DIR/.mcp.json" ]; then
+                    echo -e "  ${GREEN}✅${RESET} 项目根 .mcp.json 已存在"
+                else
+                    cat > "$SCRIPT_DIR/.mcp.json" <<'MCPEOF'
+{
+  "mcpServers": {
+    "jcodemunch": {
+      "command": "jcodemunch-mcp",
+      "args": ["serve"],
+      "cwd": "${workspaceFolder}"
+    },
+    "repomix": {
+      "command": "repomix",
+      "args": ["--mcp"],
+      "cwd": "${workspaceFolder}"
+    },
+    "headroom": {
+      "command": "headroom",
+      "args": ["mcp", "serve"],
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}
+MCPEOF
+                    echo -e "  ${GREEN}✅${RESET} 项目根 .mcp.json 已生成: $SCRIPT_DIR/.mcp.json"
+                    ((MCP_INSTALLED++)) || true
+                fi
+                # 同时写一份到 ZCode CLI 缓存（兼容老版本）
                 ZCODE_CLI_DIR="$HOME/.zcode/cli"
                 mkdir -p "$ZCODE_CLI_DIR"
                 if [ ! -f "$ZCODE_CLI_DIR/mcp-servers.json" ]; then
                     cat > "$ZCODE_CLI_DIR/mcp-servers.json" <<'MCPEOF'
 {
   "mcpServers": {
-    "repomix": {"command": "npx", "args": ["-y", "repomix", "--mcp"]},
-    "jcodemunch": {"command": "npx", "args": ["-y", "jcodemunch", "--mcp"]},
-    "headroom": {"command": "npx", "args": ["-y", "headroom", "--mcp"]}
+    "jcodemunch": {"command": "jcodemunch-mcp", "args": ["serve"]},
+    "repomix":    {"command": "repomix",         "args": ["--mcp"]},
+    "headroom":   {"command": "headroom",        "args": ["mcp", "serve"]}
   }
 }
 MCPEOF
-                    echo -e "  ${GREEN}✅${RESET} MCP 配置已生成: $ZCODE_CLI_DIR/mcp-servers.json"
-                    ((MCP_INSTALLED++)) || true
+                    echo -e "  ${GREEN}✅${RESET} ZCode CLI 缓存 mcp-servers.json 已生成"
                 fi
                 ;;
         esac
     done
-    if [ ${MCP_INSTALLED} -gt 0 ]; then
-        echo -e "  ${GREEN}✅${RESET} 自动安装了 ${MCP_INSTALLED} 个 MCP 依赖"
+    if [ $MCP_INSTALLED -gt 0 ]; then
+        echo -e "  ${GREEN}✅${RESET} 自动安装了 ${MCP_INSTALLED} 个 MCP 三件套依赖"
+    fi
+    if ${MCP_PATH_FIXED}; then
+        echo -e "  ${CYAN}ℹ️${RESET}  Python Scripts 已加入 PATH，新开终端生效"
     fi
 fi
 echo ""

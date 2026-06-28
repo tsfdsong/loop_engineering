@@ -5,6 +5,28 @@
 > **任何需要理解代码结构的操作，必须先用 MCP 工具，禁止直接 Read 全文件。**
 > 此规则适用于本项目（loop_engineering）的所有开发、调研、分析工作。
 
+### MCP 三件套（节省 80% token）
+
+LoopEngine 依赖三个 MCP 工具实现 token 优化：
+
+| 工具 | 类型 | 核心能力 | Token 节省 |
+|------|------|---------|:---:|
+| **jCodeMunch-MCP** | Python | AST 符号级代码检索 | **95%** |
+| **Repomix** | Node.js | 代码库打包 + 结构压缩 | **70%** |
+| **Headroom-ai** | Python | 上下文压缩层 | **60-95%** |
+
+详细安装配置见 `docs/mcp-setup-guide.md`。
+
+### 典型场景对比
+
+| 场景 | ZCode 自带工具（Glob+Grep+Read） | MCP 三件套 | 节省 |
+|------|----------------------|--------|:---:|
+| 阅读单个函数（300 行） | ~800 token | ~40 token | **95%** |
+| 理解项目架构 | ~1,200,000 token | ~370,000 token | **69%** |
+| 长会话（50 轮） | ~40,000 token | ~12,000 token | **70%** |
+| pytest 输出（200 行） | ~1,200 token | ~200 token | **83%** |
+| **典型场景平均** | — | — | **~80%** |
+
 ### 适用范围
 - 修改代码、调研代码、解释代码、分析架构
 - 查找函数/类/变量定义、查找引用位置
@@ -16,6 +38,19 @@
 get_repo_map → get_file_outline → search_symbols → Read（仅精确行）
 ```
 
+### MCP 工具速查
+
+| MCP 工具 | 用途 | Token 节省 |
+|------|------|:--:|
+| `mcp__jcodemunch__get_repo_map` | 项目结构全景图 | ~80% |
+| `mcp__jcodemunch__get_file_outline` | 文件符号大纲 | ~85% |
+| `mcp__jcodemunch__search_symbols` | 语义搜索符号 | ~90% |
+| `mcp__jcodemunch__get_file_tree` | 目录树浏览 | ~95% |
+| `mcp__jcodemunch__find_references` | 查找引用位置 | ~85% |
+| `mcp__jcodemunch__get_blast_radius` | 修改影响面分析 | ~90% |
+| `mcp__repomix__pack_codebase` | 打包代码库 | ~70% |
+| `mcp__headroom__headroom_compress` | 压缩大段内容 | ~95% |
+
 ### 唯一例外
 - MCP 工具全部不可用（报错/超时）
 - 文件小于 50 行
@@ -24,6 +59,15 @@ get_repo_map → get_file_outline → search_symbols → Read（仅精确行）
 ### 违规判定
 - 连续 3 次以上直接 Read 全文件而未使用任何 MCP 工具 → 红线违规
 - 每次会话结束后自查：MCP 工具调用次数应 ≥ Read 调用次数
+
+### PATH 修复指引（如 MCP 命令找不到）
+
+如果 `jcodemunch-mcp` 或 `headroom` 命令找不到，是因为 pip 安装到了 Scripts 目录但未加入 PATH：
+
+- **Windows**: 把 `C:\Users\<user>\AppData\Roaming\Python\Python<ver>\Scripts\` 加入系统 PATH
+- **Linux/macOS**: `export PATH="$HOME/.local/bin:$PATH"`（写入 ~/.bashrc / ~/.zshrc）
+
+或修改项目根 `.mcp.json` 用绝对路径（详见 `docs/mcp-setup-guide.md` 第四章）。
 
 ---
 

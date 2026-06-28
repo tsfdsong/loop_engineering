@@ -36,6 +36,38 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/update.sh | bas
 
 此规则已写入所有层级：用户级 `~/.zcode/AGENTS.md`、项目级 `AGENTS.md`、skill-hub、go、loop 技能。
 
+### 🔌 MCP 三件套（节省 80% token）
+
+LoopEngine 依赖三个 MCP 工具：
+
+| 工具 | 类型 | 核心能力 | Token 节省 |
+|------|------|---------|:---:|
+| **jCodeMunch-MCP** | Python | AST 符号级代码检索 | **95%** |
+| **Repomix** | Node.js | 代码库打包 + 结构压缩 | **70%** |
+| **Headroom-ai** | Python | 上下文压缩层 | **60-95%** |
+
+**安装**（install.sh 已自动完成）：
+```bash
+pip install --upgrade jcodemunch-mcp headroom-ai
+npm install -g repomix
+```
+
+**首次使用**（索引项目）：
+```bash
+jcodemunch-mcp index_folder .
+```
+
+**典型场景 token 对比**：
+
+| 场景 | ZCode 自带工具 | MCP 三件套 | 节省 |
+|------|----------|--------|:---:|
+| 阅读单个函数（300 行） | ~800 token | ~40 token | **95%** |
+| 理解项目架构 | ~1,200,000 token | ~370,000 token | **69%** |
+| 长会话（50 轮） | ~40,000 token | ~12,000 token | **70%** |
+| **典型场景平均** | — | — | **~80%** |
+
+详细配置见 [`docs/mcp-setup-guide.md`](docs/mcp-setup-guide.md)。
+
 ---
 
 ## 📦 各平台安装命令
