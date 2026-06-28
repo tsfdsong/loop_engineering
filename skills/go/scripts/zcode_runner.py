@@ -186,6 +186,15 @@ def build_prompt(task, worktree_dir, handoff_summaries=None):
                 parts.append(f"- 提示: {hs['next_task_hint']}")
             parts.append("")
 
+    # Token 优化指令 (减少上下文膨胀, 避免会话中断)
+    parts.append("## Token 优化（必须遵守）")
+    parts.append("- **读代码结构**: 使用 `repomix` MCP 打包模块目录，不要用 `ls`/`find` 逐文件读")
+    parts.append("- **读代码片段**: 使用 `jcodemunch` MCP 按符号精准获取代码，不要用 `Read` 全文件")
+    parts.append("- **大段输出**: 使用 `headroom` MCP 压缩工具输出后再分析")
+    parts.append("- **搜索代码**: 使用 `jcodemunch` 语义搜索，不要用 `grep` 全量匹配")
+    parts.append("- **原则**: 按需拉取，不预打包全量。优先用 MCP 工具，减少 token 消耗。")
+    parts.append("")
+
     parts.append("## 你的任务")
     parts.append(task.get("prompt", task.get("name", "")))
     parts.append("")
