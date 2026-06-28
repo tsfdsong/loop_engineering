@@ -82,8 +82,24 @@ if [ -n "$ZCODE_PACKAGES_DIR" ] || [ -d "$ZCODE_CACHE_DIR" ]; then
     SKILL_COUNT=$(ls -1 "$ZCODE_CACHE_DIR/skills/" 2>/dev/null | wc -l)
     echo -e "  📊 技能数量: ${GREEN}${SKILL_COUNT}${RESET}"
 
+    # Step 5: 调用 MCP 自愈脚本（保证 ZCode 重启后 MCP 不丢失）
+    # 根因：ZCode 启动时重写 marketplace.json，CLI 缓存 plugin.json 无 mcpServers → MCP 工具消失
+    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+    ENSURE_SCRIPT="$SCRIPT_DIR/scripts/zcode-mcp-ensure.sh"
+    if [ -f "$ENSURE_SCRIPT" ]; then
+        echo -e "  ${CYAN}▶  MCP 自愈（修复 plugin.json mcpServers + marketplace 注册）...${RESET}"
+        if bash "$ENSURE_SCRIPT" --quiet; then
+            echo -e "  ${GREEN}✅${RESET} MCP 自愈完成"
+        else
+            echo -e "  ${YELLOW}⚠️${RESET}  MCP 自愈未完全通过，可手动执行: bash $ENSURE_SCRIPT"
+        fi
+    else
+        echo -e "  ${YELLOW}ℹ️${RESET}  未找到 scripts/zcode-mcp-ensure.sh，跳过 MCP 自愈"
+    fi
+
     echo -e "  ${GREEN}✅${RESET} ZCode 桌面版更新完成"
     echo -e "  ${YELLOW}⚠️${RESET} 请重启 ZCode 桌面版使更新生效"
+    echo -e "  ${YELLOW}💡${RESET}  重启后若 MCP 工具仍消失，跑: bash $SCRIPT_DIR/scripts/zcode-mcp-ensure.sh"
     ((UPDATED++)) || true
     echo ""
 else

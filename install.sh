@@ -468,8 +468,24 @@ except Exception as e:
         echo -e "  📁 data 目录已创建"
     fi
 
+    # Step 9: 调用 MCP 自愈脚本（保证 ZCode 重启后 MCP 不丢失）
+    # 根因：ZCode 启动时会重写 marketplace.json 并优先从 CLI 缓存 plugin.json 加载 MCP
+    #       如果 plugin.json 没有 mcpServers 字段 → MCP 工具不显示
+    ENSURE_SCRIPT="$SCRIPT_DIR/scripts/zcode-mcp-ensure.sh"
+    if [ -f "$ENSURE_SCRIPT" ]; then
+        echo -e "  ${CYAN}▶  MCP 自愈（修复 plugin.json mcpServers 绝对路径 + marketplace 注册）...${RESET}"
+        if bash "$ENSURE_SCRIPT" --quiet; then
+            echo -e "  ${GREEN}✅${RESET} MCP 自愈完成"
+        else
+            echo -e "  ${YELLOW}⚠️${RESET}  MCP 自愈未完全通过，可手动执行: bash $ENSURE_SCRIPT"
+        fi
+    else
+        echo -e "  ${YELLOW}ℹ️${RESET}  未找到 scripts/zcode-mcp-ensure.sh，跳过 MCP 自愈"
+    fi
+
     echo -e "  ${GREEN}✅${RESET} ZCode 桌面版同步完成"
     echo -e "  ${YELLOW}⚠️${RESET} 请重启 ZCode 桌面版使更新生效"
+    echo -e "  ${YELLOW}💡${RESET}  重启后若 MCP 工具仍消失，跑: bash $SCRIPT_DIR/scripts/zcode-mcp-ensure.sh"
     ((INSTALLED++)) || true
     echo ""
 fi

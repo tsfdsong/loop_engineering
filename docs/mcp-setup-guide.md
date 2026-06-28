@@ -375,4 +375,94 @@ headroom --version
 headroom mcp serve              # 启动 MCP server
 headroom mcp install            # 安装到 Claude Code
 headroom mcp status             # 查看状态
+
+---
+
+## 九、ZCode 桌面版 MCP 重启丢失问题（治本方案 · 2026-06-28 实战总结）
+
+### 9.1 症状
+按本文前八章装好 MCP 三件套，ZCode 桌面版里能看到 jcodemunch/repomix/headroom 三个 server。
+**但重启 ZCode 后这三个 server 又消失了。** 重装 / 更新 install.sh / 改 `marketplace.json` 都无效。
+
+### 9.2 根因（铁证）
+2026-06-28 实测发现 ZCode 桌面版有三条隐性规则：
+
+| # | 规则 | 后果 |
+|---|------|------|
+| 1 | ZCode 启动时**自动重写** `~/.zcode/cli/plugins/marketplaces/*/marketplace.json` | 我们手动加的 loopengine 条目被反复删除 |
+| 2 | ZCode 优先从 **CLI 缓存** `plugins/cache/.../loopengine/<ver>/.zcode-plugin/plugin.json` 加载 MCP | 改"内置包目录"或"项目源"都不生效 |
+| 3 | CLI 缓存的 `plugin.json` 默认**没有** `mcpServers` 字段 | 插件加载成功，但 MCP server 列表为空 |
+
+时间线证据（24 小时内）：
+```
+22:02  CLI 缓存 plugin.json 写入（无 mcpServers）     ← ZCode 初始化
+22:55  ~/.zcode/cli/mcp-servers.json 修复为绝对路径    ← 我们第一次修
+22:59  内置包目录 plugin.json 写入（含 mcpServers）     ← 我们手动改
+23:00  项目源 plugin.json 提交（含 mcpServers）        ← 我们 commit
+23:04  marketplace.json 被 ZCode 重写（无 loopengine）  ← ZCode 启动清理
+→ 下次启动时 ZCode 找不到 loopengine → MCP 全消失
+```
+
+### 9.3 治本方案：`scripts/zcode-mcp-ensure.sh`
+LoopEngine 1.0.2+ 内置自愈脚本，一次跑完 4 件事：
+
+1. **探测三个 MCP 可执行文件绝对路径**（jcodemunch-mcp / headroom / repomix）
+2. **把 mcpServers 注入到所有 plugin.json 缓存位置**：
+   - `内置包目录/.zcode-plugin/plugin.json`（v1.0.0）
+   - `内置包目录/package.json`（v1.0.0 兼容）
+   - `CLI 缓存 zcode-plugins-official/loopengine/*/.zcode-plugin/plugin.json`
+   - `CLI 缓存 loopengine-local/loopengine/*/.zcode-plugin/plugin.json`
+   - `项目源/.zcode-plugin/plugin.json` 与 `项目源/.mcp.json`
+3. **在两个 marketplace.json 中加回 loopengine 注册**（双保险）
+4. **stdIO 握手验证**：发 JSON-RPC `initialize` 请求，确认三个 server 都返回 `serverInfo`
+
+由 `install.sh` / `update.sh` 在 ZCode 同步段自动调用，**也可手动跑**：
+
+```bash
+# 标准模式（带彩色输出）
+bash scripts/zcode-mcp-ensure.sh
+
+# 静默模式（只输出错误，适合 CI / 自动任务）
+bash scripts/zcode-mcp-ensure.sh --quiet
+```
+
+正常结尾输出：
+```
+✅ jcodemunch-mcp 握手通过（服务端: jcodemunch-mcp）
+✅ repomix 握手通过（服务端: repomix-mcp-server）
+✅ headroom 握手通过（服务端: headroom）
+✅ 全部 3 个 MCP 工具握手通过
+🎉 自愈完成 — ZCode 桌面版重启后 MCP 工具将自动加载
+```
+
+### 9.4 验证清单（重启后 MCP 仍不丢）
+```bash
+# 1) CLI 缓存 plugin.json 含 mcpServers
+grep -A2 "mcpServers" ~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/*/.zcode-plugin/plugin.json
+
+# 2) marketplace.json 含 loopengine
+grep "loopengine" ~/.zcode/cli/plugins/marketplaces/*/marketplace.json
+
+# 3) 重跑自愈确认全绿
+bash scripts/zcode-mcp-ensure.sh
+```
+
+### 9.5 永远不要做的事
+| ❌ 反模式 | 为什么错 |
+|---------|---------|
+| 只改 `内置包目录/plugin.json` | ZCode 启动后**不从它**加载 MCP |
+| 只改 `项目源/.zcode-plugin/plugin.json` | 不会自动同步到 CLI 缓存 |
+| 只改 `marketplace.json` | 下次 ZCode 启动会被自动重写丢失 |
+| `plugin.json` 里写 `jcodemunch-mcp` 等命令名 | 依赖 PATH，重启后可能找不到（pip --user 装到 Scripts 目录） |
+| 把 `enabledPlugins` 改成 `false` 再改回 `true` | 不会修复 plugin.json 缺失的 mcpServers 字段 |
+
+### 9.6 调试常见问题
+**Q：自愈脚本报告 `jcodemunch-mcp 未找到`？**
+A：先 `pip install --upgrade jcodemunch-mcp`，然后跑 `install.sh`，它会自动把 Python Scripts 加到 PATH。
+
+**Q：握手通过但 ZCode 里仍看不到？**
+A：99% 是 CLI 缓存的 plugin.json 还没注入。手动跑 `bash scripts/zcode-mcp-ensure.sh`，然后**完全退出并重启** ZCode（不是最小化窗口）。
+
+**Q：marketplace.json 总被 ZCode 重写丢失 loopengine？**
+A：正常现象。ZCode 在每次启动时都会清理"未在内置包目录找到对应版本"的条目。**靠自愈脚本每次启动后修复即可**，不要靠手改 marketplace.json。
 ```

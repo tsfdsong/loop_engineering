@@ -1,19 +1,23 @@
 {
   "mcpServers": {
     "jcodemunch": {
-      "command": "C:/Users/admin/AppData/Roaming/Python/Python314/Scripts/jcodemunch-mcp.exe",
-      "args": ["serve"],
-      "cwd": "C:/tsfdsong/python-project/loop_engineering"
+      "command": "C:/Users/admin/AppData/Roaming/Python/Python314/Scripts/jcodemunch-mcp",
+      "args": [
+        "serve"
+      ]
     },
     "repomix": {
-      "command": "repomix",
-      "args": ["--mcp"],
-      "cwd": "C:/tsfdsong/python-project/loop_engineering"
+      "command": "C:/Users/admin/AppData/Roaming/npm/repomix",
+      "args": [
+        "--mcp"
+      ]
     },
     "headroom": {
-      "command": "C:/Users/admin/AppData/Roaming/Python/Python314/Scripts/headroom.exe",
-      "args": ["mcp", "serve"],
-      "cwd": "C:/tsfdsong/python-project/loop_engineering"
+      "command": "C:/Users/admin/AppData/Roaming/Python/Python314/Scripts/headroom",
+      "args": [
+        "mcp",
+        "serve"
+      ]
     }
   }
 }

@@ -127,3 +127,51 @@ mkdir "$env:USERPROFILE\.zcode\cli\plugins\data\loopengine@zcode-plugins-officia
 - [ ] data 目录 `loopengine@zcode-plugins-official` 已创建
 
 详见 `docs/zcode-install-guide.md`。
+
+---
+
+## 🔴 ZCode 桌面版 MCP 重启丢失红线（2026-06-28 实测发现 · 治本方案）
+
+### 症状
+安装/更新后 MCP 三件套（jcodemunch/repomix/headroom）正常加载，但**重启 ZCode 桌面版后又不见了**。
+
+### 根因（三条铁律）
+1. **ZCode 启动时自动重写 `marketplace.json`**——它只保留"内置包目录能找到的插件"，我们手动加的 loopengine 注册会被反复删除
+2. **ZCode 优先从 CLI 缓存 `plugins/cache/.../loopengine/<ver>/.zcode-plugin/plugin.json` 加载 MCP**——这个文件是真正生效的位置，**不是**项目源 `.zcode-plugin/plugin.json`
+3. **CLI 缓存的 plugin.json 默认没有 mcpServers 字段**——所以即使插件加载成功，MCP 工具也不显示
+
+### 治本：永远跑一次 `scripts/zcode-mcp-ensure.sh`
+此脚本会：
+- 探测三个 MCP 可执行文件绝对路径
+- 把 mcpServers 注入到**所有** loopengine plugin.json 缓存位置（内置包 + CLI 缓存 + 项目源）
+- 在所有 marketplace.json 中加回 loopengine 注册
+- 验证 stdio 握手通过
+
+由 `install.sh` / `update.sh` 在 ZCode 同步段自动调用，**也可手动跑**：
+```bash
+bash scripts/zcode-mcp-ensure.sh
+```
+
+### 验证清单（重启后 MCP 仍不丢）
+- [ ] `~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/1.0.1/.zcode-plugin/plugin.json` 含 `mcpServers` 字段
+- [ ] `~/.zcode/cli/plugins/cache/loopengine-local/loopengine/1.0.0/.zcode-plugin/plugin.json` 含 `mcpServers` 字段
+- [ ] 两个 marketplace.json 都含 `loopengine` 条目
+- [ ] `bash scripts/zcode-mcp-ensure.sh` 输出 "全部 3 个 MCP 工具握手通过"
+
+### 永远不要做的事
+- ❌ **不要**只改 `内置包目录/plugin.json`（ZCode 不从它加载 MCP）
+- ❌ **不要**只改 `项目源/.zcode-plugin/plugin.json`（不会同步到 CLI 缓存）
+- ❌ **不要**只改 `marketplace.json`（下次启动会被 ZCode 重写丢失）
+- ❌ **不要**在 plugin.json 里用 `jcodemunch-mcp` 等命令名（依赖 PATH，重启可能找不到）——**必须用绝对路径**
+
+### 调试命令
+```bash
+# 1) 看 CLI 缓存 plugin.json 是否有 mcpServers
+grep -A2 "mcpServers" ~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/*/.zcode-plugin/plugin.json
+
+# 2) 看 marketplace.json 是否含 loopengine
+grep "loopengine" ~/.zcode/cli/plugins/marketplaces/*/marketplace.json
+
+# 3) 复跑自愈
+bash scripts/zcode-mcp-ensure.sh
+```
