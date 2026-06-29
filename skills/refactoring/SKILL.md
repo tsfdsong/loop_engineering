@@ -11,8 +11,11 @@ metadata:
   merged_from:
     - refactoring
     - refactoring-guru
-  merge_date: "2026-06-29"
-  merge_reason: "两源同打包工具 + 内容高度重叠（Fowler 原书 + refactoring.guru 速查），合并减少调度冲突"
+    - legacy-code
+    - framework-migration-legacy-modernize
+  merge_date_v2: "2026-06-29"
+  merge_date_v2_1: "2026-06-29"
+  merge_reason: "v6.1.1 合并 refactoring-guru → refactoring；v6.2 扩展 legacy-code + framework-migration-legacy-modernize"
 ---
 
 # Refactoring 超级技能
@@ -69,7 +72,41 @@ C:\Users\admin\.agents\skills\agent-rules-books\refactoring-guru\refactoring-gur
 - 设计模式应用场景
 - 重构与模式的关系
 
-**_两个规则文件都是此技能的核心。务必在重构前读取它们。_**
+### 来自 legacy-code（v6.2 扩展）
+
+遗留代码 = 没有测试保护的代码。改造原则：
+- **识别接缝（Seam）**：可在不修改源码情况下改变行为的位置
+- **破除依赖**：参数化、提取接口、子类化并重写
+- **特征测试（Characterization Test）**：记录现有行为
+- **小步改动 + 快速验证**
+- **高风险改动优先用安全手段**
+
+> 完整 31 行内容：[references/legacy-code-full.md](references/legacy-code-full.md)
+
+### 来自 framework-migration-legacy-modernize（v6.2 扩展）
+
+框架迁移的 strangler fig 模式：
+- **渐进式替换**：新旧系统共存，逐步迁移
+- **持续业务运行**：迁移期间不中断业务
+- **风险管控**：每阶段验证后再继续
+- **关键模式**：门面模式、抽象层、双写
+
+> 完整 140 行内容：[references/framework-migration-full.md](references/framework-migration-full.md)
+
+## 触发关键词（v6.2 扩展后）
+
+重构、坏味道、提取方法、改善结构、速查、模式参考、遗留代码、没测试、老系统、安全改动、框架迁移、升级、现代化
+
+## v6.2 扩展整合
+
+```
+refactoring 超级技能 = refactoring (Fowler) + refactoring-guru (速查) + legacy-code + framework-migration
+├─ 何时用 refactoring 主技能：通用代码改善
+├─ 何时用 legacy-code：没有测试保护的旧代码
+└─ 何时用 framework-migration：升级框架版本
+```
+
+**_规则文件是此技能的核心。务必在重构前读取 references/。_**
 
 ---
 

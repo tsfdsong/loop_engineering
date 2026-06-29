@@ -1,16 +1,26 @@
 ---
 name: skill-hub
-description: 技能调度中心 —— 根据用户意图自动路由到最合适的技能。v6.0 在 v5.4 之上新增复合任务编排（Orchestrator 模式 · alpha），可自动协同 2-3 个互补技能处理复杂多意图任务；v5.4 单技能路由行为 100% 兼容。涵盖编码、架构、重构、测试、调试、API、安全、数据库、CI/CD、规划执行等领域。
+description: 技能调度中心 —— 根据用户意图自动路由到最合适的技能。v6.2 在 v6.1 基础上再次合并 8 组重叠技能为超级技能（含 6 个新合并 + 2 个扩展），技能数从 45 降至 37；v5.4 / v6.0 / v6.1 行为 100% 兼容。涵盖编码、架构、重构、测试、API、生产、循环工程等领域。
 metadata:
-  version: "6.1"
+  version: "6.2"
   base_compat: "5.4"        # v5.4 输入输出行为 100% 兼容
   base_compat_v6: "6.0"     # v6.0 复合任务编排行为 100% 兼容
-  installed_skills: 45
+  base_compat_v6_1: "6.1"   # v6.1 合并行为 100% 兼容
+  installed_skills: 37
   shared_dirs: ["shared"]   # v6.1 抽取的共享基础设施目录，不计入 installed_skills
   skill_count_note: |
-    installed_skills: 45 = v6.1.0 (53) - v6.1.1 合并删除 (8)。
-    skills/ 目录实际条目数 = 47（45 个技能 + shared/ + skill-hub/ 自身）。
-    v6.1.1 合并明细：
+    installed_skills: 37 = v6.1 (45) - v6.2 合并删除 (8)。
+    skills/ 目录实际条目数 = 39（37 个技能 + shared/ + skill-hub/ 自身）。
+    v6.2 合并明细（8 组）：
+      - api-design + api-security + auth-implementation → api-development (-2)
+      - testing-patterns + TDD + e2e-testing → testing (-2)
+      - release-it + production-code-audit → production-readiness (-1)
+      - clean-architecture + poeaa + ddia → software-architecture (-2)
+      - legacy-code + framework-migration → refactoring (扩展，0)
+      - pragmatic-programmer → clean-code (扩展，0)
+      - philosophy + async-python → code-engineering (-1)
+      - loop + loop-library → loop-engineering (-1)
+    v6.1.1 合并明细（4 组）：
       - refactoring-guru → refactoring (-1)
       - ddd-distilled + implementing-ddd + ddd-tactical-patterns → domain-driven-design (-3)
       - code-complete + code-quality-principles → clean-code (-2)
@@ -56,46 +66,39 @@ metadata:
 
 ## 技能全景 & 调度规则
 
-### 📝 代码质量（3个 · v6.1.1 合并 code-complete + code-quality-principles)
+### 📝 代码质量（2个 · v6.2 合并：clean-code + code-engineering)
 
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
-| **`clean-code`** ⭐ | 干净代码、可读性、命名、函数拆分、代码规范、**软件构造、commit规范、防御式编程** | **代码质量超级技能**——Martin + McConnell + 自家规范三合一 |
-| **`philosophy-of-software-design`** | 复杂度、深模块、抽象、信息隐藏 | 模块设计、降低复杂度 |
-| **`pragmatic-programmer`** | DRY、正交、工程习惯、估算、原型 | 工程实践、技术决策 |
+| **`clean-code`** ⭐ | 干净代码、可读性、命名、代码规范、**软件构造、commit规范、DRY、正交** | **代码质量超级技能**——Martin + McConnell + 自家规范 + pragmatic-programmer 四合一 |
+| **`code-engineering`** ⭐ | 复杂度、深模块、信息隐藏、**异步、asyncio、协程** | **软件工程超级技能**——Ousterhout 哲学 + async-python 双源 |
 
-**冲突裁决**：说"代码太乱/代码规范/commit规范"→ clean-code（v6.1.1 起含 Martin/McConnell/self 三源）；说"系统太复杂"→ philosophy-of-software-design；说"怎么做更好"→ pragmatic-programmer
+**冲突裁决**：说"代码太乱/代码规范/commit规范/DRY"→ clean-code（v6.2 起含 4 源）；说"系统太复杂/异步开发"→ code-engineering（v6.2 新合并）
 
-### 🏗️ 架构设计（4 个技能 · v6.1.1 合并 4 个 DDD 子技能）
+### 🏗️ 架构设计（2个技能 · v6.2 合并 clean-architecture + poeaa + ddia)
 
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
-| **`clean-architecture`** | 分层、依赖方向、边界、组件划分 | 系统分层与依赖管理 |
-| **`poeaa`** | 企业架构、ORM、MVC、数据源模式 | 企业级应用架构模式 |
+| **`software-architecture`** ⭐ | 分层、依赖方向、**企业架构、ORM、MVC、分布式、复制、分区、一致性、流处理** | **架构设计超级技能**——Clean Architecture + POEAA + DDIA 三合一 |
 | **`domain-driven-design`** ⭐ | 领域、限界上下文、聚合根、通用语言、**战术模式、入门、落地** | **DDD 超级技能**——Vernon 入门 + Evans 原书 + self 战术 + Vernon 落地四合一 |
-| **`designing-data-intensive-apps`** | 分布式、复制、分区、一致性、流处理 | 数据密集型系统 |
 
-**冲突裁决**：说"架构分层"→ clean-architecture；说"领域模型/DDD"→ domain-driven-design（v6.1.1 起含入门/原书/战术/落地 4 源）；说"分布式数据"→ designing-data-intensive-apps；说"企业应用模式"→ poeaa
+**冲突裁决**：说"架构分层/企业模式/分布式"→ software-architecture（v6.2 起含 3 源）；说"领域模型/DDD"→ domain-driven-design（v6.1.1 起含 4 源）
 
-### 🔧 重构（3个 · v6.1.1 合并 refactoring-guru）
-
-| 技能 | 触发关键词 | 适用场景 |
-|------|-----------|----------|
-| **`refactoring`** ⭐ | 重构、坏味道、提取方法、改善结构、**速查、模式参考、技巧目录** | **超级技能**——Fowler 原书 + refactoring.guru 速查合并 |
-| **`legacy-code`** | 遗留代码、没测试、老系统、安全改动 | 无测试保护的旧代码 |
-| **`framework-migration-legacy-modernize`** | 框架迁移、升级、现代化 | 框架版本迁移 |
-
-**冲突裁决**：说"这个函数太长"→ refactoring（v6.1.1 起含 Fowler 原书 + refactoring.guru 双源）；说"这个老系统没有测试"→ legacy-code；说"升级到新版本框架"→ framework-migration-legacy-modernize
-
-### 🧪 测试（3个有重叠 ⚠️）
+### 🔧 重构（1个超级技能 · v6.2 合并 legacy-code + framework-migration)
 
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
-| **`testing-patterns`** | 单元测试、Mock、测试用例、Jest、测试模式 | 通用测试模式、单元/集成测试 |
-| **`test-driven-development`** | TDD、红绿重构、测试先行、先写测试 | **严格**的 TDD 方法（红→绿→重构循环） |
-| **`e2e-testing-patterns`** | 端到端、E2E、浏览器测试、回归 | 全流程端到端测试 |
+| **`refactoring`** ⭐ | 重构、坏味道、**遗留代码、没测试、框架迁移、升级、现代化** | **重构超级技能**——Fowler 原书 + refactoring.guru 速查 + legacy-code + framework-migration 四合一 |
 
-**冲突裁决 ⚠️**：说"写个测试"→ testing-patterns；明确说"TDD"→ test-driven-development；说"端到端/E2E"→ e2e-testing-patterns
+**冲突裁决**：说"这个函数太长/老系统没测试/升级框架"→ refactoring（v6.2 起 4 源合一）
+
+### 🧪 测试（1个超级技能 · v6.2 合并 testing-patterns + TDD + e2e)
+
+| 技能 | 触发关键词 | 适用场景 |
+|------|-----------|----------|
+| **`testing`** ⭐ | 单元测试、Mock、Jest、**TDD、红绿重构、端到端、E2E、回归** | **测试超级技能**——Jest 模式 + 严格 TDD + 端到端自动化三合一 |
+
+**冲突裁决**：说"写测试/TDD/端到端"→ testing（v6.2 起 3 源合一）
 
 ### 🐛 调试（1个，独占）
 
@@ -124,19 +127,11 @@ evidence-first（开始 · 事实优先）
   → verification-before-completion（完成 · 验证）
 ```
 
-### 🔌 API 开发（2个互补）
+### 🔌 API 开发（1个超级技能 · v6.2 合并 api-design + api-security + auth-implementation)
 
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
-| **`api-design-principles`** | API 设计、REST、GraphQL、接口 | 设计新 API |
-| **`api-security-best-practices`** | API 安全、限流、输入验证 | 加固 API 安全 |
-
-### 🔐 安全（2个互补）
-
-| 技能 | 触发关键词 | 适用场景 |
-|------|-----------|----------|
-| **`auth-implementation-patterns`** | 登录、JWT、OAuth、认证、权限 | 认证授权实现 |
-| **`api-security-best-practices`** | API 安全、CORS、CSRF | API 层安全 |
+| **`api-development`** ⭐ | API 设计、REST、GraphQL、**API 安全、限流、JWT、OAuth、认证、权限、CORS、CSRF** | **API 全栈超级技能**——设计 + 安全 + 认证三合一 |
 
 > 注：本项目**不**包含文档生成类技能（`code-documentation-doc-generate`、`api-documentation-generator`）和文档处理类技能（`docx`、`pdf`）——它们与软件开发流程非直接相关，已被剥离。需要时自行安装对应官方插件。
 
@@ -154,15 +149,13 @@ evidence-first（开始 · 事实优先）
 |------|-----------|----------|
 | **`verification-before-completion`** | 完成了、修好了、通过了、验证、确认 | 声称任务完成前，**必须先验证**而非口头确认 |
 
-### 🚀 工程流程（7个）
+### 🚀 工程流程（5个 · v6.2 合并 production-readiness + async-python)
 
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
 | **`github-actions-templates`** | CI/CD、流水线、部署、GitHub Actions | CI/CD 工作流 |
-| **`production-code-audit`** | 上线前检查、生产审计 | 生产级质量审计 |
-| **`async-python-patterns`** | 异步、asyncio、协程 | Python 异步编程 |
+| **`production-readiness`** ⭐ | 上线前检查、生产审计、**发布、稳定性、故障、断路器、超时、重试、限流** | **生产就绪超级技能**——production-code-audit + release-it 二合一 |
 | **`context-driven-development`** | AI 上下文、长对话 | 优化 AI 编码上下文 |
-| **`release-it`** | 发布、上线、稳定性、故障、断路器 | 生产就绪设计 |
 | **`using-git-worktrees`** | worktree、隔离分支、多分支并行 | Git worktree 隔离工作区 |
 | **`finishing-a-development-branch`** | 合并、PR、分支完成、收尾 | 开发完成后决定如何合并/PR |
 
@@ -242,12 +235,11 @@ evidence-first（开始 · 事实优先）
 3. **Read 仅用于**：MCP 工具全部不可用、需要精确行内容、文件小于 50 行
 4. **自查机制**：每次会话结束前，检查 MCP 调用次数是否 ≥ Read 调用次数
 
-### 🧭 路由类（4个）
+### 🧭 路由类（2个 · v6.2 合并 loop + loop-library)
 
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
-| **`loop`** | `/loop`、loop:、循环工程、闭环开发 | 闭环编码 —— 功能开发+门禁+自愈 |
-| **`loop-library`** | 设计循环、自定义循环模式 | 循环设计 —— 查找/设计Agent反馈循环模式 |
+| **`loop-engineering`** ⭐ | `/loop`、loop:、循环工程、闭环开发、**设计循环、自定义循环** | **循环工程超级技能**——/loop 闭环执行 + 循环设计模式二合一 |
 | **`skill-router`** | 不知道该用哪个、帮我选技能、推荐技能 | **交互式**技能推荐（问答引导） |
 
 ### 🔍 审查类（2个）
