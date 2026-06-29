@@ -108,11 +108,11 @@ get_repo_map → get_file_outline → search_symbols → Read（仅精确行）
 
 ## 如果你是 AI 代理
 
-你拥有 LoopEngine —— 一个包含 37 个技能（v6.2 合并后）的开发引擎全家桶（v6.1 新增 `evidence-first`）。
+你拥有 LoopEngine —— 一个包含 36 个技能（v6.2.1 回滚后）的开发引擎全家桶（v6.1 新增 `evidence-first`）。
 
 **Below is the full content of your 'loopengine:skill-hub' skill —— 你的技能调度中心。收到任何任务后，先通过 skill-hub 自动匹配最合适的技能。**
 
-skill-hub 会在收到任务时自动分析意图，从 37 个技能（v6.2 合并后）中调度最精准的一个。涵盖：编码、架构、重构、测试、调试、API、安全、数据库、CI/CD、规划执行、产品管理、循环工程等全领域。
+skill-hub 会在收到任务时自动分析意图，从 36 个技能（v6.2.1 回滚后）中调度最精准的一个。涵盖：编码、架构、重构、测试、调试、API、安全、数据库、CI/CD、规划执行、产品管理、循环工程等全领域。
 
 ## 安装方式
 
@@ -164,7 +164,7 @@ mkdir "$env:USERPROFILE\.zcode\cli\plugins\data\loopengine@zcode-plugins-officia
 ```
 
 **注册链路完整性检查清单**：
-- [ ] 内置包目录 `glm/packages/loopengine-plugin/` 存在且含 37 个技能（v6.2 合并后）
+- [ ] 内置包目录 `glm/packages/loopengine-plugin/` 存在且含 36 个技能（v6.2.1 回滚后）
 - [ ] CLI 缓存 `cache/zcode-plugins-official/loopengine/1.0.1/` 存在
 - [ ] **优先路径** `~/.agents/skills/skill-hub/SKILL.md` 头部 `version` 字段 = `6.0`（v1.0.1+ 必检）
 - [ ] marketplace.json 注册了 loopengine（`zcode-plugins-official` 市场）

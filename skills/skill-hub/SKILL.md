@@ -1,17 +1,20 @@
 ---
 name: skill-hub
-description: 技能调度中心 —— 根据用户意图自动路由到最合适的技能。v6.2 在 v6.1 基础上再次合并 8 组重叠技能为超级技能（含 6 个新合并 + 2 个扩展），技能数从 45 降至 37；v5.4 / v6.0 / v6.1 行为 100% 兼容。涵盖编码、架构、重构、测试、API、生产、循环工程等领域。
+description: 技能调度中心 —— 根据用户意图自动路由到最合适的技能。v6.2.1 回滚合并 8（loop + loop-library），恢复 loop 自研核心技能；v6.2 其他 7 组合并保留（api-development/testing/production-readiness/software-architecture/refactoring 扩展/clean-code 扩展/code-engineering）；v5.4 / v6.0 / v6.1 行为 100% 兼容。
 metadata:
-  version: "6.2"
+  version: "6.2.1"
   base_compat: "5.4"        # v5.4 输入输出行为 100% 兼容
   base_compat_v6: "6.0"     # v6.0 复合任务编排行为 100% 兼容
   base_compat_v6_1: "6.1"   # v6.1 合并行为 100% 兼容
-  installed_skills: 37
+  installed_skills: 36
   shared_dirs: ["shared"]   # v6.1 抽取的共享基础设施目录，不计入 installed_skills
   skill_count_note: |
-    installed_skills: 37 = v6.1 (45) - v6.2 合并删除 (8)。
-    skills/ 目录实际条目数 = 39（37 个技能 + shared/ + skill-hub/ 自身）。
-    v6.2 合并明细（8 组）：
+    installed_skills: 36 = v6.1 (45) - v6.2 合并删除 (7) + v6.2.1 回滚合并 8 (1) - 36。
+    skills/ 目录实际条目数 = 38（36 个技能 + shared/ + skill-hub/ 自身）。
+    v6.2.1 回滚（commit rollback/merge-8）：
+      - loop + loop-library → loop-engineering → 回滚为 loop（+1）
+      - loop-library（superpowers）彻底废弃删除
+    v6.2 合并明细（7 组保留 + 1 组回滚）：
       - api-design + api-security + auth-implementation → api-development (-2)
       - testing-patterns + TDD + e2e-testing → testing (-2)
       - release-it + production-code-audit → production-readiness (-1)
@@ -19,7 +22,6 @@ metadata:
       - legacy-code + framework-migration → refactoring (扩展，0)
       - pragmatic-programmer → clean-code (扩展，0)
       - philosophy + async-python → code-engineering (-1)
-      - loop + loop-library → loop-engineering (-1)
     v6.1.1 合并明细（4 组）：
       - refactoring-guru → refactoring (-1)
       - ddd-distilled + implementing-ddd + ddd-tactical-patterns → domain-driven-design (-3)
@@ -235,12 +237,14 @@ evidence-first（开始 · 事实优先）
 3. **Read 仅用于**：MCP 工具全部不可用、需要精确行内容、文件小于 50 行
 4. **自查机制**：每次会话结束前，检查 MCP 调用次数是否 ≥ Read 调用次数
 
-### 🧭 路由类（2个 · v6.2 合并 loop + loop-library)
+### 🧭 路由类（2个 · v6.2.1 回滚合并 8：loop 保留)
 
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
-| **`loop-engineering`** ⭐ | `/loop`、loop:、循环工程、闭环开发、**设计循环、自定义循环** | **循环工程超级技能**——/loop 闭环执行 + 循环设计模式二合一 |
+| **`loop`** | `/loop`、loop:、循环工程、闭环开发 | 闭环编码 —— 功能开发+门禁+自愈（v4.1 自研核心技能）|
 | **`skill-router`** | 不知道该用哪个、帮我选技能、推荐技能 | **交互式**技能推荐（问答引导） |
+
+> 注：loop-library（superpowers）已彻底废弃删除。v6.2 合并 8 错误地与自研 loop 合并，已回滚。
 
 ### 🔍 审查类（2个）
 
