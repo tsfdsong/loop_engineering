@@ -483,22 +483,17 @@ except Exception as e:
         echo -e "  ${YELLOW}ℹ️${RESET}  未找到 scripts/zcode-mcp-ensure.sh，跳过 MCP 自愈"
     fi
 
-    # Step 10: 同步 skills 到 ~/.agents/skills/ 优先路径（修复 ZCode 加载 v5.4 旧版的 bug）
+    # Step 10: 同步 skills 到 ~/.agents/skills/ 优先路径
     # 根因（2026-06-29 实测发现）：
     #   ZCode 桌面版启动时优先扫描 ~/.agents/skills/ 目录里的 SKILL.md，
-    #   marketplace.json 中 loopengine 注册失败时（ZCode 启动会重写）会回退到该路径，
-    #   导致 v5.4 旧版 skill-hub 遮蔽 CLI 缓存里的 v6.0 新版。
+    #   marketplace.json 中 loopengine 注册失败时（ZCode 启动会重写）会回退到该路径。
     # 治本：把 skills/ 同步到 ~/.agents/skills/，让 ZCode 直接从此路径加载最新技能。
+    # v6.3 后：无 v5.4 backup 逻辑（v5.4 兼容性已彻底清理）
     AGENTS_SKILLS_DIR="$HOME/.agents/skills"
     ZCODE_SKILLS_SRC="$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/$ZCODE_VERSION/skills"
     if [ -d "$ZCODE_SKILLS_SRC" ]; then
         echo -e "  ${CYAN}▶  同步 skills 到 ~/.agents/skills/ 优先路径...${RESET}"
         mkdir -p "$AGENTS_SKILLS_DIR"
-        # 一次性备份旧版 skill-hub（仅当 .v5.4.backup 尚未存在时）
-        if [ -d "$AGENTS_SKILLS_DIR/skill-hub" ] && [ ! -d "$AGENTS_SKILLS_DIR/skill-hub.v5.4.backup" ]; then
-            mv "$AGENTS_SKILLS_DIR/skill-hub" "$AGENTS_SKILLS_DIR/skill-hub.v5.4.backup"
-            echo -e "  ${YELLOW}📦${RESET}  备份旧版 skill-hub → skill-hub.v5.4.backup"
-        fi
         # 同步整个 skills/ 目录（cp -r .../. 保留目标目录结构，覆盖同名技能）
         if cp -r "$ZCODE_SKILLS_SRC/." "$AGENTS_SKILLS_DIR/" 2>/dev/null; then
             SKILL_COUNT=$(ls -1 "$AGENTS_SKILLS_DIR" 2>/dev/null | grep -c 'SKILL\.md$' || true)
