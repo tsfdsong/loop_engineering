@@ -1,12 +1,13 @@
 ---
 name: skill-hub
-description: 技能调度中心 —— 根据用户意图自动路由到最合适的技能，涵盖编码、架构、重构、测试、调试、API、安全、数据库、CI/CD、规划执行等领域。每次对话自动加载，智能匹配意图并调度单个技能。
+description: 技能调度中心 —— 根据用户意图自动路由到最合适的技能。v6.0 新增复合任务编排（Orchestrator 模式），可自动协同 2-3 个互补技能处理复杂多意图任务；v5.4 单技能路由完全保留。涵盖编码、架构、重构、测试、调试、API、安全、数据库、CI/CD、规划执行等领域。
 metadata:
-  version: "5.4"
+  version: "6.0"
   installed_skills: 53
   cross_plugin_skills: 1
   cross_plugin_refs: "skill-creator (官方 skill-creator 插件)"
-  purpose: auto-routing
+  purpose: auto-routing + composite-orchestration
+  v6_orchestrator: opt-in  # alpha 阶段需 LOOPENGINE_ORCHESTRATOR=alpha
 ---
 
 # Skill Hub — 技能自动调度中心
