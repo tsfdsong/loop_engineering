@@ -4,6 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.1-blue)](package.json)
+[![skill-hub](https://img.shields.io/badge/skill--hub-v6.0--alpha-orange)](skills/skill-hub/SKILL.md)
 
 ---
 
