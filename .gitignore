@@ -9,3 +9,4 @@ test-page/
 
 # IDE 配置
 .idea/
+.worktrees/
