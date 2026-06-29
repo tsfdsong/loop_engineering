@@ -150,7 +150,7 @@ export LOOPENGINE_ORCHESTRATOR=alpha
 
 **v5.4 单技能路由 100% 保留，零迁移成本**。详细规范见：
 - 设计文档：[docs/2026-06-29-skill-hub-v6-design.md](docs/2026-06-29-skill-hub-v6-design.md)
-- 迁移指南：[docs/migration-guide-v5-to-v6.md](docs/migration-guide-v5-to-v6.md)
+- 迁移指南：[docs/migration-guide-v5-to-v6.md](docs/migration-guide-v5-to-v6.md)（v6.1.1 已删除 — 历史归档）
 
 ---
 

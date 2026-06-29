@@ -364,7 +364,7 @@ export LOOPENGINE_BRIDGES=disabled
 - **设计文档**：`docs/2026-06-29-skill-hub-v6.1-design.md`
 - **实施计划**：`docs/2026-06-29-skill-hub-v6.1-plan.md`
 - **v6.0 设计**：`docs/2026-06-29-skill-hub-v6-design.md`（用于回溯对照）
-- **v5 → v6 迁移**：`docs/migration-guide-v5-to-v6.md`
+- **v5 → v6 迁移**：`docs/migration-guide-v5-to-v6.md`（v6.1.1 已删除 — 历史归档，v5.4 → v6 行为由 v5.4 backup + golden-traces 持续保护）
 
 ---
 
