@@ -137,18 +137,33 @@ If you find issues, fix them inline. No need to re-review — just fix and move 
 
 After saving the plan, offer execution choice:
 
-**"Plan complete and saved to `docs/superpowers/plans/<filename>.md`. Two execution options:**
+**"Plan complete and saved to `docs/superpowers/plans/<filename>.md`. Three execution options:**
 
-**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
-
-**2. Inline Execution** - Execute tasks in this session using executing-plans, batch execution with checkpoints
-
-**Which approach?"**
-
-**If Subagent-Driven chosen:**
+**1. Subagent-Driven (recommended for simple plans)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
 - **REQUIRED SUB-SKILL:** Use superpowers:subagent-driven-development
 - Fresh subagent per task + two-stage review
 
-**If Inline Execution chosen:**
+**2. Inline Execution (for single-session work)** - Execute tasks in this session using executing-plans, batch execution with checkpoints
 - **REQUIRED SUB-SKILL:** Use superpowers:executing-plans
 - Batch execution with checkpoints for review
+
+**3. /go Engineering Mode (recommended for engineering-level plans, v4.0+)** - 工程化执行：worktree 隔离 + 自动拆分 + 降级兜底 + G10 系统审查
+- **适用场景**：跨模块 / 多文件 / 需要并发 / 复杂任务
+- **执行命令**：`/go <一句话需求>`（无需提前写 plan，go 会自动拆分）
+- **不适用**：单文件修改 / 简单重构 / 教学示例
+- **与本 plan 的关系**：可选择忽略本 plan，直接用 /go 重新拆任务
+
+**Which approach?"**
+
+**选择判断标准：**
+- 计划 ≤ 3 个任务 + 单文件 → 选项 1 或 2
+- 计划 ≥ 4 个任务 / 跨文件 / 需要并发 → **选项 3（/go）**
+- 不确定 → 选项 1（推荐）
+
+**Plan frontmatter 字段（写完后自动添加）：**
+
+```markdown
+---
+execution_path: subagent-driven  # 写完后让用户填 / inline / go
+---
+```

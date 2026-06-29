@@ -71,9 +71,44 @@ get_repo_map → get_file_outline → search_symbols → Read（仅精确行）
 
 ---
 
+## 🔴 事实优先硬规则（本项目最高优先级 · 不可违反 · 2026-06-29 加入）
+
+> **针对 2026-06-29 v5.4 兼容性胡乱分析事故**（AI 基于错误假设套用通用话术被用户当场识破），
+> 本项目强制执行以下 5 条事实优先规范：
+
+1. **项目分析前必查 5 项事实**（参见 `skills/evidence-first/SKILL.md`）：
+   - `git log --oneline -10`（最近 10 次提交）
+   - `README.md` / `AGENTS.md`（项目自述）
+   - `pyproject.toml` / `package.json`（版本声明）
+   - `docs/` 下最近的设计文档 / CHANGELOG
+   - `git log --since="3 months ago" --oneline | wc -l`（3 个月活跃度）
+
+2. **每句话必须标注 [F]/[H]/[P]**：
+   - `[F]` 事实（已通过 git/file/docs 验证，可追溯）
+   - `[H]` 假设（基于经验但未验证，需明确标注）
+   - `[P]` 原则（通用工程参考，优先级最低）
+
+3. **不确定 = 说"我不清楚"**：禁止凑答案 / 编造 / 套模板
+
+4. **长篇论述前自检 4 问**：
+   - 我有 [F] 事实依据吗？
+   - [H] 假设明确标注了吗？
+   - 错了损失大吗？（高损失必须 [F] 主导）
+   - 能说"我不清楚"吗？
+
+5. **判断必须可追溯到事实**：每条结论附"事实依据 + 来源 + 验证方式"
+
+**未完成事实清单 = 禁止进入分析论述**。
+
+**违规判定**：长篇论述（> 5 段）无 [F] 标注 = 视为红线违规，自动加载 `evidence-first` 技能重写。
+
+**事故教训库**：`docs/lessons-learned.md`（含本事故的完整记录 + 修复措施）
+
+---
+
 ## 如果你是 AI 代理
 
-你拥有 LoopEngine —— 一个包含 53 个技能的开发引擎全家桶。
+你拥有 LoopEngine —— 一个包含 54 个技能的开发引擎全家桶（v6.1 新增 `evidence-first`）。
 
 **Below is the full content of your 'loopengine:skill-hub' skill —— 你的技能调度中心。收到任何任务后，先通过 skill-hub 自动匹配最合适的技能。**
 

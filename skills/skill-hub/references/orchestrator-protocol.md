@@ -1,6 +1,13 @@
-# Orchestrator 编排协议（v6.0 Layer 3）
+# Orchestrator 编排协议（v6.0 Layer 3 · 2026-06-29 已重命名 · 兼容保留）
 
-> Orchestrator 在复合任务识别后，按本协议调度多个技能。
+> ⚠️ **本文件已重命名**（2026-06-29 system-review Fix #4）：
+> - 新名：`plan-orchestrator-protocol.md`
+> - 原因：避免与 `/go` v4.0 的 `scripts/orchestrator.py`（Task Orchestrator）命名混淆
+> - 本文件保留作 v6.0 向后兼容，内容与新文件**完全一致**
+> - v6.1+ 文档应引用 `plan-orchestrator-protocol.md`
+> - 计划在 v6.2 删除本文件
+
+> Plan Orchestrator 在复合任务识别后，按本协议调度多个技能。
 
 ## 串行编排
 

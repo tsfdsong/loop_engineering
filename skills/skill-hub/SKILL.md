@@ -100,6 +100,27 @@ metadata:
 |------|-----------|----------|
 | **`systematic-debugging`** | 调试、报错、Bug、不工作、排查、修一下、修好了吗 | 遇到任何 bug 或测试失败时，**优先调用此技能** |
 
+### 🔍 事实优先（1个，独占 · v6.1 新增 · 2026-06-29）
+
+> **起源**：2026-06-29 v5.4 兼容性事故 — AI 基于错误假设套用通用话术被用户当场识破。
+> **强制触发**：任何项目分析/比较/评估/设计/重构前**必须**自动加载。
+
+| 技能 | 触发关键词 | 适用场景 |
+|------|-----------|----------|
+| **`evidence-first`** | 分析、比较、评估、为什么、有什么用、什么价值、设计、重构、选型、该不该、应不应该、vs | 项目分析前必查 5 项事实 + 标注 [F]/[H]/[P] + 自检 4 问 |
+
+**铁律**：
+- 长篇论述（> 5 段）无 [F] 标注 = 🔴 红线违规
+- 用 [H]/[P] 伪装 [F] = 🟠 严重违规
+- 不确定 = 说"我不清楚"，禁止凑答案
+
+**调度位置**：在 systematic-debugging 之前、verification-before-completion 之后，形成完整链路：
+```
+evidence-first（开始 · 事实优先）
+  → systematic-debugging（过程 · 调试）
+  → verification-before-completion（完成 · 验证）
+```
+
 ### 🔌 API 开发（2个互补）
 
 | 技能 | 触发关键词 | 适用场景 |
@@ -324,8 +345,11 @@ export LOOPENGINE_ORCHESTRATOR=off
 
 - 5 类复合任务定义 → `references/composite-task-types.md`
 - 复杂度评估规则 → `references/complexity-evaluator.md`
-- Orchestrator 协议 → `references/orchestrator-protocol.md`
+- **Plan Orchestrator 协议**（编排技能 · 2026-06-29 重命名）→ `references/plan-orchestrator-protocol.md`
+  - 原 `orchestrator-protocol.md` 仍保留作向后兼容（v6.0 期间）
 - Trace 格式 → `references/trace-format.md`
+
+> **命名澄清**（2026-06-29 system-review Fix #4）：`plan-orchestrator-protocol.md` 是 skill-hub 编排**技能**的协议；`skills/go/scripts/orchestrator.py` 是 `/go` v4.0 编排**代码任务**的实现（Task Orchestrator）。两者职责清晰划分。
 
 ### 一键回滚
 
