@@ -217,7 +217,7 @@ def run_all():
         # 文件存在性
         test_skill_md_exists,
         test_references_exist,
-        test_examples_exist,
+        test_examples_dir_removed,
         # 文档内容
         test_skill_md_has_origin,
         test_skill_md_has_5_facts,
@@ -227,10 +227,8 @@ def run_all():
         test_self_check_doc_has_4_questions,
         test_no_hallucination_doc_has_rules,
         test_traceability_doc_has_chain,
-        # Examples
-        test_bad_example_marks_mistakes,
-        test_good_example_uses_evidence_first,
-        test_good_example_has_at_least_4_facts,
+        # Examples（v6.3 清理后已删除）
+        test_examples_removed_v63,
         # 黄金轨迹
         test_golden_trace_exists,
         test_golden_trace_categories,
