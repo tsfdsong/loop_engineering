@@ -1,7 +1,7 @@
 {
   "name": "loopengine",
   "displayName": "LoopEngine",
-  "description": "LoopEngine: loop闭环编码 + go全自动编排 + skill-hub 45技能智能调度（v6.1.1 合并后）",
+  "description": "LoopEngine: loop闭环编码 + go全自动编排 + skill-hub 37技能智能调度（v6.2 合并后）",
   "version": "1.0.1",
   "author": {
     "name": "tsfdsong"
