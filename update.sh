@@ -38,7 +38,16 @@ elif [ -d "$HOME/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-
     ZCODE_PACKAGES_DIR="$HOME/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin"
 fi
 
-ZCODE_CACHE_DIR="$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/1.0.0"
+# 自动检测实际安装的版本（避免硬编码 1.0.0 与未来 1.0.2/1.1.0 等版本不一致）
+ZCODE_CACHE_BASE="$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine"
+if [ -d "$ZCODE_CACHE_BASE/1.0.1" ]; then
+    ZCODE_CACHE_DIR="$ZCODE_CACHE_BASE/1.0.1"
+elif [ -d "$ZCODE_CACHE_BASE/1.0.0" ]; then
+    ZCODE_CACHE_DIR="$ZCODE_CACHE_BASE/1.0.0"
+else
+    # 兜底：取该目录下最新的版本号
+    ZCODE_CACHE_DIR=$(ls -1d "$ZCODE_CACHE_BASE"/*/ 2>/dev/null | sort -V | tail -1 | sed 's:/$::' || echo "")
+fi
 
 if [ -n "$ZCODE_PACKAGES_DIR" ] || [ -d "$ZCODE_CACHE_DIR" ]; then
     echo -e "${CYAN}▶  更新 ZCode 桌面版...${RESET}"
@@ -95,6 +104,31 @@ if [ -n "$ZCODE_PACKAGES_DIR" ] || [ -d "$ZCODE_CACHE_DIR" ]; then
         fi
     else
         echo -e "  ${YELLOW}ℹ️${RESET}  未找到 scripts/zcode-mcp-ensure.sh，跳过 MCP 自愈"
+    fi
+
+    # Step 6: 同步 skills 到 ~/.agents/skills/ 优先路径（修复 ZCode 加载 v5.4 旧版的 bug）
+    # 根因（2026-06-29 实测发现）：
+    #   ZCode 桌面版启动时优先扫描 ~/.agents/skills/ 目录里的 SKILL.md，
+    #   marketplace.json 中 loopengine 注册失败时（ZCode 启动会重写）会回退到该路径，
+    #   导致 v5.4 旧版 skill-hub 遮蔽 CLI 缓存里的 v6.0 新版。
+    # 治本：把 skills/ 同步到 ~/.agents/skills/，让 ZCode 直接从此路径加载最新技能。
+    AGENTS_SKILLS_DIR="$HOME/.agents/skills"
+    if [ -d "$ZCODE_CACHE_DIR/skills" ]; then
+        echo -e "  ${CYAN}▶  同步 skills 到 ~/.agents/skills/ 优先路径...${RESET}"
+        mkdir -p "$AGENTS_SKILLS_DIR"
+        # 一次性备份旧版 skill-hub（仅当 .v5.4.backup 尚未存在时）
+        if [ -d "$AGENTS_SKILLS_DIR/skill-hub" ] && [ ! -d "$AGENTS_SKILLS_DIR/skill-hub.v5.4.backup" ]; then
+            mv "$AGENTS_SKILLS_DIR/skill-hub" "$AGENTS_SKILLS_DIR/skill-hub.v5.4.backup"
+            echo -e "  ${YELLOW}📦${RESET}  备份旧版 skill-hub → skill-hub.v5.4.backup"
+        fi
+        if cp -r "$ZCODE_CACHE_DIR/skills/." "$AGENTS_SKILLS_DIR/" 2>/dev/null; then
+            SKILL_COUNT=$(ls -1 "$AGENTS_SKILLS_DIR" 2>/dev/null | grep -c 'SKILL\.md$' || true)
+            echo -e "  ${GREEN}✅${RESET} skills 已同步到 ~/.agents/skills/（含 $SKILL_COUNT 个 SKILL.md）"
+        else
+            echo -e "  ${RED}❌${RESET}  skills 同步失败，可手动执行: cp -r $ZCODE_CACHE_DIR/skills/. $AGENTS_SKILLS_DIR/"
+        fi
+    else
+        echo -e "  ${YELLOW}ℹ️${RESET}  未找到 CLI 缓存 skills 目录: $ZCODE_CACHE_DIR/skills，跳过 ~/.agents/skills/ 同步"
     fi
 
     echo -e "  ${GREEN}✅${RESET} ZCode 桌面版更新完成"
