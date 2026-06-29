@@ -108,3 +108,23 @@ def write_state(state, path):
 | 错误分类 | 无(统一续跑) | **6类错误分类重试** |
 
 **为什么编排层需要更强的恢复**: loop 是单会话,中断概率低;编排层跨多工具/多模型/长时间运行,中断概率高,必须有强恢复。
+
+---
+
+## 🔗 v6.1 共享引用
+
+> **v6.1 增强**：本文件中的三步骤断点恢复协议（一致性校验 → 搁置时长 → 状态定位）已抽取到 `shared/references/breakpoint-recovery-base.md`，与 loop 技能共享。
+
+| 共享 spec | 替换原文件中的内容 | 详见 |
+|----------|----------------|------|
+| `shared/references/breakpoint-recovery-base.md` | 三步骤协议 | 一致性校验（git HEAD / 分支 / worktree）+ 搁置时长阈值（1h/24h）+ 状态定位规则 |
+| `shared/references/atomic-write-spec.md` | 6 类错误分类中的"状态文件损坏"类 | tempfile + os.replace 原子写保证 |
+| `shared/references/state-protocol-base.md` | 5 状态机定义 | planning → in_progress → completed/failed/paused |
+
+**本文件保留的编排层特有内容**：
+- 任务树级范围（vs loop 的轮次级）
+- 6 类错误分类重试策略
+- git_head_before 原子性回滚机制
+- 跨子任务并发检测
+
+**向后兼容**：本文件原有内容**全部保留**，共享 spec 是**增量引用**而非修改。

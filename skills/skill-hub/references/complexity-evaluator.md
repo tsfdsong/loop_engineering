@@ -41,7 +41,7 @@ def evaluate_complexity(user_input: str, intent_vector: list[str]) -> TaskType:
 2. 规则无匹配：意图向量 ≥2 但未命中任何复合模式
 3. 用户显式怀疑：用 `/clarify` 前缀请求 LLM 解释为何选/不选某个类型
 
-**LLM 验证的硬约束**：
+**LLM 验证的硬约束**（在 composite-task-types.md 和 orchestrator-protocol.md 同样引用）：
 - 必须列出 Top-2 候选让用户选（防御 LLM 自评盲点）
 - 不允许 LLM 单独决定
 - 验证成本计入 token 预算
@@ -50,4 +50,4 @@ def evaluate_complexity(user_input: str, intent_vector: list[str]) -> TaskType:
 
 - 规则判定：< 1ms（纯字符串匹配）
 - LLM 验证：< 2k token（只输出 Top-2 候选 + 理由）
-- 总开销：相对 v5.4 增加 < 5%
+- 总开销：相对 v5.4 增加 < 5%（**注**：alpha 阶段为设计目标，未实际测量）

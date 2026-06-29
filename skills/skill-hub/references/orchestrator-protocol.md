@@ -42,11 +42,13 @@ parallel_execution:
 
 ```yaml
 stop_conditions:
-  max_steps: 5  # 防复合任务无限展开
-  max_duration_minutes: 10  # 防 hang 住
-  consecutive_identical_intents: 2  # 连续 2 步意图相同则中止
+  max_steps: 5  # 防复合任务无限展开 → 触发 stop_reason: step_limit_exceeded
+  max_duration_minutes: 10  # 防 hang 住 → 触发 stop_reason: timeout
+  consecutive_identical_intents: 2  # 连续 2 步意图相同则中止 → 触发 stop_reason: loop_detected
   required_verification: verification-before-completion  # 每步必须验证
 ```
+
+> `stop_reason` enum 完整定义见 `trace-format.md`：`completed / timeout / loop_detected / user_abort / user_decision_required / token_limit_exceeded / step_limit_exceeded / skill_failed`。
 
 **中止后行为**：
 1. 抛出结构化错误：`{trace_id, completed_steps, remaining_steps, stop_reason}`

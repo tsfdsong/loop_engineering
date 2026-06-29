@@ -490,7 +490,7 @@ except Exception as e:
     #   导致 v5.4 旧版 skill-hub 遮蔽 CLI 缓存里的 v6.0 新版。
     # 治本：把 skills/ 同步到 ~/.agents/skills/，让 ZCode 直接从此路径加载最新技能。
     AGENTS_SKILLS_DIR="$HOME/.agents/skills"
-    ZCODE_SKILLS_SRC="$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/$VERSION/skills"
+    ZCODE_SKILLS_SRC="$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/$ZCODE_VERSION/skills"
     if [ -d "$ZCODE_SKILLS_SRC" ]; then
         echo -e "  ${CYAN}▶  同步 skills 到 ~/.agents/skills/ 优先路径...${RESET}"
         mkdir -p "$AGENTS_SKILLS_DIR"
@@ -508,6 +508,49 @@ except Exception as e:
         fi
     else
         echo -e "  ${YELLOW}ℹ️${RESET}  未找到 CLI 缓存 skills 目录: $ZCODE_SKILLS_SRC，跳过 ~/.agents/skills/ 同步"
+    fi
+
+    # Step 11: CLI 缓存完整性检查（2026-06-29 新增，防御 ZCode 重写 marketplace.json 导致 MCP 丢失）
+    echo -e "  ${CYAN}▶  CLI 缓存完整性检查...${RESET}"
+    CACHE_OK=1
+    # 11.1 验证 .zcode-plugin/plugin.json 存在且含 mcpServers
+    if [ ! -f "$ZCODE_CACHE_DIR/.zcode-plugin/plugin.json" ]; then
+        echo -e "  ${RED}❌${RESET}  缺少 .zcode-plugin/plugin.json（ZCode 无法加载 MCP）"
+        CACHE_OK=0
+    elif ! grep -q '"mcpServers"' "$ZCODE_CACHE_DIR/.zcode-plugin/plugin.json" 2>/dev/null; then
+        echo -e "  ${RED}❌${RESET}  .zcode-plugin/plugin.json 缺 mcpServers 字段"
+        CACHE_OK=0
+    else
+        echo -e "  ${GREEN}✅${RESET}  plugin.json 含 mcpServers（MCP 可被 ZCode 加载）"
+    fi
+    # 11.2 验证关键技能目录存在
+    CRITICAL_SKILLS=("skill-hub" "go" "loop" "system-review" "using-loopengine")
+    MISSING=()
+    for s in "${CRITICAL_SKILLS[@]}"; do
+        [ ! -d "$ZCODE_CACHE_DIR/skills/$s" ] && MISSING+=("$s")
+    done
+    if [ ${#MISSING[@]} -eq 0 ]; then
+        echo -e "  ${GREEN}✅${RESET}  关键技能目录完整（5/5）"
+    else
+        echo -e "  ${RED}❌${RESET}  关键技能缺失: ${MISSING[*]}"
+        CACHE_OK=0
+    fi
+    # 11.3 清理已知冗余（即便 rsync 已 exclude，防御历史残留）
+    for stale in .git .idea .vscode __pycache__ .DS_Store Thumbs.db; do
+        [ -e "$ZCODE_CACHE_DIR/$stale" ] && rm -rf "$ZCODE_CACHE_DIR/$stale" 2>/dev/null && \
+            echo -e "  ${YELLOW}🧹${RESET}  清理冗余: $stale"
+    done
+    # 11.4 验证 marketplace.json 注册
+    ZCODE_MARKET="$HOME/.zcode/cli/plugins/marketplaces/zcode-plugins-official/marketplace.json"
+    if [ -f "$ZCODE_MARKET" ] && grep -q '"name": "loopengine"' "$ZCODE_MARKET" 2>/dev/null; then
+        echo -e "  ${GREEN}✅${RESET}  marketplace.json 已注册 loopengine"
+    else
+        echo -e "  ${YELLOW}⚠️${RESET}   marketplace.json 未注册（ZCode 启动会重写，建议跑 zcode-mcp-ensure.sh）"
+    fi
+    if [ $CACHE_OK -eq 1 ]; then
+        echo -e "  ${GREEN}✅${RESET}  CLI 缓存完整性 ${GREEN}OK${RESET}"
+    else
+        echo -e "  ${YELLOW}⚠️${RESET}   CLI 缓存完整性 ${RED}FAIL${RESET}，建议手动跑: bash $SCRIPT_DIR/scripts/zcode-mcp-ensure.sh"
     fi
 
     echo -e "  ${GREEN}✅${RESET} ZCode 桌面版同步完成"

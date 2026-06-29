@@ -139,3 +139,23 @@ G1 是所有非纯文档任务的**强制前置**:
 1. docker-compose up -d <db> 起本地依赖
 2. 检查 Docker daemon → 尝试启动
 3. 失败 → 阻塞保护，告知用户，禁止继续声称验证通过
+
+---
+
+## 🔗 v6.1 共享引用
+
+> **v6.1 增强**：G9/G10 协作契约已抽取到 `shared/references/g9-g10-coordination.md`，与 go 技能共享。
+
+| 共享 spec | 替换原文件中的内容 | 详见 |
+|----------|----------------|------|
+| `shared/references/g9-g10-coordination.md` | G9（loop 内）/ G10（go 内）职责边界 | G9 = loop 单次提交审查 / G10 = go 累积分支审查 + 桥接模式（v6.1 opt-in） |
+
+**本文件保留的 loop 特有内容**：
+- G0-G8 单任务门禁定义
+- F1-F5 前端验证 4 阶段
+- 自愈 A/B/C/🎨 分级触发
+- stagnated/exhausted 终态处理
+
+**桥接说明**（v6.1 opt-in）：当 `LOOPENGINE_BRIDGES=alpha` 启用 + `loop` 命令带 `--reviewer=subagent-dd` 时，G9 可由 `subagent-dd` 的三阶段循环替代。详见 `shared/references/g9-g10-coordination.md`。
+
+**向后兼容**：本文件原有内容**全部保留**，共享 spec 是**增量引用**而非修改。

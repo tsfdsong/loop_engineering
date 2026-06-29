@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """
-复合任务识别测试
+复合任务识别测试（ALPHA MOCK · 规则模拟）
 
 目的：验证 Orchestrator 能正确识别 5 类复合任务。
 通过标准：100 个测试样本中识别准确率 ≥ 80%。
+
+⚠️ **ALPHA 阶段说明**：本测试基于规则关键词匹配（`COMPOSITE_KEYWORDS` 字典），
+   模拟 Orchestrator 的复合任务识别逻辑。样本量 25 正 + 5 负（alpha smoke），
+   未达到设计目标的 100 个。生产前需扩充样本量并对接真实 LLM 验证层。
 """
 import json
 from pathlib import Path

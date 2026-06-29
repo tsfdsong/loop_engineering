@@ -1,19 +1,29 @@
 """
-编排层状态管理模块 v4.0 — 线程安全 + Windows 文件锁
+编排层状态管理模块 v4.0 → v6.1 — 线程安全 + Windows 文件锁
 
 修复:
   - BUG #1: 并发线程竞态 → 加 threading.Lock
   - BUG #3: read-modify-write 竞态 → 原子更新操作
   - BUG #7: 断点续跑没有恢复分支 → 加分支检查
   - Windows os.replace 并发冲突 → 重试机制
+
+v6.1 改造:
+  - 原子写算法迁移到 shared/scripts/atomic_write.py（消除与 loop 重复）
+  - 本文件保留：threading.Lock + Windows 重试 + 业务逻辑封装
 """
 import json
 import os
-import tempfile
+import sys
 import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+
+# v6.1: 引入 shared 原子写函数（替代内联 tempfile + os.replace）
+_SHARED_SCRIPTS = Path(__file__).resolve().parents[2] / "shared" / "scripts"
+if str(_SHARED_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_SHARED_SCRIPTS))
+from atomic_write import atomic_write_json  # noqa: E402
 
 
 STATE_FILENAME = ".orchestrate-state.json"
@@ -67,23 +77,19 @@ def write_state(project_dir, state):
     """
     原子写入状态文件(检查点机制)。
     Windows 上 os.replace 可能被其他线程占用,加重试。
+
+    v6.1: 底层原子写算法迁移到 shared/scripts/atomic_write.py,
+    本函数保留编排层特有的 Windows 重试 + 业务逻辑封装。
     """
     state["updated_at"] = datetime.now(timezone.utc).isoformat()
     path = get_state_path(project_dir)
 
     for attempt in range(5):
         try:
-            fd, tmp = tempfile.mkstemp(dir=str(path.parent), suffix=".tmp")
-            with os.fdopen(fd, "w", encoding="utf-8") as f:
-                json.dump(state, f, ensure_ascii=False, indent=2)
-            os.replace(tmp, str(path))
+            atomic_write_json(str(path), state)
             return
         except (PermissionError, OSError):
             # Windows 上可能被其他线程占用,等待重试
-            try:
-                os.unlink(tmp)
-            except (OSError, UnboundLocalError):
-                pass
             if attempt < 4:
                 time.sleep(0.05 * (attempt + 1))
             else:

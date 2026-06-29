@@ -1,13 +1,16 @@
 ---
 name: skill-hub
-description: 技能调度中心 —— 根据用户意图自动路由到最合适的技能。v6.0 新增复合任务编排（Orchestrator 模式），可自动协同 2-3 个互补技能处理复杂多意图任务；v5.4 单技能路由完全保留。涵盖编码、架构、重构、测试、调试、API、安全、数据库、CI/CD、规划执行等领域。
+description: 技能调度中心 —— 根据用户意图自动路由到最合适的技能。v6.0 在 v5.4 之上新增复合任务编排（Orchestrator 模式 · alpha），可自动协同 2-3 个互补技能处理复杂多意图任务；v5.4 单技能路由行为 100% 兼容。涵盖编码、架构、重构、测试、调试、API、安全、数据库、CI/CD、规划执行等领域。
 metadata:
-  version: "6.0"
+  version: "6.1"
+  base_compat: "5.4"        # v5.4 输入输出行为 100% 兼容
+  base_compat_v6: "6.0"     # v6.0 复合任务编排行为 100% 兼容
   installed_skills: 53
   cross_plugin_skills: 1
   cross_plugin_refs: "skill-creator (官方 skill-creator 插件)"
-  purpose: auto-routing + composite-orchestration
-  v6_orchestrator: opt-in  # alpha 阶段需 LOOPENGINE_ORCHESTRATOR=alpha
+  purpose: auto-routing + composite-orchestration (opt-in) + cross-skill-bridge (opt-in)
+  orchestrator_env: "LOOPENGINE_ORCHESTRATOR=alpha 启用；=off 一键回滚"
+  bridges_env: "LOOPENGINE_BRIDGES=alpha 启用 subagent-dd 桥接；=disabled 默认关闭"
 ---
 
 # Skill Hub — 技能自动调度中心
@@ -16,14 +19,14 @@ metadata:
 
 ## 核心规则
 
-1. **🔴 MCP 红线（最高优先级）**：任何需要理解代码结构的操作（修改、调研、解释、分析架构、查找定义/引用），**必须先用 MCP 工具**，禁止直接 Read 全文件。唯一例外：MCP 不可用、文件 < 50 行、需精确行内容。连续 3 次违规视为红线事故。详见「🔴 MCP 代码理解工具（红线规则）」章节。
-2. **分析用户意图** → 匹配下方「意图→技能」映射表
-3. **调用 Skill 工具** → 加载匹配的**一个**技能
-4. **技能加载后** → 严格遵循该技能的指令
-5. **多种技能适用时** → 按「冲突裁决」规则选主技能，只加载一个
-6. **无匹配技能时** → 进入「语义兜底」规则（见底部）
-7. **遇到 Bug/报错** → 优先调 systematic-debugging
-8. **声称完成时** → 调 verification-before-completion
+0. **🔴 MCP 红线（最高优先级）** — 详见底部「🔴 MCP 代码理解工具」章节，三处重复强调防遗漏。
+1. **分析用户意图** → 匹配下方「意图→技能」映射表
+2. **调用 Skill 工具** → 加载匹配的**一个**技能
+3. **技能加载后** → 严格遵循该技能的指令
+4. **多种技能适用时** → 按「冲突裁决」规则选主技能，只加载一个
+5. **无匹配技能时** → 进入「语义兜底」规则（见底部）
+6. **遇到 Bug/报错** → 优先调 systematic-debugging
+7. **声称完成时** → 调 verification-before-completion
 
 ---
 
@@ -263,18 +266,19 @@ metadata:
 3. **含"修/改/更新/优化/改进/完善" + 具体对象** → `refactoring`（重构改进）
 4. **含"怎么/如何/为什么"** → `brainstorming`（探索性问题）
 5. **含"能不能/可不可以/是否"** → `brainstorming`（可行性分析）
-5. **以上都不匹配** → 直接执行，不强行调用
+6. **以上都不匹配** → 直接执行，不强行调用
 
 ## 关键指令
 
-1. **🔴 MCP 红线优先于一切**。任何理解代码的操作（修改、调研、解释、分析），必须先用 `get_repo_map` / `get_file_outline` / `search_symbols`，禁止直接 Read 全文件。连续 3 次违规 = 红线事故。
-2. **每次只加载一个技能**。
-3. **不要等用户说技能名**。用户说"这个函数太长了"，你就应该调用 `refactoring`。
-4. **遇到 Bug 优先调试**。第一反应是 `systematic-debugging`。
-5. **完成前必须验证**。用户说"修好了/完成了"，先调 `verification-before-completion`。
-6. **优先精准技能**。`api-security-best-practices` 优先于更宽泛的安全技能。
-7. **简洁告知**。加载技能时一句话说明为什么选它。
-8. **语义兜底优先**。关键词无匹配时，先用语义兜底规则判断，不要直接放弃。
+> **MCP 红线**：见底部「🔴 MCP 代码理解工具」章节（最高优先级，三处重复强调防遗漏）。
+
+1. **每次只加载一个技能**（除非显式 `/composite` 走 Orchestrator 串/并行链）。
+2. **不要等用户说技能名**。用户说"这个函数太长了"，你就应该调用 `refactoring`。
+3. **遇到 Bug 优先调试**。第一反应是 `systematic-debugging`。
+4. **完成前必须验证**。用户说"修好了/完成了"，先调 `verification-before-completion`。
+5. **优先精准技能**。`api-security-best-practices` 优先于更宽泛的安全技能。
+6. **简洁告知**。加载技能时一句话说明为什么选它。
+7. **语义兜底优先**。关键词无匹配时，先用语义兜底规则判断，不要直接放弃。
 
 **_这个技能是你与 53 个技能之间的桥梁。每次对话开始时自动参考此调度规则。_**
 
@@ -282,7 +286,8 @@ metadata:
 
 ## 🆕 v6.0 新增：复合任务编排（Orchestrator 模式 · alpha 阶段）
 
-> **本节为 v6.0 新增内容，alpha 阶段需显式启用。** v5.4 单技能路由完全保留，零变化。
+> **本节为 v6.0 新增内容，alpha 阶段需显式启用。** v5.4 单技能路由行为 100% 兼容（v5.4 输入输出 trace 一致，已通过 `tests/golden-traces/v54-baseline.json` 黄金轨迹回归测试）。
+> **当前实现状态**：alpha mock —— 设计文档完整，3 个测试脚本通过（composite-recognition 96.7% / orchestrator-execution 100% / failure-defenses 100%），但**真实编排引擎未实现**（测试均为规则模拟）。生产使用前需先实现真实 Orchestrator。
 
 ### 启用方式
 
@@ -296,13 +301,15 @@ export LOOPENGINE_ORCHESTRATOR=off
 
 ### 5 类复合任务自动识别
 
-| 任务类型 | 默认技能链 | 触发关键词 |
-|---------|----------|----------|
-| 调研+决策 | brainstorming → system-review → writing-plans | 调研 + 决策/选型/对比 |
-| 分析+建议 | system-review → brainstorming | 审查/分析 + 改进/建议 |
-| 诊断+修复 | systematic-debugging → verification-before-completion | 报错/Bug + 修复 |
-| 设计+实现 | brainstorming → writing-plans → executing-plans | 设计 + 实现/开发 |
-| 规划+并行 | subagent-driven-development | 并行/多任务 + 调研 |
+| 任务类型 | 默认技能链 | 编排方式 | 触发关键词 |
+|---------|----------|:--:|----------|
+| 调研+决策 | brainstorming → system-review → writing-plans | 串行 | 调研 + 决策/选型/对比 |
+| 分析+建议 | system-review → brainstorming | 串行 | 审查/分析 + 改进/建议 |
+| 诊断+修复 | systematic-debugging → verification-before-completion | 串行 | 报错/Bug + 修复 |
+| 设计+实现 | brainstorming → writing-plans → executing-plans | 串行 | 设计 + 实现/开发 |
+| 规划+并行 | subagent-driven-development | **并行** | 并行/多任务 + 调研 |
+
+> 规划+并行类复用 `subagent-driven-development` 技能作为并行执行器，不再额外引入 `dispatching-parallel-agents`（避免职责重叠）。
 
 ### 显式触发
 
@@ -329,3 +336,142 @@ export LOOPENGINE_ORCHESTRATOR=off
 ```
 
 回滚不影响：53 个 SKILL.md / MCP 集成 / 已安装功能。
+
+---
+
+## 🆕 v6.1 新增：三技能协同契约（go / loop / subagent-dd）
+
+> **本节为 v6.1 新增内容，alpha 阶段需显式启用。** v5.4 单技能路由 100% 兼容，v6.0 复合任务 5 类表 100% 兼容。
+> **核心目的**：在 v6.0 复合任务编排基础上，显式建模 go（编排层）/ loop（执行层）/ subagent-dd（平行范式）三者的调用边界与桥接模式。
+
+### 启用方式
+
+```bash
+# 默认（不启用桥接）
+export LOOPENGINE_BRIDGES=disabled    # 默认值
+
+# 启用桥接（alpha）
+export LOOPENGINE_BRIDGES=alpha       # 加载 subagent-dd 桥接组件
+```
+
+### 三技能定位（不可替代）
+
+| 技能 | 抽象层 | 核心能力 | 不可替代点 |
+|------|--------|---------|----------|
+| **`go`** v4.0 | 编排层 | 多任务拆分 + DAG + worktree 真并发 + 全局回归 | 唯一具备真并发 + 跨模块集成 |
+| **`loop`** v4.1 | 执行层 | 单任务闭环 + 自动化门禁 + 自愈 A/B/C/🎨 | 唯一带自动自愈分级 + 经验库 |
+| **`subagent-driven-development`** | 平行执行范式 | 多任务串行 + 人工子代理双阶段审查 | 唯一具备"spec ✅ → code quality"强顺序 + TDD 强制 |
+
+**铁律**：三者**不互相替代**，调度时按下文决策树选型。
+
+### 协同决策树
+
+```
+收到任务
+  │
+  ├─ 有现成 writing-plans 计划？
+  │   ├─ 是 → subagent-driven-development
+  │   └─ 否 ↓
+  │
+  ├─ 跨模块 / 需要 DAG / 需要 worktree 真并发？
+  │   ├─ 是 → go
+  │   │       └─ 默认调 loop --auto 执行子任务
+  │   │       └─ 可选 --reviewer=subagent-dd 增强 G10
+  │   └─ 否 ↓
+  │
+  ├─ 端到端单任务闭环 + 自动化门禁 + 自愈？
+  │   ├─ 是 → loop
+  │   │       └─ 默认走 --default 模式（自适应 L1/L2/L3）
+  │   │       └─ 可选 --reviewer=subagent-dd 增强 G9
+  │   └─ 否 ↓
+  │
+  └─ 临时多问题域并行调研（无 plan）？
+      └─ 是 → dispatching-parallel-agents
+```
+
+### 调用边界（硬约束）
+
+**go → loop 单向调用**：
+- `go` Step ⑤ 调度子任务 → 每个 worktree 内调 `loop --auto`
+- `loop` 在 `go` worktree 内执行，**不创建嵌套 worktree**
+- `loop` 不重复 `go` 的 6 维度需求分析
+- `loop` **不**重复调 `system-review`（G10 在 go Step ⑦.5 一次性触发）
+
+**subagent-dd 平行范式**：
+- `subagent-dd` **仅在主会话层级**调用
+- 派发的 subagent **不**再触发 Orchestrator 路径
+- `subagent-dd` **不**与 `dispatching-parallel-agents` 互触发
+
+**subagent-dd vs dispatching-parallel-agents 边界**：
+- 有现成 plan → `subagent-driven-development`
+- 临时多问题域并行调研 → `dispatching-parallel-agents`
+- 冲突时：`subagent-dd` 主导，`dispatching-parallel-agents` 不触发
+
+### 状态协议共享（双轨制 + 共享 spec）
+
+| 状态文件 | 抽象层 | 负责技能 | 存放位置 |
+|---------|--------|---------|---------|
+| `.orchestrate-state.json` | 宏观（任务树） | go | 项目根目录 |
+| `.loop-state-<slug>.json` | 微观（单任务） | loop | worktree 内 |
+
+**双轨制铁律**：两份状态文件**不合并**（合并破坏分层），但**共享 owner/原子写/断点恢复规范**（详见 `skills/shared/references/`）。
+
+### 桥接模式（v6.1 核心新增 · opt-in）
+
+**go G10 桥接**（Step ⑦.5 系统审查）：
+```bash
+# 默认（v6.1 行为不变）
+/go 实现订单管理功能
+  └─ G10 = system-review 审查整特性分支
+
+# 启用桥接
+LOOPENGINE_BRIDGES=alpha /go --reviewer=subagent-dd 实现订单管理功能
+  └─ G10 = subagent-dd final reviewer（3 层问题分级）
+```
+
+**loop G9 桥接**（commit 前代码审查）：
+```bash
+# 默认（v6.1 行为不变）
+/loop 实现分页功能
+  └─ G9 = code-reviewer 审查单次提交
+
+# 启用桥接
+LOOPENGINE_BRIDGES=alpha /loop --reviewer=subagent-dd 实现分页功能
+  └─ G9 = subagent-dd 三阶段循环
+       （implementer → spec reviewer → code quality reviewer）
+```
+
+**6 个桥接契约**（`subagent-driven-development/bridges/contract.py`）：
+1. `dispatch_implementer` — 派遣实现者（4 状态枚举）
+2. `dispatch_spec_reviewer` — 派遣规格审查（二元 ✅/❌）
+3. `dispatch_code_quality_reviewer` — 派遣质量审查（3 层 Issues）
+4. `model_select` — 模型选型信号
+5. `handle_implementer_status` — 4 状态应对动作
+6. `review_gate` — 强顺序约束（spec ✅ → code quality）
+
+### 补全冲突裁决句式（v6.1 增强）
+
+| 重叠组 | 裁决句式 |
+|--------|---------|
+| **API 开发** | "设计 API 形态" → `api-design-principles`；"写 API 文档" → `api-documentation-generator`；"API 安全审查" → `api-security-best-practices` |
+| **技能管理** | "调度技能" → `skill-hub`；"路由到具体技能" → `skill-router`；"发布到市场" → `skill-publisher`；"新建技能" → `skill-creator` |
+| **工具类** | "浏览器操作" → `agent-browser`；"修 bug" → `systematic-debugging`；"验证完成" → `verification-before-completion` |
+| **审查类** | "审查项目/架构/系统" → `system-review`；"审查单文件/单 PR" → `code-reviewer` |
+| **规划与执行** | "需求探索" → `brainstorming`；"写实现计划" → `writing-plans`；"执行计划（多任务串行 + 双审）" → `subagent-driven-development`；"执行计划（跨会话）" → `executing-plans`；"临时问题域分头调研" → `dispatching-parallel-agents` |
+| **产品管理** | "产品定位/路线图" → `product-manager`；"写 PRD 文档" → `to-prd` |
+
+### 详细规范
+
+- 三技能调用契约 → `references/skill-relationships.md`
+- 共享基础设施 → `skills/shared/references/`
+- 桥接组件 → `subagent-driven-development/bridges/contract.py`
+
+### 一键回滚
+
+任何时候可关闭桥接回退到 v6.0（Orchestrator 仍可用）：
+
+```bash
+export LOOPENGINE_BRIDGES=disabled
+```
+
+回滚不影响：v5.4 单技能路由 / v6.0 复合任务 / MCP 集成 / 已安装功能。

@@ -131,6 +131,39 @@ if [ -n "$ZCODE_PACKAGES_DIR" ] || [ -d "$ZCODE_CACHE_DIR" ]; then
         echo -e "  ${YELLOW}ℹ️${RESET}  未找到 CLI 缓存 skills 目录: $ZCODE_CACHE_DIR/skills，跳过 ~/.agents/skills/ 同步"
     fi
 
+    # Step 7: CLI 缓存完整性检查（2026-06-29 新增）
+    echo -e "  ${CYAN}▶  CLI 缓存完整性检查...${RESET}"
+    CACHE_OK=1
+    if [ ! -f "$ZCODE_CACHE_DIR/.zcode-plugin/plugin.json" ]; then
+        echo -e "  ${RED}❌${RESET}  缺少 .zcode-plugin/plugin.json（ZCode 无法加载 MCP）"
+        CACHE_OK=0
+    elif ! grep -q '"mcpServers"' "$ZCODE_CACHE_DIR/.zcode-plugin/plugin.json" 2>/dev/null; then
+        echo -e "  ${RED}❌${RESET}  .zcode-plugin/plugin.json 缺 mcpServers 字段"
+        CACHE_OK=0
+    else
+        echo -e "  ${GREEN}✅${RESET}  plugin.json 含 mcpServers"
+    fi
+    CRITICAL_SKILLS=("skill-hub" "go" "loop" "system-review" "using-loopengine")
+    MISSING=()
+    for s in "${CRITICAL_SKILLS[@]}"; do
+        [ ! -d "$ZCODE_CACHE_DIR/skills/$s" ] && MISSING+=("$s")
+    done
+    if [ ${#MISSING[@]} -eq 0 ]; then
+        echo -e "  ${GREEN}✅${RESET}  关键技能目录完整（5/5）"
+    else
+        echo -e "  ${RED}❌${RESET}  关键技能缺失: ${MISSING[*]}"
+        CACHE_OK=0
+    fi
+    for stale in .git .idea .vscode __pycache__ .DS_Store Thumbs.db; do
+        [ -e "$ZCODE_CACHE_DIR/$stale" ] && rm -rf "$ZCODE_CACHE_DIR/$stale" 2>/dev/null && \
+            echo -e "  ${YELLOW}🧹${RESET}  清理冗余: $stale"
+    done
+    if [ $CACHE_OK -eq 1 ]; then
+        echo -e "  ${GREEN}✅${RESET}  CLI 缓存完整性 ${GREEN}OK${RESET}"
+    else
+        echo -e "  ${YELLOW}⚠️${RESET}   CLI 缓存完整性 ${RED}FAIL${RESET}，建议跑: bash $SCRIPT_DIR/scripts/zcode-mcp-ensure.sh"
+    fi
+
     echo -e "  ${GREEN}✅${RESET} ZCode 桌面版更新完成"
     echo -e "  ${YELLOW}⚠️${RESET} 请重启 ZCode 桌面版使更新生效"
     echo -e "  ${YELLOW}💡${RESET}  重启后若 MCP 工具仍消失，跑: bash $SCRIPT_DIR/scripts/zcode-mcp-ensure.sh"

@@ -130,3 +130,21 @@ def write_state(state, path):
 - loop 在 go 提供的 worktree 目录内创建 `.loop-state`
 - worktree 清理时,`.loop-state` 自动随目录消失
 - 编排层只读取宏观状态,不碰微观状态
+
+---
+
+## 🔗 v6.1 共享引用
+
+> **v6.1 增强**：本文件中的 owner 字段定义、原子写算法、断点恢复协议已抽取到 `skills/shared/references/`，消除与 loop 技能的字段定义重复。
+
+| 共享 spec | 替换原文件中的内容 | 详见 |
+|----------|----------------|------|
+| `shared/references/owner-field-spec.md` | 第 89 行（owner 字段描述）+ 第 120-122 行（并发检测规则） | owner 字段结构 `{pid, session_id, heartbeat, started_at}` + 5/30/24h 判定阈值 |
+| `shared/references/atomic-write-spec.md` | 第 100-108 行（原子写伪代码） | tempfile + os.replace 算法 + 异常处理 |
+| `shared/references/state-protocol-base.md` | 第 17-25 行（状态机定义）+ 第 32-35 行（通用字段） | 5 状态机（planning/in_progress/completed/failed/paused）+ 通用字段（id/feature/status/owner/decision_log） |
+| `shared/references/breakpoint-recovery-base.md` | `breakpoint-recovery.md` 全文 | 三步骤协议（一致性校验 → 搁置时长 → 状态定位） |
+| `shared/references/g9-g10-coordination.md` | SKILL.md 第 32 行（G9/G10 职责） | G9 = loop 单次提交审查 / G10 = go 累积分支审查 |
+
+**Python 实现**：`scripts/state_manager.py` 已迁移到 `shared/scripts/atomic_write.py`（v6.1 改造完成，API 100% 兼容）。
+
+**向后兼容**：本文件原有内容**全部保留**，共享 spec 是**增量引用**而非修改。

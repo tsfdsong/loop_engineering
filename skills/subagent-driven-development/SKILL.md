@@ -1,6 +1,12 @@
 ---
 name: subagent-driven-development
 description: Use when executing implementation plans with independent tasks in the current session
+metadata:
+  version: "1.0"  # v6.1 增强：新增 bridgeable 能力
+  type: skill
+  mode: bridgeable  # v6.1 新增：可被 go/loop 通过 bridges/contract.py 桥接
+  bridgeable_contracts: 6  # 6 个核心桥接函数
+  bridge_env: "LOOPENGINE_BRIDGES=alpha 启用桥接"
 ---
 
 # Subagent-Driven Development
@@ -277,3 +283,59 @@ Done!
 
 **Alternative workflow:**
 - **superpowers:executing-plans** - Use for parallel session instead of same-session execution
+
+---
+
+## 🆕 v6.1 增强：可桥接组件（Bridgeable Components · opt-in）
+
+> **本节为 v6.1 新增内容，opt-in 启用。** 默认情况下，subagent-dd 仍按上述"任务循环 + 双阶段审查"模式独立运行；启用桥接时，go / loop 可通过 `bridges/contract.py` 调用 subagent-dd 的 6 个核心契约作为 G9/G10 的增强实现。
+
+### 灰度开关
+
+```bash
+# 默认（不启用）
+export LOOPENGINE_BRIDGES=disabled    # 默认值，不加载 bridges/
+
+# 启用桥接（alpha）
+export LOOPENGINE_BRIDGES=alpha       # 允许 go/loop 通过 bridges/contract.py 调用
+```
+
+### 6 个桥接契约
+
+| 桥接函数 | 对应章节 | 用途 |
+|---------|---------|------|
+| `dispatch_implementer` | `Your Job`（implementer-prompt.md） | 派遣 implementer subagent，返回 4 状态枚举 |
+| `dispatch_spec_reviewer` | `What Was Requested`（spec-reviewer-prompt.md） | 派遣 spec reviewer，返回 ✅/❌ + file:line |
+| `dispatch_code_quality_reviewer` | `DESCRIPTION`（code-quality-reviewer-prompt.md） | 派遣 code quality reviewer，返回 3 层 Issues |
+| `model_select` | `Model Selection` | 信号→模型档位映射 |
+| `handle_implementer_status` | `Handling Implementer Status` | 4 状态应对动作状态机 |
+| `review_gate` | `Red Flags` | 强顺序约束：spec ✅ → code quality |
+
+### 与 go / loop 的集成
+
+**go G10 桥接**（Step ⑦.5 系统审查）：
+```bash
+LOOPENGINE_BRIDGES=alpha /go --reviewer=subagent-dd 实现订单管理功能
+  └─ G10 = bridges/dispatch_code_quality_reviewer 审查整特性分支
+```
+
+**loop G9 桥接**（commit 前代码审查）：
+```bash
+LOOPENGINE_BRIDGES=alpha /loop --reviewer=subagent-dd 实现分页功能
+  └─ G9 = bridges 三阶段循环
+       （implementer → spec → code quality）
+```
+
+### 详细规范
+
+- 桥接组件总览 → `bridges/README.md`
+- 6 个桥接函数契约 → `bridges/contract.py`
+- 集成模式 + 失败降级 → `bridges/dispatcher.md`
+- loop G9 启用示例 → `bridges/examples/loop-g9-with-bridge.md`
+
+### 兼容性承诺
+
+- ✅ **3 个 prompt template 不动**（implementer / spec-reviewer / code-quality-reviewer）
+- ✅ **默认（disabled）行为 100% 不变**——任务循环 + 双阶段审查照常运行
+- ✅ **桥接失败自动降级**到原 G9/G10，不报错中断
+- ✅ v5.4 / v6.0 完全兼容

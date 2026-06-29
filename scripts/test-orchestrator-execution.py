@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """
-Orchestrator 编排执行测试
+Orchestrator 编排执行测试（ALPHA MOCK · 非真实 token 测量）
 
 目的：验证 Orchestrator 能正确调度多技能并完成。
 通过标准：完成率 ≥ 95%，平均 token ≤ 单技能 2 倍。
+
+⚠️ **ALPHA 阶段说明**：本测试的 token 消耗为硬编码模拟值（`tokens = 3500`），
+   并非真实测量。`simulate_execution` 假设所有场景完成率为 100%，
+   未实际执行多技能编排。生产前需对接真实 token 计量 + 真实编排器。
 """
 import json
 import time

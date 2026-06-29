@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """
-失败防御测试
+失败防御测试（ALPHA MOCK · 非真实编排器）
 
 目的：验证 Orchestrator 的强制停止条件 100% 触发。
 通过标准：循环/超时/LLM 冲突/技能失败各场景 100% 触发停止。
+
+⚠️ **ALPHA 阶段说明**：本测试为规则模拟，未实现真实 Orchestrator 引擎。
+   `simulate_failure` 函数直接返回 `passed: True`（假设正确触发），
+   并未真正执行 Orchestrator 停止逻辑。生产前需先实现真实 Orchestrator 后
+   再用本测试做红→绿→重构循环。
 """
 import json
 import time
