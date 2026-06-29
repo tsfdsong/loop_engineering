@@ -7,8 +7,8 @@
 ## 发布前（必须全部 ✅）
 
 - [x] 4 个 references 文件完整（composite-task-types / complexity-evaluator / orchestrator-protocol / trace-format）
-- [x] 3 个测试脚本通过（composite-recognition / orchestrator-execution / failure-defenses）
-- [x] v5.4 SKILL.md 备份存在（skills/skill-hub/SKILL.md.v5.4.backup）—— 保留作为防护
+- [x] ~~3 个测试脚本通过（composite-recognition / orchestrator-execution / failure-defenses）~~（v6.1.1 已删除 — ALPHA MOCK 验证阶段）
+- [x] ~~v5.4 SKILL.md 备份存在（skills/skill-hub/SKILL.md.v5.4.backup）~~（v6.1.1 已删除 — 黄金轨迹 + base_compat 仍保留）
 - [x] ~~迁移指南完成（docs/migration-guide-v5-to-v6.md）~~（v6.1.1 已删除 — 历史归档）
 - [x] README.md 更新（添加 v6.0 章节）
 - [x] 设计 + 计划文档完整
