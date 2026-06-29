@@ -47,19 +47,11 @@ def test_references_exist():
     print(f"✅ test_references_exist ({len(expected)} 份全部存在)")
 
 
-def test_examples_exist():
-    """2 个 example 案例全部存在"""
-    expected = [
-        "bad-v54-compat-answer.md",
-        "good-v54-compat-answer.md",
-    ]
+def test_examples_dir_removed():
+    """v6.3 清理：examples/ 目录已删除（事故案例随 v5.4 遗留清除）"""
     examples_dir = SKILL_DIR / "examples"
-    assert examples_dir.exists(), f"examples/ 应存在: {examples_dir}"
-
-    for ex in expected:
-        path = examples_dir / ex
-        assert path.exists(), f"应存在: {ex}"
-    print(f"✅ test_examples_exist ({len(expected)} 个案例全部存在)")
+    assert not examples_dir.exists(), f"v6.3 后 examples/ 应不存在: {examples_dir}"
+    print("✅ test_examples_dir_removed (v6.3 清理：examples/ 已删除)")
 
 
 # ===== 文档内容测试 =====
@@ -133,34 +125,12 @@ def test_traceability_doc_has_chain():
     print("✅ test_traceability_doc_has_chain")
 
 
-# ===== Examples 内容测试 =====
+# ===== Examples 内容测试（v6.3 清理后已删除）=====
 
-def test_bad_example_marks_mistakes():
-    """坏案例应标记错误点"""
-    content = (SKILL_DIR / "examples" / "bad-v54-compat-answer.md").read_text(encoding="utf-8")
-    # 应含错误分析
-    for keyword in ["错误 1", "错误 2", "错误 3", "用户纠正", "教训"]:
-        assert keyword in content, f"坏案例应含「{keyword}」"
-    print("✅ test_bad_example_marks_mistakes")
-
-
-def test_good_example_uses_evidence_first():
-    """好案例应使用 evidence-first 协议"""
-    content = (SKILL_DIR / "examples" / "good-v54-compat-answer.md").read_text(encoding="utf-8")
-    # 关键 section
-    for keyword in ["事实清单", "自检 4 问", "[F]", "[H]", "[P]", "追溯链", "我不清楚"]:
-        assert keyword in content, f"好案例应含「{keyword}」"
-    print("✅ test_good_example_uses_evidence_first")
-
-
-def test_good_example_has_at_least_4_facts():
-    """好案例应至少含 4 个 [F] 事实"""
-    content = (SKILL_DIR / "examples" / "good-v54-compat-answer.md").read_text(encoding="utf-8")
-    # 统计 [F] 出现次数
-    f_count = content.count("[F]")
-    # 至少 4 个 [F]（事实清单 + 结论中各 4 个）
-    assert f_count >= 4, f"好案例应至少 4 个 [F]，实际 {f_count}"
-    print(f"✅ test_good_example_has_at_least_4_facts ({f_count} 个 [F])")
+def test_examples_removed_v63():
+    """v6.3 清理：examples/ 内容测试已移除（事故案例随 v5.4 遗留清除）"""
+    # 此测试仅作占位，证明 examples 内容测试已删除
+    print("✅ test_examples_removed_v63 (v6.3 清理：examples 内容测试已删除)")
 
 
 # ===== 黄金轨迹测试 =====
@@ -247,7 +217,7 @@ def run_all():
         # 文件存在性
         test_skill_md_exists,
         test_references_exist,
-        test_examples_exist,
+        test_examples_dir_removed,
         # 文档内容
         test_skill_md_has_origin,
         test_skill_md_has_5_facts,
@@ -257,10 +227,8 @@ def run_all():
         test_self_check_doc_has_4_questions,
         test_no_hallucination_doc_has_rules,
         test_traceability_doc_has_chain,
-        # Examples
-        test_bad_example_marks_mistakes,
-        test_good_example_uses_evidence_first,
-        test_good_example_has_at_least_4_facts,
+        # Examples（v6.3 清理后已删除）
+        test_examples_removed_v63,
         # 黄金轨迹
         test_golden_trace_exists,
         test_golden_trace_categories,

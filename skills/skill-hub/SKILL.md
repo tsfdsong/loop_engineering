@@ -1,16 +1,17 @@
 ---
 name: skill-hub
-description: 技能调度中心 —— 根据用户意图自动路由到最合适的技能。v6.2.1 回滚合并 8（loop + loop-library），恢复 loop 自研核心技能；v6.2 其他 7 组合并保留（api-development/testing/production-readiness/software-architecture/refactoring 扩展/clean-code 扩展/code-engineering）；v5.4 / v6.0 / v6.1 行为 100% 兼容。
+description: 技能调度中心 —— 根据用户意图自动路由到最合适的技能。v6.2 合并 7 组 + v6.2.1 回滚合并 8（保留 loop 自研核心，删除 loop-library）。v6.3 清理 v5.4/v6.0/v6.1 旧版本遗留，无向下兼容层。
 metadata:
-  version: "6.2.1"
-  base_compat: "5.4"        # v5.4 输入输出行为 100% 兼容
-  base_compat_v6: "6.0"     # v6.0 复合任务编排行为 100% 兼容
-  base_compat_v6_1: "6.1"   # v6.1 合并行为 100% 兼容
+  version: "6.3"
   installed_skills: 36
-  shared_dirs: ["shared"]   # v6.1 抽取的共享基础设施目录，不计入 installed_skills
   skill_count_note: |
-    installed_skills: 36 = v6.1 (45) - v6.2 合并删除 (7) + v6.2.1 回滚合并 8 (1) - 36。
+    installed_skills: 36 = v6.1 (45) - v6.2 合并删除 (7) + v6.2.1 回滚合并 8 (1)。
     skills/ 目录实际条目数 = 38（36 个技能 + shared/ + skill-hub/ 自身）。
+    v6.3 清理 v5.4/v6.0/v6.1 旧版本遗留：
+      - v5.4 黄金轨迹 / 事故案例 / 兼容性字段 已删除
+      - v6.0 references（5 个 Orchestrator 文件）已删除
+      - v6.1 shared/ 共享基础设施 + bridges/ 桥接组件 已删除
+      - 测试 test-bridges.py + test-shared-modules.py 已删除
     v6.2.1 回滚（commit rollback/merge-8）：
       - loop + loop-library → loop-engineering → 回滚为 loop（+1）
       - loop-library（superpowers）彻底废弃删除
