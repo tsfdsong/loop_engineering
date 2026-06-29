@@ -1,7 +1,7 @@
 {
   "name": "loopengine",
   "version": "1.0.1",
-  "description": "LoopEngine — 循环工程全家桶：loop闭环编码 + go全自动编排 + skill-hub 53技能智能调度",
+  "description": "LoopEngine — 循环工程全家桶：loop闭环编码 + go全自动编排 + skill-hub 45技能智能调度（v6.1.1 合并后）",
   "author": {
     "name": "tsfdsong"
   },
@@ -24,8 +24,8 @@
   "hooks": "./hooks/hooks-codex.json",
   "interface": {
     "displayName": "LoopEngine",
-    "shortDescription": "Loop闭环编码 + go全自动编排 + 53技能智能调度",
-    "longDescription": "LoopEngine 是开发引擎全家桶：/loop 闭环编码自动完成需求→计划→门禁→自愈→交付全流程；/go 全自动多工具编排；skill-hub 根据意图自动从56个技能中调度最精准的一个。涵盖编码、架构、重构、测试、调试、API、安全、数据库、CI/CD等全领域。",
+    "shortDescription": "Loop闭环编码 + go全自动编排 + 45技能智能调度",
+    "longDescription": "LoopEngine 是开发引擎全家桶：/loop 闭环编码自动完成需求→计划→门禁→自愈→交付全流程；/go 全自动多工具编排；skill-hub 根据意图自动从 45 个技能（v6.1.1 合并后）中调度最精准的一个。涵盖编码、架构、重构、测试、调试、API、安全、数据库、CI/CD等全领域。",
     "developerName": "tsfdsong",
     "category": "Coding",
     "capabilities": [

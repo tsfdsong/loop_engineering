@@ -1,6 +1,6 @@
 ---
 name: dispatching-parallel-agents
-description: Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies
+description: "Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies. **前置条件：无现成 plan，临时多问题域并行调研**（每问题域派一个 agent，无强顺序、无双阶段审查）。**有现成 writing-plans 计划 → subagent-driven-development**。"
 ---
 
 # Dispatching Parallel Agents

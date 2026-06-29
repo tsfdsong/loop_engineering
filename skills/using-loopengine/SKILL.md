@@ -43,7 +43,7 @@ description: Use when users are new to LoopEngine or need guidance on how the lo
 自动：递归拆解任务 → 并发调度 ZCode → 闭环执行每个子任务 → 汇总 → 交付。你只需要描述大目标。
 
 ### skill-hub — 智能路由（自动生效）
-不需要手动调用。收到任何任务后，skill-hub 自动从 52 个技能中匹配最精准的一个。例如：
+不需要手动调用。收到任何任务后，skill-hub 自动从 **45 个技能**（v6.1.1 合并后）中匹配最精准的一个。例如：
 - 你说"这个类太大了" → 自动加载 `refactoring`
 - 你说"设计 API 接口" → 自动加载 `api-design-principles`
 - 你说"报错了" → 自动加载 `systematic-debugging`
@@ -52,14 +52,14 @@ description: Use when users are new to LoopEngine or need guidance on how the lo
 
 | 分类 | 数量 | 典型技能 |
 |------|------|---------|
-| 代码编写 | 5 | clean-code, code-quality-principles |
-| 架构设计 | 7 | clean-architecture, domain-driven-design |
-| 重构 | 4 | refactoring, legacy-code |
+| 代码质量 | 3 | clean-code（**合并**: + code-complete + code-quality-principles） |
+| 架构设计 | 4 | clean-architecture, domain-driven-design（**合并**: + ddd-distilled + ddd-tactical-patterns + implementing-ddd） |
+| 重构 | 3 | refactoring（**合并**: + refactoring-guru）, legacy-code |
 | 测试 | 3 | test-driven-development, e2e-testing-patterns |
 | 调试 | 1 | systematic-debugging |
 | API/安全 | 4 | api-design-principles, api-security-best-practices |
 | 文档 | 3 | code-documentation-doc-generate, docx¹, pdf¹ |
-| 代码审查 | 3 | code-reviewer, requesting-code-review |
+| 代码审查 | 1 | code-reviewer（**合并**: + requesting-code-review + receiving-code-review） |
 | 工程流程 | 7 | github-actions-templates, using-git-worktrees |
 | 规划执行 | 5 | brainstorming, writing-plans |
 | 产品管理 | 2 | product-manager, to-prd |

@@ -5,7 +5,16 @@ metadata:
   version: "6.1"
   base_compat: "5.4"        # v5.4 输入输出行为 100% 兼容
   base_compat_v6: "6.0"     # v6.0 复合任务编排行为 100% 兼容
-  installed_skills: 53
+  installed_skills: 45
+  shared_dirs: ["shared"]   # v6.1 抽取的共享基础设施目录，不计入 installed_skills
+  skill_count_note: |
+    installed_skills: 45 = v6.1.0 (53) - v6.1.1 合并删除 (8)。
+    skills/ 目录实际条目数 = 47（45 个技能 + shared/ + skill-hub/ 自身）。
+    v6.1.1 合并明细：
+      - refactoring-guru → refactoring (-1)
+      - ddd-distilled + implementing-ddd + ddd-tactical-patterns → domain-driven-design (-3)
+      - code-complete + code-quality-principles → clean-code (-2)
+      - requesting-code-review + receiving-code-review → code-reviewer (-2)
   cross_plugin_skills: 1
   cross_plugin_refs: "skill-creator (官方 skill-creator 插件)"
   purpose: auto-routing + composite-orchestration (opt-in) + cross-skill-bridge (opt-in)
@@ -47,42 +56,36 @@ metadata:
 
 ## 技能全景 & 调度规则
 
-### 📝 代码编写 / 代码质量（5个重叠）
+### 📝 代码质量（3个 · v6.1.1 合并 code-complete + code-quality-principles)
 
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
-| **`clean-code`** | 干净代码、可读性、命名、函数拆分、代码审查 | 日常编码，关注微观代码形态 |
-| **`code-quality-principles`** | 代码规范、代码原则、异常处理、commit规范、防御式编程 | 代码级架构规范，异常分类、测试金字塔、契约测试 |
-| **`code-complete`** | 软件构造、全套流程、防御式编程 | 从需求到编码的全流程 |
+| **`clean-code`** ⭐ | 干净代码、可读性、命名、函数拆分、代码规范、**软件构造、commit规范、防御式编程** | **代码质量超级技能**——Martin + McConnell + 自家规范三合一 |
 | **`philosophy-of-software-design`** | 复杂度、深模块、抽象、信息隐藏 | 模块设计、降低复杂度 |
 | **`pragmatic-programmer`** | DRY、正交、工程习惯、估算、原型 | 工程实践、技术决策 |
 
-**冲突裁决**：说"代码太乱"→ clean-code；说"系统太复杂"→ philosophy-of-software-design；说"怎么做更好"→ pragmatic-programmer
+**冲突裁决**：说"代码太乱/代码规范/commit规范"→ clean-code（v6.1.1 起含 Martin/McConnell/self 三源）；说"系统太复杂"→ philosophy-of-software-design；说"怎么做更好"→ pragmatic-programmer
 
-### 🏗️ 架构设计（7个重叠）
+### 🏗️ 架构设计（4 个技能 · v6.1.1 合并 4 个 DDD 子技能）
 
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
 | **`clean-architecture`** | 分层、依赖方向、边界、组件划分 | 系统分层与依赖管理 |
 | **`poeaa`** | 企业架构、ORM、MVC、数据源模式 | 企业级应用架构模式 |
-| **`domain-driven-design`** | 领域、限界上下文、聚合根、通用语言 | 复杂业务领域建模 |
-| **`ddd-distilled`** | DDD 快速入门、事件风暴 | DDD 轻量速查 |
-| **`implementing-ddd`** | DDD 落地、事件溯源、CQRS、Saga | DDD 实现层 |
-| **`ddd-tactical-patterns`** | 实体、值对象、工厂、资源库 | DDD 战术编码模式 |
+| **`domain-driven-design`** ⭐ | 领域、限界上下文、聚合根、通用语言、**战术模式、入门、落地** | **DDD 超级技能**——Vernon 入门 + Evans 原书 + self 战术 + Vernon 落地四合一 |
 | **`designing-data-intensive-apps`** | 分布式、复制、分区、一致性、流处理 | 数据密集型系统 |
 
-**冲突裁决**：说"架构分层"→ clean-architecture；说"领域模型"→ domain-driven-design；说"分布式数据"→ designing-data-intensive-apps；说"企业应用模式"→ poeaa
+**冲突裁决**：说"架构分层"→ clean-architecture；说"领域模型/DDD"→ domain-driven-design（v6.1.1 起含入门/原书/战术/落地 4 源）；说"分布式数据"→ designing-data-intensive-apps；说"企业应用模式"→ poeaa
 
-### 🔧 重构（4个重叠）
+### 🔧 重构（3个 · v6.1.1 合并 refactoring-guru）
 
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
-| **`refactoring`** | 重构、坏味道、提取方法、改善结构 | 标准重构操作 |
-| **`refactoring-guru`** | 重构速查、模式参考、技巧目录 | 快速查阅重构手法 |
+| **`refactoring`** ⭐ | 重构、坏味道、提取方法、改善结构、**速查、模式参考、技巧目录** | **超级技能**——Fowler 原书 + refactoring.guru 速查合并 |
 | **`legacy-code`** | 遗留代码、没测试、老系统、安全改动 | 无测试保护的旧代码 |
 | **`framework-migration-legacy-modernize`** | 框架迁移、升级、现代化 | 框架版本迁移 |
 
-**冲突裁决**：说"这个函数太长"→ refactoring；说"这个老系统没有测试"→ legacy-code；说"升级到新版本框架"→ framework-migration-legacy-modernize
+**冲突裁决**：说"这个函数太长"→ refactoring（v6.1.1 起含 Fowler 原书 + refactoring.guru 双源）；说"这个老系统没有测试"→ legacy-code；说"升级到新版本框架"→ framework-migration-legacy-modernize
 
 ### 🧪 测试（3个有重叠 ⚠️）
 
@@ -137,15 +140,13 @@ evidence-first（开始 · 事实优先）
 
 > 注：本项目**不**包含文档生成类技能（`code-documentation-doc-generate`、`api-documentation-generator`）和文档处理类技能（`docx`、`pdf`）——它们与软件开发流程非直接相关，已被剥离。需要时自行安装对应官方插件。
 
-### 🔍 代码审查（4个有重叠 ⚠️）
+### 🔍 代码审查（1个 · v6.1.1 合并 requesting + receiving)
 
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
-| **`code-reviewer`** | CR、代码审查、review 代码、检查代码 | AI 自动审查**代码质量**（安全漏洞、性能、代码规范） |
-| **`requesting-code-review`** | 请求审查、找人 review、提交审查 | 完成任务后请求他人/AI 审查 |
-| **`receiving-code-review`** | 收到审查意见、处理反馈、CR 意见 | 收到审查反馈后，处理修改意见 |
+| **`code-reviewer`** ⭐ | CR、代码审查、review 代码、检查代码、**请求审查、提交审查、收到审查意见、处理反馈** | **代码审查超级技能**——AI 自动审查 + 请求审查 + 接收反馈三合一（被 loop G9 调用） |
 
-**冲突裁决 ⚠️**：说"审查这段代码"→ code-reviewer；说"我刚完成功能，需要 review"→ requesting-code-review；说"审查意见我收到了，帮我改"→ receiving-code-review
+**冲突裁决**：说"审查这段代码/请求审查/收到审查反馈"→ code-reviewer（v6.1.1 起三合一）；说"审查项目/架构/系统"→ `system-review`
 
 ### ✅ 验证（1个，独占）
 
@@ -169,7 +170,7 @@ evidence-first（开始 · 事实优先）
 
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
-| **`brainstorming`** | 创意、设计、头脑风暴、想法、方案、**调研、讨论、审查、分析、探索、看看、研究、评估、对比、选型、思考** | 编码前的需求探索、方案设计、技术调研、可行性分析 |
+| **`brainstorming`** | 创意、设计、头脑风暴、想法、方案 | 编码前的需求探索、方案设计、可行性分析（**已收窄**——调研/讨论/分析/评估/选型/对比等词交由 evidence-first / system-review / product-manager 处理） |
 | **`writing-plans`** | 写计划、规划、任务拆分、实现方案 | 有明确需求后写实现计划 |
 | **`executing-plans`** | 执行计划、按计划实现 | 有写好的计划后分步执行 |
 | **`subagent-driven-development`** | 并行任务、多任务同时、分头执行 | 当前会话中并行执行独立任务 |
@@ -180,7 +181,7 @@ evidence-first（开始 · 事实优先）
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
 | **`product-manager`** | PRD、产品文档、需求规范、竞品分析、RICE、Kano、MoSCoW、用户故事 | **规范化**需求 |
-| **`to-prd`** | 生成 PRD、整理需求、输出需求文档 | **收尾输出**——将讨论结果合成为 PRD |
+| **`to-prd`** 🔵 | 生成 PRD、整理需求、输出需求文档 | **收尾输出**——将讨论结果合成为 PRD（🔵 用户显式：`disable-model-invocation: true`，AI 不自动调度，需用户主动 `/to-prd` 调用） |
 
 > ⚠️ `brainstorming` 覆盖了产品需求的**发散阶段**（需求探索、想法发散、创意讨论），此处不再重复列出。
 
@@ -283,7 +284,7 @@ evidence-first（开始 · 事实优先）
 **当关键词表无匹配时，按以下优先级做二次判断**（参考 Superpowers 的 LLM 语义路由）：
 
 1. **含"审查系统/审查架构/检查矛盾/系统审计/优化项目"** → `system-review`（系统级审查）
-2. **含"调研/讨论/分析/探索/研究/评估/对比/选型"** → `brainstorming`（需求探索与方案设计）
+2. **含"调研/对比/选型"** → `brainstorming`（需求探索与方案设计）；**含"分析/探索/研究/评估"** → `evidence-first`（事实优先协议）；**含"审查"** → `system-review`（系统级审查）或 `code-reviewer`（单文件 PR）
 3. **含"修/改/更新/优化/改进/完善" + 具体对象** → `refactoring`（重构改进）
 4. **含"怎么/如何/为什么"** → `brainstorming`（探索性问题）
 5. **含"能不能/可不可以/是否"** → `brainstorming`（可行性分析）
@@ -301,7 +302,7 @@ evidence-first（开始 · 事实优先）
 6. **简洁告知**。加载技能时一句话说明为什么选它。
 7. **语义兜底优先**。关键词无匹配时，先用语义兜底规则判断，不要直接放弃。
 
-**_这个技能是你与 53 个技能之间的桥梁。每次对话开始时自动参考此调度规则。_**
+**_这个技能是你与 45 个技能（v6.1.1 合并后）之间的桥梁。每次对话开始时自动参考此调度规则。_**
 
 ---
 

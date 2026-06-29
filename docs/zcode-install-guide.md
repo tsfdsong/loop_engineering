@@ -214,7 +214,7 @@ foreach ($c in $checks) {
 
 | 症状 | 排查 |
 |------|------|
-| skill-hub 不工作 | 检查缓存目录中 `skills/` 是否包含 53 个技能目录 |
+| skill-hub 不工作 | 检查缓存目录中 `skills/` 是否包含 45 个技能目录（v6.1.1 合并后） |
 | | 检查 `.zcode-plugin/plugin.json` 中 `"skills": "skills"` 字段是否存在 |
 
 ### 4.3 常见错误
