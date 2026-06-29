@@ -58,7 +58,7 @@
     "total_duration_seconds": {"type": "number"},
     "stop_reason": {
       "type": "string",
-      "enum": ["completed", "timeout", "loop_detected", "user_abort", "token_limit_exceeded", "skill_failed"]
+      "enum": ["completed", "timeout", "loop_detected", "user_abort", "user_decision_required", "token_limit_exceeded", "skill_failed"]
     },
     "rollback_available": {
       "type": "boolean",
