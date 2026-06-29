@@ -66,17 +66,18 @@ def test_v6_composite_task_types_unchanged():
 
 
 def test_v6_skill_hub_version_compat():
-    """v6.0 单技能路由仍兼容（v5.4 base_compat 保留）"""
+    """v6.2 单技能路由仍兼容（v5.4/v6.0/v6.1 base_compat 保留）"""
     skill_hub_path = REPO_ROOT / "skills" / "skill-hub" / "SKILL.md"
     assert skill_hub_path.exists()
 
     content = skill_hub_path.read_text(encoding="utf-8")
 
-    # v6.1 frontmatter 应同时声明 base_compat 5.4 和 base_compat_v6 6.0
-    assert 'version: "6.1"' in content, "应升级到 v6.1"
+    # v6.2 frontmatter 应同时声明 base_compat 5.4 / base_compat_v6 6.0 / base_compat_v6_1 6.1
+    assert 'version: "6.2"' in content, "应升级到 v6.2"
     assert 'base_compat: "5.4"' in content, "v5.4 兼容性必须保留"
     assert 'base_compat_v6: "6.0"' in content, "v6.0 兼容性必须保留"
-    print("✅ test_v6_skill_hub_version_compat (v5.4 + v6.0 双兼容)")
+    assert 'base_compat_v6_1: "6.1"' in content, "v6.1 兼容性必须保留"
+    print("✅ test_v6_skill_hub_version_compat (v5.4 + v6.0 + v6.1 三兼容)")
 
 
 # ===== 状态文件向后兼容测试 =====
