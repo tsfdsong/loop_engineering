@@ -131,6 +131,26 @@ jcodemunch-mcp index_folder .
 | "写个单元测试" | `testing-patterns` |
 | "画个架构图" | `drawio-skill` |
 
+#### 🆕 v6.0 复合任务编排（alpha · opt-in）
+
+v6.0 新增 **Orchestrator 模式**：自动识别复杂多意图任务（如"调研 + 决策"、"分析 + 建议"），按 5 类预设模式协同 2-3 个互补技能。
+
+**5 类复合任务**：
+- **调研+决策**：`brainstorming` → `system-review` → `writing-plans`
+- **分析+建议**：`system-review` → `brainstorming`
+- **诊断+修复**：`systematic-debugging` → `verification-before-completion`
+- **设计+实现**：`brainstorming` → `writing-plans` → `executing-plans`
+- **规划+并行**：`subagent-driven-development`
+
+**启用方式**（opt-in）：
+```bash
+export LOOPENGINE_ORCHESTRATOR=alpha
+```
+
+**v5.4 单技能路由 100% 保留，零迁移成本**。详细规范见：
+- 设计文档：[docs/2026-06-29-skill-hub-v6-design.md](docs/2026-06-29-skill-hub-v6-design.md)
+- 迁移指南：[docs/migration-guide-v5-to-v6.md](docs/migration-guide-v5-to-v6.md)
+
 ---
 
 ## 📚 技能分类（50个内置 + 1 跨插件引用 = 51 个可用）
