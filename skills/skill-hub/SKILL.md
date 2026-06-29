@@ -277,3 +277,55 @@ metadata:
 8. **语义兜底优先**。关键词无匹配时，先用语义兜底规则判断，不要直接放弃。
 
 **_这个技能是你与 53 个技能之间的桥梁。每次对话开始时自动参考此调度规则。_**
+
+---
+
+## 🆕 v6.0 新增：复合任务编排（Orchestrator 模式 · alpha 阶段）
+
+> **本节为 v6.0 新增内容，alpha 阶段需显式启用。** v5.4 单技能路由完全保留，零变化。
+
+### 启用方式
+
+```bash
+# 显式启用 Orchestrator（alpha）
+export LOOPENGINE_ORCHESTRATOR=alpha
+
+# 一键回滚到 v5.4 行为
+export LOOPENGINE_ORCHESTRATOR=off
+```
+
+### 5 类复合任务自动识别
+
+| 任务类型 | 默认技能链 | 触发关键词 |
+|---------|----------|----------|
+| 调研+决策 | brainstorming → system-review → writing-plans | 调研 + 决策/选型/对比 |
+| 分析+建议 | system-review → brainstorming | 审查/分析 + 改进/建议 |
+| 诊断+修复 | systematic-debugging → verification-before-completion | 报错/Bug + 修复 |
+| 设计+实现 | brainstorming → writing-plans → executing-plans | 设计 + 实现/开发 |
+| 规划+并行 | subagent-driven-development | 并行/多任务 + 调研 |
+
+### 显式触发
+
+使用 `/composite <type>` 前缀强制指定复合任务类型：
+
+```
+/composite 1 调研下 A 和 B 方案的优缺点
+/composite 5 并行调研 fastapi, django, flask
+```
+
+### 详细规范
+
+- 5 类复合任务定义 → `references/composite-task-types.md`
+- 复杂度评估规则 → `references/complexity-evaluator.md`
+- Orchestrator 协议 → `references/orchestrator-protocol.md`
+- Trace 格式 → `references/trace-format.md`
+
+### 一键回滚
+
+任何时候可关闭 Orchestrator 回退到 v5.4：
+
+```bash
+export LOOPENGINE_ORCHESTRATOR=off
+```
+
+回滚不影响：53 个 SKILL.md / MCP 集成 / 已安装功能。
