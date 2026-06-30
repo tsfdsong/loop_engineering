@@ -18,5 +18,19 @@
     "best-practices",
     "workflows",
     "skill-routing"
-  ]
+  ],
+  "mcpServers": {
+    "jcodemunch": {
+      "command": "jcodemunch-mcp",
+      "args": ["serve"]
+    },
+    "repomix": {
+      "command": "repomix",
+      "args": ["--mcp"]
+    },
+    "headroom": {
+      "command": "headroom",
+      "args": ["mcp", "serve"]
+    }
+  }
 }

@@ -1,31 +1,15 @@
 #!/usr/bin/env bash
 # SessionStart hook for loopengine plugin (Codex variant)
 # Bootstrap: injects orch (multi-skill orchestrator) at session start
+# 公共逻辑见 hooks/_lib.sh
 
 set -euo pipefail
 
-# Determine plugin root directory
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+# shellcheck source=_lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
 
-# Read orch content (the bootstrap skill)
-orch_content=$(cat "${PLUGIN_ROOT}/skills/orch/SKILL.md" 2>&1 || echo "Error reading orch skill")
+orch_content=$(load_orch_content "$PLUGIN_ROOT")
+session_context=$(build_session_context "$orch_content")
 
-# Escape string for JSON embedding
-escape_for_json() {
-    local s="$1"
-    s="${s//\\/\\\\}"
-    s="${s//\"/\\\"}"
-    s="${s//$'\n'/\\n}"
-    s="${s//$'\r'/\\r}"
-    s="${s//$'\t'/\\t}"
-    printf '%s' "$s"
-}
-
-orch_escaped=$(escape_for_json "$orch_content")
-session_context="<EXTREMELY_IMPORTANT>\nYou have LoopEngine — the full-stack development engine with 33 skills.\n\n**Below is the full content of your 'loopengine:orch' skill — your multi-skill orchestrator. For all other skills, use the 'Skill' tool:**\n\n${orch_escaped}\n</EXTREMELY_IMPORTANT>"
-
-# Codex-specific format
+# Codex: 固定使用 SDK 标准 schema（与 hooks-codex.json matcher 一致）
 printf '{\n  "additionalContext": "%s"\n}\n' "$session_context" | cat
-
-exit 0

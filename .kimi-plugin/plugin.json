@@ -23,6 +23,20 @@
   "sessionStart": {
     "skill": "orch"
   },
+  "mcpServers": {
+    "jcodemunch": {
+      "command": "jcodemunch-mcp",
+      "args": ["serve"]
+    },
+    "repomix": {
+      "command": "repomix",
+      "args": ["--mcp"]
+    },
+    "headroom": {
+      "command": "headroom",
+      "args": ["mcp", "serve"]
+    }
+  },
   "skillInstructions": "LoopEngine tool mapping for Kimi Code:\n\n- When a LoopEngine skill says to ask the user, ask clarifying questions, ask one question at a time, present multiple-choice options, use the terminal for a question, or wait for the user's choice, call Kimi Code's `AskUserQuestion` tool. Do not render those choices as plain assistant text unless `AskUserQuestion` is unavailable or the session is in auto permission mode.\n- For `AskUserQuestion`, provide 1 question with 2-4 concrete options when possible. Put the recommended option first and suffix its label with `(Recommended)`.\n- When a LoopEngine skill refers to `TodoWrite`, use Kimi Code's `TodoList` tool.\n- When a LoopEngine skill says `Task tool (general-purpose)` or asks you to dispatch an implementer/reviewer subagent, use Kimi Code's `Agent` tool.\n- For implementation, code review, spec review, quality review, call `Agent` with `subagent_type: \"coder\"`, paste the fully filled prompt into `prompt`, and provide a short `description`.\n- For read-only codebase exploration that would take several searches, use `Agent` with `subagent_type: \"explore\"`.\n- For read-only planning or architecture design, use `Agent` with `subagent_type: \"plan\"`.\n- Keep dependent subagent steps sequential. Use multiple `Agent` calls, or `run_in_background: true` only when the work is independent.\n- When a LoopEngine skill refers to the `Skill` tool, use Kimi Code's native `Skill` tool.\n- Use Kimi Code's `Read`, `Write`, `Edit`, `Bash`, `Grep`, `Glob`, `FetchURL`, `WebSearch`, and MCP tools by their actual exposed names.",
   "interface": {
     "displayName": "LoopEngine",

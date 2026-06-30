@@ -21,5 +21,19 @@
     "skill-routing"
   ],
   "skills": "./skills/",
-  "hooks": "./hooks/hooks-cursor.json"
+  "hooks": "./hooks/hooks-cursor.json",
+  "mcpServers": {
+    "jcodemunch": {
+      "command": "jcodemunch-mcp",
+      "args": ["serve"]
+    },
+    "repomix": {
+      "command": "repomix",
+      "args": ["--mcp"]
+    },
+    "headroom": {
+      "command": "headroom",
+      "args": ["mcp", "serve"]
+    }
+  }
 }

@@ -22,6 +22,20 @@
   ],
   "skills": "./skills/",
   "hooks": "./hooks/hooks-codex.json",
+  "mcpServers": {
+    "jcodemunch": {
+      "command": "jcodemunch-mcp",
+      "args": ["serve"]
+    },
+    "repomix": {
+      "command": "repomix",
+      "args": ["--mcp"]
+    },
+    "headroom": {
+      "command": "headroom",
+      "args": ["mcp", "serve"]
+    }
+  },
   "interface": {
     "displayName": "LoopEngine",
     "shortDescription": "Loop闭环编码 + go全自动编排 + 33技能智能调度",
