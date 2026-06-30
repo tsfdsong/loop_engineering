@@ -1,6 +1,6 @@
 # 冲突场景调优策略（deep-research vs brainstorming）
 
-> 📌 **本文件用途**：当用户输入同时包含 brainstorming 和 deep-research 触发词时，给 skill-hub 和 AI 提供调优策略。
+> 📌 **本文件用途**：当用户输入同时包含 brainstorming 和 deep-research 触发词时，给 orch 和 AI 提供调优策略。
 > 📅 **生成时间**：2026-06-29（基于 BM25 + LLM 模拟路由测试结果）
 
 ---
@@ -70,7 +70,7 @@ handoff:
 
 | 限制 | 严重度 | 缓解 |
 |------|------|------|
-| **skill-hub 当前不支持自动复合编排** | 🔴 高 | skill-hub alpha mock 阶段，需手动手动串联 |
+| **orch 默认不自动触发复合编排** | 🟡 中 | v1.0 设计为**显式 `/orch`** 触发；如需自动识别"调研+设计"连串意图，用户需自行 `/orch 1 ...` 或 `/orch 4 ...` |
 | **description 无法精确抢"做 X"中文短语** | 🟡 中 | A1 用例 BM25 score = 0 是已知问题 |
 | **接力棒机制无自动化** | 🟡 中 | 用户需手动 "继续 .workflow/<slug>/" 触发下一阶段 |
 | **冲突场景 C1/C2/C3 全部被 BM25 路由到 deep-research** | 🟠 较高 | description 中文"调研"权重高于英文"design" |
@@ -129,20 +129,27 @@ handoff:
 
 ---
 
-## 5. 给 skill-hub 的建议
+## 5. orch 现状与未来扩展
 
-若未来 skill-hub 实现**复合任务编排**（v6.0 alpha → 真实实现），应该增加：
+**当前状态（v1.0）**：orch 已支持 5 类复合任务链，但**默认显式 `/orch <type>` 触发**：
 
-1. **意图数检测**：识别用户输入的意图数（≥ 2 走复合路径）
-2. **顺序推断**：按关键词位置决定先后
-3. **接力棒自动化**：自动把前一阶段产出喂给后一阶段
-4. **Trace 支持**：让 `trace-format.md` 记录复合任务的 skills_invoked 序列
+- "调研 + 决策" → `/orch 1`（brainstorming → evidence-first → writing-plans）
+- "设计 + 实现" → `/orch 4`（brainstorming → writing-plans → executing-plans）
+- "并行调研" → `/orch 5`（dispatching-parallel-agents）
+
+**未来扩展方向**（如有需求可加）：
+
+1. **意图数自动检测**：识别用户输入的意图数（≥ 2 提示用户打 `/orch`），但**不**自动执行
+2. **接力棒自动化**：orch 内部自动把前一阶段产出喂给后一阶段（当前需用户手动）
+3. **Trace 支持**：让 `trace-format.md` 记录复合任务的 skills_invoked 序列
+
+> 设计哲学：宁可让用户多打 5 个字符 `/orch`，也不让 AI 静默替换 LLM 的判断（避免 v6.7 自我重复的复杂度）。
 
 ---
 
 ## 6. 下一步
 
-**测试**：在 ZCode 端跑 C1/C2/C3 实测，看 skill-hub 实际怎么路由。如果实测仍全部 → deep-research，那意味着 skill-hub 用的是 BM25-like 关键词匹配（确认了我的怀疑）。如果实测给出"复合任务提示"，那意味着 skill-hub 已有 LLM 路由层（更智能）。
+**测试**：在 ZCode 端跑 C1/C2/C3 实测，看 orch 实际怎么路由。如果实测仍全部 → deep-research，那意味着 orch 用的是 BM25-like 关键词匹配（确认了我的怀疑）。如果实测给出"复合任务提示"，那意味着 orch 已有 LLM 路由层（更智能）。
 
 **记录**：实测结果填到 `96-scheduling-accuracy-test.md` 的 C 类表。
 

@@ -31,8 +31,6 @@ metadata:
 
 # Clean Code 超级技能
 
-> 🔴 **用户交互红线**：遵循 skill-hub 的 4 项硬要求——必须用 `AskUserQuestion` 列出选项（含推荐），推荐项标 `(推荐)` 并说明理由，不推荐项必须说明理由，禁止自由文本输入和开放式追问。
-
 ## 核心定位：4 种风格 × 4 个维度
 
 不同问题需要不同风格的指导。4 源各占一个维度，互补不冲突：
@@ -327,4 +325,4 @@ metadata:
 - **v6.4 重组**：4 源 → 4 个明确维度（原则/要点/规范/决策），避免风格混用
 - 内联：pragmatic-programmer 34 行要点已融入"维度 4：决策"章节
 - 保留：clean-code + code-complete 通过 `~/.agents/skills/agent-rules-books/` 规则文件引用
-- skill-hub 调度表已同步
+- orch 调度表已同步

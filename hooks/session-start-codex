@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SessionStart hook for loopengine plugin (Codex variant)
-# Bootstrap: injects skill-hub as the skill discovery/routing layer
+# Bootstrap: injects orch (multi-skill orchestrator) at session start
 
 set -euo pipefail
 
@@ -8,8 +8,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-# Read skill-hub content (replaces using-superpowers as the bootstrap skill)
-skill_hub_content=$(cat "${PLUGIN_ROOT}/skills/skill-hub/SKILL.md" 2>&1 || echo "Error reading skill-hub skill")
+# Read orch content (replaces skill-hub as the bootstrap skill)
+orch_content=$(cat "${PLUGIN_ROOT}/skills/orch/SKILL.md" 2>&1 || echo "Error reading orch skill")
 
 # Escape string for JSON embedding
 escape_for_json() {
@@ -22,8 +22,8 @@ escape_for_json() {
     printf '%s' "$s"
 }
 
-skill_hub_escaped=$(escape_for_json "$skill_hub_content")
-session_context="<EXTREMELY_IMPORTANT>\nYou have LoopEngine — the full-stack development engine with 55 skills.\n\n**Below is the full content of your 'loopengine:skill-hub' skill — your skill routing hub. For all other skills, use the 'Skill' tool:**\n\n${skill_hub_escaped}\n</EXTREMELY_IMPORTANT>"
+orch_escaped=$(escape_for_json "$orch_content")
+session_context="<EXTREMELY_IMPORTANT>\nYou have LoopEngine — the full-stack development engine with 33 skills.\n\n**Below is the full content of your 'loopengine:orch' skill — your multi-skill orchestrator. For all other skills, use the 'Skill' tool:**\n\n${orch_escaped}\n</EXTREMELY_IMPORTANT>"
 
 # Codex-specific format
 printf '{\n  "additionalContext": "%s"\n}\n' "$session_context" | cat

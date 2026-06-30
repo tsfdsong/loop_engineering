@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# skills/skill-hub/hooks/skillhub-bootstrap.sh
-# v6.7 session-start bootstrap - 注入 skill-hub 全文到系统提示
-# 参照 superpowers/session-start 实现
+# skills/orch/hooks/orch-bootstrap.sh
+# session-start bootstrap - 注入 orch (多技能编排器) 全文到系统提示
 
 set -euo pipefail
 
@@ -9,14 +8,14 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
-# 读取 skill-hub/SKILL.md 全文
-SKILLHUB_MD="${PLUGIN_ROOT}/skills/skill-hub/SKILL.md"
-if [ ! -f "$SKILLHUB_MD" ]; then
-  echo "ERROR: skill-hub/SKILL.md not found at $SKILLHUB_MD" >&2
+# 读取 orch/SKILL.md 全文
+ORCH_MD="${PLUGIN_ROOT}/skills/orch/SKILL.md"
+if [ ! -f "$ORCH_MD" ]; then
+  echo "ERROR: orch/SKILL.md not found at $ORCH_MD" >&2
   exit 1
 fi
 
-SKILL_CONTENT=$(cat "$SKILLHUB_MD")
+SKILL_CONTENT=$(cat "$ORCH_MD")
 
 # JSON 转义（5 个特殊字符）
 escape_for_json() {
@@ -29,17 +28,16 @@ escape_for_json() {
   printf '%s' "$s"
 }
 
-ESCAPED_CONTENT=$(escape_for_json "$SKILL_CONTENT")
-
 # 构造 session context
 SESSION_CONTEXT="<EXTREMELY_IMPORTANT>
-You have skill-hub (v6.7.0-alpha) installed as your meta-skill for routing.
+You have orch (multi-skill orchestrator, v1.0.0) installed.
 
-Below is the full content of your skill-hub skill. Read it carefully.
+Below is the full content of your orch skill. Read it carefully.
 
 ${SKILL_CONTENT}
 
-For all other skills, follow the 1% rule: even 1% chance a skill applies -> invoke it.
+For single-skill tasks: native description matching handles it — do not call /orch.
+For multi-skill tasks: user must explicitly type /orch — see above for the 5 task chains.
 </EXTREMELY_IMPORTANT>"
 
 ESCAPED_CONTEXT=$(escape_for_json "$SESSION_CONTEXT")

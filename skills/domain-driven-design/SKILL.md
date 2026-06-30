@@ -22,8 +22,6 @@ metadata:
 
 # Domain-Driven Design 超级技能
 
-> 🔴 **用户交互红线**：遵循 skill-hub 的 4 项硬要求——必须用 `AskUserQuestion` 列出选项（含推荐），推荐项标 `(推荐)` 并说明理由，不推荐项必须说明理由，禁止自由文本输入和开放式追问。
-
 当需要 DDD 入门、复杂业务领域建模、限界上下文设计、战术编码（实体/值对象/聚合/资源库/领域事件）、DDD 落地实战时使用此技能。
 
 ## 使用方式
@@ -139,5 +137,5 @@ class Order {
 
 - v6.1.1 合并前：ddd-distilled + domain-driven-design + ddd-tactical-patterns + implementing-ddd 四个独立技能
 - v6.1.1 合并后：domain-driven-design 一个超级技能（含 3 个 ciembor 规则文件引用 + self 战术内容内联）
-- skill-hub 调度表已同步：ddd-distilled / ddd-tactical-patterns / implementing-ddd 行已移除
+- orch 调度表已同步：ddd-distilled / ddd-tactical-patterns / implementing-ddd 行已移除
 - 黄金轨迹：v54-baseline 中"ddd-distilled"等关键词已映射到 domain-driven-design

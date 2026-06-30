@@ -168,6 +168,98 @@ echo ""
 echo -e "${BOLD}⚙️  Step 4: 配置 ZCode 桌面版 MCP (~/.zcode/cli/config.json)...${RESET}"
 write_zcode_desktop_config
 
+# ── Step 5: 注入全局用户交互红线规则 ─────────────────────────────
+# 把 AGENTS.md 中的"用户交互红线"章节注入到所有 AI 工具的**用户级**规则文件。
+# 关键设计：sentinel markers（HTML 注释）+ Python 合并，保证：
+#   1. 幂等性 —— 重复执行不重复插入（找到旧块则替换）
+#   2. 用户保留 —— 用户在文件其他章节的自定义内容**不会被覆盖**
+#   3. 自动更新 —— 项目升级（update.sh → install.sh）时，规则自动同步
+#   4. 全局生效 —— 用户级 (~/.xxx/...) 而非项目级，新会话立即生效
+install_interaction_rules() {
+    local src="$WORK/AGENTS.md"
+    [ ! -f "$src" ] && { echo -e "  ${YELLOW}⚠${RESET}  $src 不存在，跳过"; return 0; }
+
+    # 提取"用户交互红线"章节的精确行号范围
+    # 注意：使用 awk 而非 grep —— Git Bash Windows 下 grep 处理 `^## 🔴`（4 字节 UTF-8 emoji + ^ 锚点）失败
+    local begin_line
+    begin_line=$(awk '/^## 🔴 用户交互红线/ { print NR; exit }' "$src")
+    if [ -z "$begin_line" ]; then
+        echo -e "  ${YELLOW}⚠${RESET}  AGENTS.md 中未找到'用户交互红线'章节，跳过"
+        return 0
+    fi
+    # 下一个 ## 章节开始行号
+    local next_section_line
+    next_section_line=$(awk -v start="$begin_line" 'NR > start && /^## / { print NR; exit }' "$src")
+    local end_line
+    if [ -n "$next_section_line" ]; then
+        end_line=$((next_section_line - 1))
+    else
+        end_line=$(wc -l < "$src")
+    fi
+
+    # 用 awk 而非 sed 提取行范围（更跨平台、避免 sed 在 Windows 下的转义问题）
+    local managed_block
+    managed_block=$(awk -v start="$begin_line" -v end="$end_line" 'NR>=start && NR<=end' "$src")
+    local wrapped_block
+    wrapped_block=$(printf '<!-- BEGIN LOOPENGINE-MANAGED INTERACTION-RULES -->\n%s\n<!-- END LOOPENGINE-MANAGED INTERACTION-RULES -->' "$managed_block")
+
+    # 目标：(标签 | 用户级规则文件路径)
+    # 注意：路径是用户级 (~/.xxx/...)，与项目级 (./AGENTS.md) 不同，确保**全局生效**
+    local targets=(
+        "ZCode|$HOME/.zcode/AGENTS.md"
+        "Claude Code|$HOME/.claude/CLAUDE.md"
+        "Gemini CLI|$HOME/.gemini/GEMINI.md"
+        "Codex|$HOME/.codex/AGENTS.md"
+        "Cursor|$HOME/.cursor/rules/loopengine-interaction.mdc"
+        "Copilot CLI|$HOME/.copilot/AGENTS.md"
+        "Pi|$HOME/.pi/AGENTS.md"
+    )
+
+    for entry in "${targets[@]}"; do
+        local label="${entry%%|*}"
+        local target="${entry##*|}"
+        mkdir -p "$(dirname "$target")"
+
+        # Python 合并：找到旧块则替换，否则追加
+        python - "$target" "$wrapped_block" <<'PYEOF'
+import sys, os, re
+target = sys.argv[1]
+new_block = sys.argv[2]
+begin_marker = "<!-- BEGIN LOOPENGINE-MANAGED INTERACTION-RULES -->"
+end_marker = "<!-- END LOOPENGINE-MANAGED INTERACTION-RULES -->"
+
+content = ""
+if os.path.isfile(target):
+    with open(target, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+pattern = re.compile(re.escape(begin_marker) + r".*?" + re.escape(end_marker), re.DOTALL)
+
+if pattern.search(content):
+    new_content = pattern.sub(new_block, content)
+    action = "UPDATED"
+else:
+    if content and not content.endswith("\n"):
+        content += "\n"
+    if content and not content.endswith("\n\n"):
+        content += "\n"
+    new_content = content + new_block + "\n"
+    action = "APPENDED"
+
+with open(target, 'w', encoding='utf-8') as f:
+    f.write(new_content)
+print(f"  {action}")
+PYEOF
+
+        echo -e "  ${GREEN}✅${RESET} [$label 交互红线] $target"
+        TARGETS+=("$label 交互红线:$target")
+    done
+}
+
+echo ""
+echo -e "${BOLD}🌐 Step 5: 注入全局用户交互红线规则（7 个 AI 工具用户级文件）...${RESET}"
+install_interaction_rules
+
 # ── 总结 ────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
@@ -178,5 +270,5 @@ for t in "${TARGETS[@]}"; do
 done
 echo ""
 echo -e "${BOLD}💡 验证 (开新 AI 会话后发送):${RESET}"
-echo -e "  ${CYAN}\"告诉我 LoopEngine 的核心价值，并列出 skill-hub 调度的 5 类复合任务\"${RESET}"
+echo -e "  ${CYAN}\"告诉我 LoopEngine 的核心价值，并列出 orch 调度的 5 类复合任务\"${RESET}"
 echo ""

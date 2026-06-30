@@ -7,8 +7,6 @@ source: self
 
 # Skill Router
 
-> 🔴 **用户交互红线**：遵循 skill-hub 的 4 项硬要求——必须用 `AskUserQuestion` 列出选项（含推荐），推荐项标 `(推荐)` 并说明理由，不推荐项必须说明理由，禁止自由文本输入和开放式追问。
-
 ## When to Use
 Use this skill when:
 - The user says "I don't know where to start" or "which skill should I use"

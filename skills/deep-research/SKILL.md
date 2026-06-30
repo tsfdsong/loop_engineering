@@ -6,8 +6,6 @@ description: "Use when conducting data-driven research: 调研/对比/选型/综
 
 # Deep Research（深度调研）— 4 阶段本地化调研闭环
 
-> 🔴 **用户交互红线**：遵循 skill-hub 的 4 项硬要求——必须用 `AskUserQuestion` 列出选项（含推荐），推荐项标 `(推荐)` 并说明理由，不推荐项必须说明理由，禁止自由文本输入和开放式追问。
-
 ---
 
 ## 核心定位

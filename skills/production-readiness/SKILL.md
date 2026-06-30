@@ -23,8 +23,6 @@ metadata:
 
 # Production Readiness 超级技能
 
-> 🔴 **用户交互红线**：遵循 skill-hub 的 4 项硬要求——必须用 `AskUserQuestion` 列出选项（含推荐），推荐项标 `(推荐)` 并说明理由，不推荐项必须说明理由，禁止自由文本输入和开放式追问。
-
 ## 核心定位：3 阶段上线工作流
 
 ```
@@ -330,4 +328,4 @@ Step 3 (发布): 蓝绿部署 + 监控
 - 内联：release-it 30 行要点（稳定性反模式 / 模式 / 发布模式 / 容量规划）已融入 Stage 2/3
 - 内联：production-code-audit 6 维度审计清单已融入 Stage 1 章节
 - 保留：release-it 通过 agent-rules-books 规则文件引用
-- skill-hub 调度表已同步
+- orch 调度表已同步

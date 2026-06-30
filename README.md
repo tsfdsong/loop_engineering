@@ -1,10 +1,10 @@
 # LoopEngine — 循环工程全家桶
 
-> **loop** 闭环编码 + **go** 全自动编排 + **skill-hub** 33 技能智能调度（v6.4 真正融合后），一站式 AI 编程引擎插件。
+> **loop** 闭环编码 + **go** 全自动编排 + **orch** 多技能编排（v1.0 单职责化），一站式 AI 编程引擎插件。
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.2-blue)](package.json)
-[![skill-hub](https://img.shields.io/badge/skill--hub-v6.4-blue)](skills/skill-hub/SKILL.md)
+[![orch](https://img.shields.io/badge/orch-v1.0.0-blue)](skills/orch/SKILL.md)
 
 ---
 
@@ -35,7 +35,7 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/update.sh | bas
 | **唯一例外** | MCP 全部不可用、文件 < 50 行、需精确行内容 |
 | **违规判定** | 连续 3 次直接 Read 全文件未用 MCP = 红线事故 |
 
-此规则已写入所有层级：用户级 `~/.zcode/AGENTS.md`、项目级 `AGENTS.md`、skill-hub、go、loop 技能。
+此规则已写入所有层级：用户级 `~/.zcode/AGENTS.md`、项目级 `AGENTS.md`、orch、go、loop 技能。
 
 ### 🔌 MCP 三件套（节省 80% token）
 
@@ -91,9 +91,9 @@ jcodemunch-mcp index_folder .
 
 ```
 ┌───────────────────────────────────────────────────┐
-│                   skill-hub                        │
-│           智能路由 · 会话启动自动加载               │
-│     收到任务 → 分析意图 → 匹配 55 技能中最准的      │
+│                     orch                          │
+│         多技能编排器 · 显式 /orch 触发              │
+│   单技能(80%)走原生 · 多技能(20%)走 orch 5 类链    │
 └──────────┬──────────────────────┬─────────────────┘
            │                      │
            ▼                      ▼
@@ -121,36 +121,30 @@ jcodemunch-mcp index_folder .
 ```
 自动：递归拆解任务 → 并发调度 ZCode → 闭环执行每个子任务 → 汇总 → 交付。复杂工程一键完成。
 
-### `skill-hub` — 智能路由（自动生效）
-无需手动调用。收到任何任务后自动从 33 个技能（v6.4 真正融合超级技能后）中匹配最精准的一个：
+### `orch` — 多技能编排器（显式 `/orch` 触发）
 
-| 你说 | 自动加载 |
-|------|---------|
-| "这个类太大了" | `refactoring` |
-| "设计 API 接口" | `api-design-principles` |
-| "报错了帮我看看" | `systematic-debugging` |
-| "写个单元测试" | `testing-patterns` |
-| "画个架构图" | `drawio-skill` |
+**单技能任务（80%）**：原生 description 匹配自动处理，无需 `/orch`。
+**多技能任务（20%）**：用户显式 `/orch <type> <query>` 触发，按 5 类任务链编排。
 
-#### 🆕 v6.0 复合任务编排（alpha · opt-in）
+| 你说 | 该用 |
+|------|------|
+| "这个类太大了" | 单技能 → `refactoring`（不打 `/orch`） |
+| "报错了帮我看看" | 单技能 → `systematic-debugging`（不打 `/orch`） |
+| "对比 A 和 B 选型" | 多技能 → `/orch 1 ...`（显式触发） |
+| "帮我审查并改进" | 多技能 → `/orch 2 ...`（显式触发） |
+| "设计并实现 X 功能" | 多技能 → `/orch 4 ...`（显式触发） |
 
-v6.0 新增 **Orchestrator 模式**：自动识别复杂多意图任务（如"调研 + 决策"、"分析 + 建议"），按 5 类预设模式协同 2-3 个互补技能。
+#### 📋 5 类复合任务
 
-**5 类复合任务**：
-- **调研+决策**：`brainstorming` → `system-review` → `writing-plans`
-- **分析+建议**：`system-review` → `brainstorming`
-- **诊断+修复**：`systematic-debugging` → `verification-before-completion`
-- **设计+实现**：`brainstorming` → `writing-plans` → `executing-plans`
-- **规划+并行**：`subagent-driven-development`
+| type | 名称 | 技能链 |
+|:---:|------|--------|
+| **1** | 调研 + 决策 | `brainstorming` → `evidence-first` → `writing-plans` |
+| **2** | 分析 + 建议 | `system-review` → `brainstorming` |
+| **3** | 诊断 + 修复 | `systematic-debugging` → `refactoring` → `verification-before-completion` |
+| **4** | 设计 + 实现 | `brainstorming` → `writing-plans` → `executing-plans` |
+| **5** | 并行调研 | `dispatching-parallel-agents` / `subagent-driven-development` |
 
-**启用方式**（opt-in）：
-```bash
-export LOOPENGINE_ORCHESTRATOR=alpha
-```
-
-**v5.4 单技能路由 100% 保留，零迁移成本**。详细规范见：
-- 设计文档：[docs/2026-06-29-skill-hub-v6-design.md](docs/2026-06-29-skill-hub-v6-design.md)
-- 迁移指南：[docs/migration-guide-v5-to-v6.md](docs/migration-guide-v5-to-v6.md)（v6.1.1 已删除 — 历史归档）
+**v1.0 单职责化**：orch 仅做编排，不维护关键词表 / 冲突裁决 / P0 纪律 / 复杂度评分——这些由 AGENTS.md 或原生 description 匹配承担。详细规范见 [`skills/orch/SKILL.md`](skills/orch/SKILL.md)。
 
 ---
 
@@ -205,10 +199,10 @@ loopengine/
 │   ├── loop/                # 闭环编码引擎
 │   ├── go/                  # 全自动编排引擎（v4.0 ZCode 纯血 + Worktree 并发）
 │   │   └── scripts/         # Python 编排脚本（orchestrator/zcode_runner/git_ops/state_manager）
-│   ├── skill-hub/           # 智能路由中心（会话启动注入）
-│   └── ...                  # 其余 42 个技能
+│   ├── orch/               # 多技能编排器（v1.0 单职责化 · 会话启动注入）
+│   └── ...                  # 其余 32 个技能
 ├── hooks/                   # 会话启动钩子
-│   ├── session-start        # 启动引导脚本（注入 skill-hub）
+│   ├── session-start        # 启动引导脚本（注入 orch）
 │   ├── run-hook.cmd         # 跨平台 polyglot 包装器
 │   └── hooks*.json          # 各平台钩子配置
 ├── docs/                    # 文档
@@ -240,9 +234,31 @@ loopengine/
 LoopEngine 采用与 [Superpowers](https://github.com/obra/Superpowers) 相同的插件架构：
 
 1. **会话启动钩子** → `hooks/session-start` 脚本在 AI 会话启动时触发
-2. **启动引导注入** → 将 `skill-hub/SKILL.md` 注入到会话上下文
-3. **自动路由** → 代理学会根据用户意图自动从 33 个技能（v6.4 真正融合后）中匹配最精准的一个
-4. **🔴 MCP 红线** → 所有理解代码的操作必须先用 MCP 工具（`get_repo_map` → `get_file_outline` → `search_symbols`），禁止直接 Read 全文件，省 ~90% token
+2. **启动引导注入** → 将 `orch/SKILL.md` 注入到会话上下文
+3. **单技能走原生** → 80% 任务由 LLM 通过 description 语义匹配自动选择技能，无需 `/orch`
+4. **多技能走 orch** → 20% 复合任务由用户显式 `/orch <type> <query>` 触发，按 5 类任务链编排
+5. **🔴 MCP 红线** → 所有理解代码的操作必须先用 MCP 工具（`get_repo_map` → `get_file_outline` → `search_symbols`），禁止直接 Read 全文件，省 ~90% token
+
+### 🔴 用户交互红线（Step 5 · v1.0 新增）
+
+`install.sh` Step 5 自动把 AGENTS.md 中的"用户交互红线"注入到 **7 个 AI 工具的用户级**规则文件，确保全局生效：
+
+| AI 工具 | 注入路径 |
+|---|---|
+| ZCode | `~/.zcode/AGENTS.md` |
+| Claude Code | `~/.claude/CLAUDE.md` |
+| Gemini CLI | `~/.gemini/GEMINI.md` |
+| Codex | `~/.codex/AGENTS.md` |
+| Cursor | `~/.cursor/rules/loopengine-interaction.mdc` |
+| Copilot CLI | `~/.copilot/AGENTS.md` |
+| Pi | `~/.pi/AGENTS.md` |
+
+**关键设计**：
+- **sentinel markers**（`<!-- BEGIN/END LOOPENGINE-MANAGED INTERACTION-RULES -->`）—— 幂等更新，重复运行不重复插入
+- **用户保留** —— 你在文件其他位置的自定义内容**不会被覆盖**
+- **自动同步** —— `update.sh` 重跑时规则自动更新
+
+详见 [install.sh Step 5](install.sh) 中的 `install_interaction_rules` 函数。
 
 ### 更新链路
 

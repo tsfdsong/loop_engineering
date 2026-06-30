@@ -59,18 +59,37 @@ bash update.sh      # = git pull + exec install.sh
 开新 AI 会话后发送：
 
 ```
-"告诉我 LoopEngine 的核心价值，并列出 skill-hub 调度的 5 类复合任务"
+"告诉我 LoopEngine 的核心价值，并列出 orch 调度的 5 类复合任务"
 ```
 
 期望：
-- 解释出 "loop + go + skill-hub 闭环开发引擎" 核心价值
-- 列出 v6.0 Orchestrator 的 5 类（调研+决策 / 分析+建议 / 诊断+修复 / 设计+实现 / 规划+并行）
+- 解释出 "loop + go + orch 多技能编排" 核心价值
+- 列出 orch v1.0 的 5 类（调研+决策 / 分析+建议 / 诊断+修复 / 设计+实现 / 并行调研）
 
 如果 MCP 工具（jcodemunch / repomix / headroom）不显示，按需运行：
 
 ```bash
 bash scripts/zcode-mcp-ensure.sh
 ```
+
+## 🌐 Step 5（v1.0 新增）：全局用户交互红线
+
+`install.sh` 会自动把 AGENTS.md 中的"用户交互红线"章节注入到 7 个 AI 工具的用户级规则文件：
+
+- `~/.zcode/AGENTS.md`
+- `~/.claude/CLAUDE.md`
+- `~/.gemini/GEMINI.md`
+- `~/.codex/AGENTS.md`
+- `~/.cursor/rules/loopengine-interaction.mdc`
+- `~/.copilot/AGENTS.md`
+- `~/.pi/AGENTS.md`
+
+**保证**：
+- **幂等性**：重复执行不重复插入（sentinel markers 检测）
+- **用户保留**：你的其他自定义内容不会被覆盖
+- **自动同步**：`update.sh` 重跑时规则自动更新
+
+如需手动移除某工具的规则，删除对应文件中 `<!-- BEGIN LOOPENGINE-MANAGED INTERACTION-RULES -->` 到 `<!-- END -->` 之间的整段内容即可。
 
 ---
 

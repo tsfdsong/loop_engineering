@@ -27,8 +27,6 @@ metadata:
 
 # Testing 超级技能
 
-> 🔴 **用户交互红线**：遵循 skill-hub 的 4 项硬要求——必须用 `AskUserQuestion` 列出选项（含推荐），推荐项标 `(推荐)` 并说明理由，不推荐项必须说明理由，禁止自由文本输入和开放式追问。
-
 ## 核心定位：4 层测试金字塔 + TDD 横切
 
 ```
@@ -456,4 +454,4 @@ Step 6: 还 flaky？→ 标记为 known flaky，跳过 CI（但要修）
 - 内联：e2e-testing 49 行要点已融入 Layer 3 章节
 - 保留：tdd-full.md（371 行）+ e2e-playbook.md（531 行）
 - 内联：testing-patterns 270 行内容已融入 Layer 1 章节
-- skill-hub 调度表已同步
+- orch 调度表已同步

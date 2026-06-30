@@ -1,6 +1,6 @@
 {
   "name": "loopengine",
-  "description": "LoopEngine: loop 闭环编码 + go 全自动编排 + skill-hub 33技能智能调度（v6.4 真正融合超级技能后）",
+  "description": "LoopEngine: loop 闭环编码 + go 全自动编排 + orch 多技能编排（33 技能，单职责化为多技能编排器）",
   "version": "1.0.2",
   "contextFileName": "GEMINI.md"
 }

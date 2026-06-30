@@ -1,19 +1,19 @@
 ---
 name: using-loopengine
-description: Use when users are new to LoopEngine or need guidance on how the loop/go/skill-hub ecosystem works. Provides a quick tour of the three core skills and the automatic routing system.
+description: Use when users are new to LoopEngine or need guidance on how the loop/go/orch ecosystem works. Provides a quick tour of the three core skills and the multi-skill orchestration system.
 ---
 
 # Using LoopEngine — 循环工程全家桶
 
-你是 LoopEngine 的用户指南中枢。帮助用户快速理解 loop/go/skill-hub 三大核心技能如何协同工作。
+你是 LoopEngine 的用户指南中枢。帮助用户快速理解 loop/go/orch 三大核心技能如何协同工作。
 
 ## LoopEngine 三大核心
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                  skill-hub                       │
-│          🧠 智能路由 · 会话启动自动加载           │
-│   收到任务 → 分析意图 → 匹配 52 个技能中最准的    │
+│                     orch                        │
+│         🧠 多技能编排器 · 显式 /orch 触发         │
+│   单技能(80%)走原生 · 多技能(20%)走 5 类任务链     │
 └────────┬──────────────────────────┬─────────────┘
          │                          │
          ▼                          ▼
@@ -42,31 +42,37 @@ description: Use when users are new to LoopEngine or need guidance on how the lo
 ```
 自动：递归拆解任务 → 并发调度 ZCode → 闭环执行每个子任务 → 汇总 → 交付。你只需要描述大目标。
 
-### skill-hub — 智能路由（自动生效）
-不需要手动调用。收到任何任务后，skill-hub 自动从 **45 个技能**（v6.1.1 合并后）中匹配最精准的一个。例如：
-- 你说"这个类太大了" → 自动加载 `refactoring`
-- 你说"设计 API 接口" → 自动加载 `api-design-principles`
-- 你说"报错了" → 自动加载 `systematic-debugging`
+### `/orch` — 多技能编排（显式触发）
+单技能任务（80%）由原生 description 匹配自动处理。多技能任务（20%）需显式 `/orch`：
+
+| 你说 | 该用 |
+|------|------|
+| "对比 A 和 B 选型" | `/orch 1 ...`（调研+决策） |
+| "帮我审查并改进" | `/orch 2 ...`（分析+建议） |
+| "报错了帮我修" | `/orch 3 ...`（诊断+修复） |
+| "设计并实现 X 功能" | `/orch 4 ...`（设计+实现） |
+| "同时调研 A/B/C" | `/orch 5 ...`（并行调研） |
 
 ## 技能分类速览
 
 | 分类 | 数量 | 典型技能 |
 |------|------|---------|
-| 代码质量 | 3 | clean-code（**合并**: + code-complete + code-quality-principles） |
-| 架构设计 | 4 | clean-architecture, domain-driven-design（**合并**: + ddd-distilled + ddd-tactical-patterns + implementing-ddd） |
-| 重构 | 3 | refactoring（**合并**: + refactoring-guru）, legacy-code |
-| 测试 | 3 | test-driven-development, e2e-testing-patterns |
+| 代码质量 | 1 | clean-code（v6.4 4 维度） |
+| 架构设计 | 2 | software-architecture, domain-driven-design |
+| 重构 | 1 | refactoring（v6.4 4 源合一） |
+| 测试 | 1 | testing（v6.4 3 源合一） |
 | 调试 | 1 | systematic-debugging |
-| API/安全 | 4 | api-design-principles, api-security-best-practices |
-| 文档 | 3 | code-documentation-doc-generate, docx¹, pdf¹ |
-| 代码审查 | 1 | code-reviewer（**合并**: + requesting-code-review + receiving-code-review） |
-| 工程流程 | 7 | github-actions-templates, using-git-worktrees |
-| 规划执行 | 5 | brainstorming, writing-plans |
+| 事实优先 | 1 | evidence-first |
+| Python 后端 | 1 | python-web-development（v6.4 5 源合一） |
+| 代码审查 | 1 | code-reviewer, system-review |
+| 验证 | 1 | verification-before-completion |
+| 工程流程 | 5 | github-actions-templates, production-readiness, using-git-worktrees |
+| 规划执行 | 5 | brainstorming, writing-plans, executing-plans, subagent-driven-development, dispatching-parallel-agents |
 | 产品管理 | 2 | product-manager, to-prd |
-| 技能管理 | 4 | writing-skills, find-skills |
+| 技能管理 | 3 | agent-skill-architecture, writing-skills, skill-creator |
 | 数据库 | 1 | database-design |
 | 工具 | 3 | drawio-skill, agent-browser, using-loopengine |
-| 路由 | 3 | loop, loop-library, skill-router |
+| 自研闭环 | 3 | loop, go, orch（v6.7 改名自 skill-hub，单职责化） |
 
 ## 安装方式
 

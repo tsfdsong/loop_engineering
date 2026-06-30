@@ -1,11 +1,11 @@
-# skills/skill-hub/hooks/install-hooks.ps1
-# 注册 skill-hub session-start hook 到 Claude Code / ZCode (Windows)
+# skills/orch/hooks/install-hooks.ps1
+# 注册 orch session-start hook 到 Claude Code / ZCode (Windows)
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $PluginRoot = Resolve-Path (Join-Path $ScriptDir "..\..\")
-$HookCmd = "`"$PluginRoot\skills\skill-hub\hooks\skillhub-bootstrap.cmd`""
+$HookCmd = "`"$PluginRoot\skills\orch\hooks\orch-bootstrap.cmd`""
 
-Write-Host "=== Installing skill-hub v6.7 session-start hook (Windows) ===" -ForegroundColor Cyan
+Write-Host "=== Installing orch v1.0.0 session-start hook (Windows) ===" -ForegroundColor Cyan
 
 # Claude Code
 $ClaudeSettings = Join-Path $env:USERPROFILE ".claude\settings.json"
@@ -35,4 +35,4 @@ if (Test-Path (Join-Path $env:USERPROFILE ".claude")) {
 
 Write-Host ""
 Write-Host "=== Installation complete ===" -ForegroundColor Cyan
-Write-Host "Restart your agent to activate skill-hub v6.7.0-alpha."
+Write-Host "Restart your agent to activate orch v1.0.0."

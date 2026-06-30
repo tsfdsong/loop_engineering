@@ -394,7 +394,7 @@ echo "long text..." | headroom compress
 ## 十、参考资料
 
 - `docs/token-optimization-guide.md` — 底层原理与详细使用指南
-- `skills/skill-hub/SKILL.md` 第 202-234 行 — MCP 工具调度规则
+- `skills/orch/SKILL.md` — orch 多技能编排器（MCP 调度见 `AGENTS.md` 顶部红线章节）
 - `AGENTS.md` — MCP 红线规则
 - [jCodeMunch GitHub](https://github.com/jgravelle/jcodemunch-mcp)
 - [Repomix GitHub](https://github.com/yamadashy/repomix)

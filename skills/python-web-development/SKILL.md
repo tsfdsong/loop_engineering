@@ -20,8 +20,6 @@ metadata:
 
 # Python Web Development 超级技能
 
-> 🔴 **用户交互红线**：遵循 skill-hub 的 4 项硬要求——必须用 `AskUserQuestion` 列出选项（含推荐），推荐项标 `(推荐)` 并说明理由，不推荐项必须说明理由，禁止自由文本输入和开放式追问。
-
 Python 后端开发的完整工作流：从 API 设计 → 安全加固 → 认证授权 → 异步决策 → 异步实现 → 测试上线。
 
 ## 何时使用
@@ -409,5 +407,5 @@ Step 5: 加入结构化日志（contextvars 传递 request_id）
 - v6.4 合并前：api-development（API 设计/安全/认证） + code-engineering（Python 异步部分） 两个独立技能
 - v6.4 合并后：python-web-development 一个超级技能
 - 完整内容保留在 references/ 和 resources/
-- skill-hub 调度表已同步：api-development / code-engineering 行已移除
+- orch 调度表已同步：api-development / code-engineering 行已移除
 - 计数：v6.3 (36) - 1 = v6.4 (35)

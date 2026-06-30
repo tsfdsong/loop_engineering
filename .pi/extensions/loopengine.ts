@@ -4,12 +4,12 @@ import { fileURLToPath } from "node:url";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 const EXTREMELY_IMPORTANT_MARKER = "<EXTREMELY_IMPORTANT>";
-const BOOTSTRAP_MARKER = "loopengine:skill-hub bootstrap for pi";
+const BOOTSTRAP_MARKER = "loopengine:orch bootstrap for pi";
 
 const extensionDir = dirname(fileURLToPath(import.meta.url));
 const packageRoot = resolve(extensionDir, "../..");
 const skillsDir = resolve(packageRoot, "skills");
-const bootstrapSkillPath = resolve(skillsDir, "skill-hub", "SKILL.md");
+const bootstrapSkillPath = resolve(skillsDir, "orch", "SKILL.md");
 
 let cachedBootstrap: string | null | undefined;
 
@@ -65,9 +65,12 @@ function getBootstrapContent(): string | null {
 		cachedBootstrap = `${EXTREMELY_IMPORTANT_MARKER}
 ${BOOTSTRAP_MARKER}
 
-You have LoopEngine — the full-stack development engine with 53 skills.
+You have LoopEngine — the full-stack development engine with 33 skills.
 
-The skill-hub skill content is included below and is already loaded for this Pi session. Follow it now. Do not try to load skill-hub again.
+The orch (multi-skill orchestrator) skill content is included below and is already loaded for this Pi session. Follow it now. Do not try to load orch again.
+
+Single-skill tasks: native description matching handles it — do NOT call /orch.
+Multi-skill tasks: user must explicitly type /orch — see content below for the 5 task chains.
 
 ${body}
 
