@@ -1,9 +1,11 @@
 ---
 name: skill-hub
-description: 技能调度中心 —— 根据用户意图自动路由到最合适的技能。v6.4 真正融合超级技能（消除简单文件堆叠，改为流程化工作流）+ 合并 code-engineering Python 异步到 python-web-development + 清理 v6.2 合并漏网孤儿目录。
+description: Use when starting any conversation, when unsure which skill applies, or when no obvious skill matches. Routes via LLM semantic matching and 1% rule. Do NOT use for: tasks with clear single skill match (call that skill directly), pure code questions (use systematic-debugging or refactoring), or architecture review (use system-review).
 metadata:
-  version: "6.4"
+  version: "6.7.0-alpha"
   installed_skills: 33
+  v67_alignment: "superpowers 调度协议（1% 规则 + P0 优先 + L4 兜底 + description 触发器）"
+  injects_at: "session-start"
   skill_count_note: |
     installed_skills: 33 = v6.3 实际 40 - v6.4 净减 7。
     skills/ 目录实际条目数 = 35（33 个技能 + shared/ + skill-hub/ 自身）。
@@ -603,6 +605,139 @@ export LOOPENGINE_BRIDGES=disabled
 ```
 
 回滚不影响：v5.4 单技能路由 / v6.0 复合任务 / MCP 集成 / 已安装功能。
+
+---
+
+## 🆕 v6.7.0-alpha 新增：调度协议元技能化（对齐 superpowers · 2026-06-30）
+
+> **起源**：4 轮 deep-research 调研业界 5 方案 + superpowers 源码级分析。
+> **核心改动**：把 skill-hub 从"路由表"改造为"调度协议"——教 LLM 怎么用其他技能，不替 LLM 决定用哪个。
+> **参照**：superpowers/using-superpowers 1% 规则 + writing-skills description 规范 + session-start bootstrap。
+
+### 核心规则（按优先级）
+
+#### 🔴 规则 0：三层仲裁（最高优先级 · 替代原"核心规则 0 MCP 红线"位置）
+
+```
+1. 用户显式指令（AGENTS.md / CLAUDE.md / 直接请求）← 最高
+2. 本 skill-hub 调度协议
+3. 其他技能自身的 description
+4. 默认系统提示                                          ← 最低
+```
+
+**即使 skill-hub 说"必须调 brainstorming"，若用户的 AGENTS.md 说"不要 brainstorming"，遵循用户。**
+
+#### 🔴 规则 1：1% 规则（不可协商）
+
+> **哪怕 1% 概率某个技能适用，你必须调用它。**
+
+- ❌ "这看起来简单，不用调 skill" → 违反
+- ❌ "我已经知道答案了" → 违反
+- ✅ "我看到 query 含 '重构'，1% 概率 refactoring 适用 → 调 refactoring"
+- ✅ "这个任务涉及多个领域，我先 brainstorm 一下意图"
+
+#### 🟠 规则 2：P0 流程类优先（硬编码 4 个）
+
+P0 流程类**必须先调**，再考虑 P1 实现类：
+
+| 优先级 | 类别 | 技能 | 触发场景 |
+|:---:|------|------|---------|
+| P0 | 流程类 | `brainstorming` | 设计/创意/新功能 |
+| P0 | 流程类 | `systematic-debugging` | bug/报错/不工作 |
+| P0 | 流程类 | `evidence-first` | 分析/比较/评估/选型 |
+| P0 | 流程类 | `writing-plans` | 写实施计划 |
+| P1 | 实现类 | `refactoring` / `testing` / `code-reviewer` 等 | 具体执行 |
+
+**反例**："帮我重写这个函数" → 不直接调 refactoring，应先想"是否需要 brainstorming"。
+
+#### 🟡 规则 3：description 触发器（替代硬编码关键词表）
+
+**`description` 字段 = 路由触发器**，不是文档说明。判断流程：
+
+1. 用户 query 进来
+2. LLM 看到所有技能的 description（启动期由 session-start 注入）
+3. LLM 自主判断：哪个 description 与 query 匹配（**用 LLM 语义，不用关键词表**）
+4. 调用对应技能的 `Skill` 工具
+
+**description 写作规范**（参照 superpowers writing-skills）：
+- 必须以 "Use when..." 开头
+- 第三人称（注入系统提示的）
+- < 500 字符
+- **不总结工作流**（避免 LLM 跳过读全文）
+- 包含 "Do NOT use for:" 反向触发
+
+#### 🟢 规则 4：L4 显式求助（兜底）
+
+**L1 关键词表 fast-path + L2 文件扫描 + L3 domain 过滤 + LLM 语义匹配全部失败时**：
+
+- ❌ 禁止 AI 自行选一个最像的技能
+- ❌ 禁止跳过技能直接执行
+- ❌ 禁止静默回退到无技能模式
+- ✅ 必须用 `AskUserQuestion` 列出 top-3 候选（详见 `references/router-fallback.md`）
+
+#### 🟢 规则 5：MCP 红线（仅限代码域 · 替代 v6.4 措辞）
+
+> **任何"理解/修改/调研代码结构"操作，必须先用 MCP 工具。**
+
+**作用范围**（v6.7 明确边界）：
+- ✅ 受约束：理解/修改/调研本项目代码
+- ❌ 不受约束：浏览器自动化（agent-browser）/ 网页抓取 / 文档生成 / 远程 API / 用户数据处理
+
+**判定口诀**：任务对象是「本项目代码文件」→ 受约束；任务对象是「外部网页/远程服务/用户数据」→ 不受约束。
+
+### 调度流程（4 步）
+
+```
+用户 query 进来
+    ↓
+[1] 1% 规则检查
+    → "哪怕 1% 概率有技能适用" → 调用该技能
+    → "确定无技能适用" → 响应（包括澄清问题）
+    ↓
+[2] P0 流程类先调（如果 1% 规则命中 P0 技能）
+    → brainstorming / systematic-debugging / evidence-first / writing-plans
+    → 必先调，再考虑 P1
+    ↓
+[3] description 语义匹配
+    → LLM 看到所有技能的 description
+    → 自主判断调哪个（用 LLM 语义，不用关键词表）
+    → 调用对应技能的 Skill 工具
+    ↓
+[4] L4 显式求助（如果上面全部失败）
+    → AskUserQuestion 列 top-3
+    → 用户选择 → 路由
+```
+
+### 不做什么
+
+- ❌ **不维护关键词表作为权威**（KEYWORDS 表降级为 fast-path 缓存，保留兼容）
+- ❌ **不替 LLM 决定调哪个技能**（用 1% 规则 + LLM 自主判断）
+- ❌ **不强行猜**（L4 兜底必须 AskUserQuestion）
+- ❌ **不总结技能工作流在 description**（避免 LLM 跳过读全文）
+
+### 关键不变量（向后兼容）
+
+- v5.4 baseline 27 条测试 100% 通过（注：v54-baseline.json 当前不存在，以 complexity-scorer-baseline 49 case 替代）
+- v6.0 复合任务 5 类表兼容
+- v6.1 三技能协同契约兼容
+- v6.5 complexity-scorer 不破坏
+- KEYWORDS 表保留为 fast-path
+- `LOOPENGINE_COMPLEXITY_AWARE=disabled` 一键回滚仍生效
+
+### 启动期注入（详见 Task 3）
+
+本技能在 `SessionStart` 事件时被注入到系统提示。**只注入本技能 1 个**，不注入其他 33 个技能——其他技能由 LLM 通过 `Skill` 工具按需加载（参照 superpowers 实战）。
+
+### 实施计划
+
+详见 `docs/2026-06-30-skillhub-v67-plan.md`（4 Task / 4.5 天 / 跨 35 文件）。
+
+### 引用
+
+- superpowers/using-superpowers — https://raw.githubusercontent.com/obra/superpowers/main/skills/using-superpowers/SKILL.md
+- superpowers/writing-skills — https://raw.githubusercontent.com/obra/superpowers/main/skills/writing-skills/SKILL.md
+- superpowers/session-start — https://raw.githubusercontent.com/obra/superpowers/main/hooks/session-start
+- 调研归档：`.workflow/loopengine-skillhub-scheduling/`
 
 ---
 

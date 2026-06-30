@@ -1,0 +1,102 @@
+{
+  "version": "1.0",
+  "task_id": "go-skillhub-v67",
+  "slug": "skillhub-v67",
+  "feature_branch": "go-skillhub-v67",
+  "work_branch": "go-skillhub-v67-wt",
+  "worktree_path": ".go/worktrees/skillhub-v67",
+  "state": "in_progress",
+  "created_at": "2026-06-30",
+  "creator": "go-skill",
+  "complexity_level": "L3",
+  "level_rationale": "4 Task · 跨 35 文件 · 需要 worktree 隔离 · 需要 G10 系统审查",
+  "spec": {
+    "design_doc": "docs/2026-06-30-skillhub-complexity-aware-design.md",
+    "plan_doc": "docs/2026-06-30-skillhub-v67-plan.md",
+    "research_docs": "4 轮 deep-research（业界 5 方案 + superpowers 1 方案源码级）"
+  },
+  "subtasks": [
+    {
+      "id": "task-1",
+      "name": "改写 skill-hub/SKILL.md 为调度协议元技能",
+      "status": "in_progress",
+      "files": [
+        "skills/skill-hub/SKILL.md",
+        "skills/skill-hub/references/router-fallback.md",
+        "tests/golden-traces/v67-router-baseline.json"
+      ],
+      "est_days": 0.5,
+      "depends_on": []
+    },
+    {
+      "id": "task-2",
+      "name": "改写 34 个 SKILL.md description 为 Use when 模式",
+      "status": "pending",
+      "files": ["skills/*/SKILL.md (34 files)"],
+      "est_days": 3,
+      "depends_on": ["task-1"]
+    },
+    {
+      "id": "task-3",
+      "name": "session-start 元技能注入机制（POSIX + Windows）",
+      "status": "pending",
+      "files": [
+        "skills/skill-hub/hooks/skillhub-bootstrap.sh",
+        "skills/skill-hub/hooks/skillhub-bootstrap.cmd",
+        "skills/skill-hub/hooks/install-hooks.sh",
+        "skills/skill-hub/hooks/install-hooks.ps1"
+      ],
+      "est_days": 0.5,
+      "depends_on": ["task-1"]
+    },
+    {
+      "id": "task-4",
+      "name": "P0 流程类优先级 + 三层冲突仲裁",
+      "status": "pending",
+      "files": [
+        "skills/skill-hub/references/priority-manifest.json",
+        "skills/skill-hub/references/complexity-scorer.cjs",
+        "tests/skill-hub-v67-router.test.cjs"
+      ],
+      "est_days": 0.5,
+      "depends_on": ["task-1"]
+    }
+  ],
+  "invariants": {
+    "v54_baseline_exists": false,
+    "v54_baseline_note": "plan 中假设的 v54-baseline.json 不存在；改用 complexity-scorer.test.cjs (40 case) + complexity-scorer-env.test.cjs (9 case) + evidence-first-baseline.json + v61-go-loop-subagent.json",
+    "complexity_scorer_tests": 49,
+    "loop_orchestrator_alpha": true,
+    "v61_bridge_contracts": 6,
+    "keywords_fastpath_kept": true,
+    "complexity_aware_disabled_rollback": true
+  },
+  "decision_log": {
+    "level_evaluation": {
+      "level": "L3",
+      "rationale": "4 Task · 跨 35 文件 · 需要 worktree 隔离 · 需要 G10 系统审查 · 涉及 session-start 注入（平台集成）"
+    },
+    "risk_discovered": [
+      {
+        "id": "R1",
+        "severity": "high",
+        "description": "plan 中假设的 v54-baseline.json 不存在",
+        "mitigation": "改用现有 baseline：complexity-scorer (40+9) + evidence-first + v61-go-loop-subagent"
+      },
+      {
+        "id": "R2",
+        "severity": "high",
+        "description": "install.sh / update.sh 有大改动看似未 commit",
+        "mitigation": "实际已在 commit 4e286f3 中（v2.0 一行 curl 安装体系重写）。问题自动解决。"
+      }
+    ]
+  },
+  "gates": {
+    "G9_code_review": "pending",
+    "G10_system_review": "pending"
+  },
+  "checkpoint": {
+    "last_completed_step": "step-2.7",
+    "next_step": "step-3.1"
+  }
+}
