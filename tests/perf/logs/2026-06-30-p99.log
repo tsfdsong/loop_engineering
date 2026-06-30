@@ -1,6 +1,0 @@
-Iterations: 1000 (each runs 14 queries = 14000 total)
-P50: 0.083ms  |  P90: 0.118ms
-P99: 0.207ms  |  Max: 0.510ms
-Per-query (P99 / 14): 0.0148ms
-
-✓ P99 0.21ms < 200ms threshold (v0.1 spec)
