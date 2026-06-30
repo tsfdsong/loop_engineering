@@ -168,44 +168,34 @@ echo ""
 echo -e "${BOLD}⚙️  Step 4: 配置 ZCode 桌面版 MCP (~/.zcode/cli/config.json)...${RESET}"
 write_zcode_desktop_config
 
-# ── Step 5: 注入全局用户交互红线规则 ─────────────────────────────
-# 把 AGENTS.md 中的"用户交互红线"章节注入到所有 AI 工具的**用户级**规则文件。
+# ── Step 5: 注入全局红线规则（4 条 · 2026-06-30 扩展） ───────────────────
+# 把 AGENTS.md 中的 4 条 🔴 红线章节注入到所有 AI 工具的**用户级**规则文件：
+#   1. 用户交互红线       → LOOPENGINE-MANAGED INTERACTION-RULES
+#   2. MCP 红线规则       → LOOPENGINE-MANAGED MCP-RULES
+#   3. 事实优先硬规则     → LOOPENGINE-MANAGED EVIDENCE-RULES
+#   4. 摘要输出红线       → LOOPENGINE-MANAGED SUMMARY-RULES（v6.8 新增）
 # 关键设计：sentinel markers（HTML 注释）+ Python 合并，保证：
 #   1. 幂等性 —— 重复执行不重复插入（找到旧块则替换）
 #   2. 用户保留 —— 用户在文件其他章节的自定义内容**不会被覆盖**
 #   3. 自动更新 —— 项目升级（update.sh → install.sh）时，规则自动同步
 #   4. 全局生效 —— 用户级 (~/.xxx/...) 而非项目级，新会话立即生效
-install_interaction_rules() {
+#   5. 多规则支持 —— 每条红线独立标记，独立追加/更新（v6.8 扩展）
+install_managed_rules() {
     local src="$WORK/AGENTS.md"
     [ ! -f "$src" ] && { echo -e "  ${YELLOW}⚠${RESET}  $src 不存在，跳过"; return 0; }
 
-    # 提取"用户交互红线"章节的精确行号范围
+    # 规则注册表：章节标题 → 标记类型
     # 注意：使用 awk 而非 grep —— Git Bash Windows 下 grep 处理 `^## 🔴`（4 字节 UTF-8 emoji + ^ 锚点）失败
-    local begin_line
-    begin_line=$(awk '/^## 🔴 用户交互红线/ { print NR; exit }' "$src")
-    if [ -z "$begin_line" ]; then
-        echo -e "  ${YELLOW}⚠${RESET}  AGENTS.md 中未找到'用户交互红线'章节，跳过"
-        return 0
-    fi
-    # 下一个 ## 章节开始行号
-    local next_section_line
-    next_section_line=$(awk -v start="$begin_line" 'NR > start && /^## / { print NR; exit }' "$src")
-    local end_line
-    if [ -n "$next_section_line" ]; then
-        end_line=$((next_section_line - 1))
-    else
-        end_line=$(wc -l < "$src")
-    fi
-
-    # 用 awk 而非 sed 提取行范围（更跨平台、避免 sed 在 Windows 下的转义问题）
-    local managed_block
-    managed_block=$(awk -v start="$begin_line" -v end="$end_line" 'NR>=start && NR<=end' "$src")
-    local wrapped_block
-    wrapped_block=$(printf '<!-- BEGIN LOOPENGINE-MANAGED INTERACTION-RULES -->\n%s\n<!-- END LOOPENGINE-MANAGED INTERACTION-RULES -->' "$managed_block")
+    local -a rules=(
+        "用户交互红线:INTERACTION-RULES"
+        "MCP 红线规则:MCP-RULES"
+        "事实优先硬规则:EVIDENCE-RULES"
+        "摘要输出红线:SUMMARY-RULES"
+    )
 
     # 目标：(标签 | 用户级规则文件路径)
     # 注意：路径是用户级 (~/.xxx/...)，与项目级 (./AGENTS.md) 不同，确保**全局生效**
-    local targets=(
+    local -a targets=(
         "ZCode|$HOME/.zcode/AGENTS.md"
         "Claude Code|$HOME/.claude/CLAUDE.md"
         "Gemini CLI|$HOME/.gemini/GEMINI.md"
@@ -215,50 +205,106 @@ install_interaction_rules() {
         "Pi|$HOME/.pi/AGENTS.md"
     )
 
+    # 临时目录存放提取的规则块（避免 bash 参数长度限制 + 多 marker 一次性传给 Python）
+    local block_dir
+    block_dir=$(mktemp -d)
+    trap "rm -rf '$block_dir'" RETURN  # bash 4.4+；旧版会泄漏临时目录但不影响功能
+
+    # 阶段 1：提取所有规则章节到 $block_dir/<MARKER>
+    local extracted_count=0
+    for entry in "${rules[@]}"; do
+        local title="${entry%%:*}"
+        local marker="${entry##*:}"
+
+        local begin_line
+        begin_line=$(awk -v t="^## 🔴 $title" '$0 ~ t { print NR; exit }' "$src")
+        if [ -z "$begin_line" ]; then
+            echo -e "  ${YELLOW}⚠${RESET}  AGENTS.md 中未找到 '$title' 章节，跳过"
+            continue
+        fi
+        local next_section_line
+        next_section_line=$(awk -v start="$begin_line" 'NR > start && /^## / { print NR; exit }' "$src")
+        local end_line
+        if [ -n "$next_section_line" ]; then
+            end_line=$((next_section_line - 1))
+        else
+            end_line=$(wc -l < "$src")
+        fi
+
+        # 用 awk 提取行范围（更跨平台、避免 sed 在 Windows 下的转义问题）
+        local managed_block
+        managed_block=$(awk -v start="$begin_line" -v end="$end_line" 'NR>=start && NR<=end' "$src")
+        local wrapped_block
+        wrapped_block=$(printf '<!-- BEGIN LOOPENGINE-MANAGED %s -->\n%s\n<!-- END LOOPENGINE-MANAGED %s -->' \
+            "$marker" "$managed_block" "$marker")
+        echo "$wrapped_block" > "$block_dir/$marker"
+        extracted_count=$((extracted_count + 1))
+        echo -e "  ${GREEN}✅${RESET} 提取: ${CYAN}${title}${RESET} → ${marker}"
+    done
+
+    if [ "$extracted_count" -eq 0 ]; then
+        echo -e "  ${RED}❌${RESET}  未提取到任何规则章节，退出"
+        return 1
+    fi
+
+    # 阶段 2：注入到所有目标文件（每个文件独立处理 4 个 marker）
     for entry in "${targets[@]}"; do
         local label="${entry%%|*}"
         local target="${entry##*|}"
         mkdir -p "$(dirname "$target")"
 
-        # Python 合并：找到旧块则替换，否则追加
-        python - "$target" "$wrapped_block" <<'PYEOF'
+        # Python 合并：遍历 $block_dir 所有文件，按 marker 独立追加/更新
+        python - "$target" "$block_dir" <<'PYEOF'
 import sys, os, re
 target = sys.argv[1]
-new_block = sys.argv[2]
-begin_marker = "<!-- BEGIN LOOPENGINE-MANAGED INTERACTION-RULES -->"
-end_marker = "<!-- END LOOPENGINE-MANAGED INTERACTION-RULES -->"
+block_dir = sys.argv[2]
 
 content = ""
 if os.path.isfile(target):
     with open(target, 'r', encoding='utf-8') as f:
         content = f.read()
 
-pattern = re.compile(re.escape(begin_marker) + r".*?" + re.escape(end_marker), re.DOTALL)
+applied = 0
+for fname in sorted(os.listdir(block_dir)):
+    block_path = os.path.join(block_dir, fname)
+    if not os.path.isfile(block_path):
+        continue
+    with open(block_path, 'r', encoding='utf-8') as f:
+        block = f.read()
+    m = re.search(r'<!-- BEGIN LOOPENGINE-MANAGED (.+?) -->', block)
+    if not m:
+        continue
+    marker_type = m.group(1)
+    begin_marker = f"<!-- BEGIN LOOPENGINE-MANAGED {marker_type} -->"
+    end_marker = f"<!-- END LOOPENGINE-MANAGED {marker_type} -->"
+    pattern = re.compile(re.escape(begin_marker) + r".*?" + re.escape(end_marker), re.DOTALL)
 
-if pattern.search(content):
-    new_content = pattern.sub(new_block, content)
-    action = "UPDATED"
-else:
-    if content and not content.endswith("\n"):
-        content += "\n"
-    if content and not content.endswith("\n\n"):
-        content += "\n"
-    new_content = content + new_block + "\n"
-    action = "APPENDED"
+    if pattern.search(content):
+        # 用 lambda 避免 re.sub 把 replacement 中的反斜杠（如 \U）当转义序列
+        content = pattern.sub(lambda _m: block, content)
+        action = "UPDATED"
+    else:
+        if content and not content.endswith("\n"):
+            content += "\n"
+        if content and not content.endswith("\n\n"):
+            content += "\n"
+        content = content + block + "\n"
+        action = "APPENDED"
+    print(f"  [{marker_type}] {action}")
+    applied += 1
 
 with open(target, 'w', encoding='utf-8') as f:
-    f.write(new_content)
-print(f"  {action}")
+    f.write(content)
+print(f"✅ Applied {applied} blocks to {target}")
 PYEOF
-
-        echo -e "  ${GREEN}✅${RESET} [$label 交互红线] $target"
-        TARGETS+=("$label 交互红线:$target")
+        echo -e "  ${GREEN}✅${RESET} [$label 红线] $target"
+        TARGETS+=("$label 红线:$target")
     done
 }
 
 echo ""
-echo -e "${BOLD}🌐 Step 5: 注入全局用户交互红线规则（7 个 AI 工具用户级文件）...${RESET}"
-install_interaction_rules
+echo -e "${BOLD}🌐 Step 5: 注入全局红线规则（7 个 AI 工具 × 4 条红线）...${RESET}"
+install_managed_rules
 
 # ── 总结 ────────────────────────────────────────────────────
 echo ""
