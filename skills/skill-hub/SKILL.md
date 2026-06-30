@@ -235,38 +235,114 @@ evidence-first（开始 · 事实优先）
 | **`agent-browser`** | 浏览器、网页、截图、自动化 | 浏览器自动化 |
 | **`using-loopengine`** | LoopEngine、体系介绍、上手引导 | **LoopEngine 体系引导** |
 
-### 🔴 MCP 代码理解工具（红线规则 · 不可违反）
+### 🔴 MCP 代码理解工具（红线规则 · 不可违反 · v6.4 重构）
 
 > **红线规则：任何需要理解代码结构的操作，必须先用 MCP 工具，禁止直接 Read 全文件。**
-> 实测可节省 ~90% token。此规则优先级高于所有其他操作指令。
+> 实测可节省 ~80% token（6 场景基准）。此规则优先级高于所有其他操作指令。
 
-**适用范围（不仅限于"修改代码前"）**：
-- 修改代码、调研代码、解释代码、分析架构
-- 查找函数/类/变量定义、查找引用位置
-- 了解项目结构、浏览目录、理解文件内容
-- **一句话：只要目的是"理解代码"，就必须 MCP 优先**
+> 📋 **本章节为指引版，完整规则见项目根 `AGENTS.md` 第 3-180 行的"🔴 MCP 红线规则"。**
+> 修订时同步两处：AGENTS.md 为主，skill-hub 为辅。
 
-**违规判定**：
-- 连续 3 次以上直接 Read 全文件而未使用任何 MCP 工具 → 红线违规
-- 每次会话结束后自查：MCP 工具调用次数应 ≥ Read 调用次数
+#### 四层探查策略（L0 → L3）
 
-| MCP 工具 | 用途 | 适用场景 | Token 节省 |
-|------|------|------|:--:|
-| `mcp__jcodemunch__get_repo_map` | 项目结构全景图（符号级） | 需要了解项目整体结构、定位文件 | ~80% |
-| `mcp__jcodemunch__get_file_outline` | 文件符号大纲（函数/类/变量列表） | 需要了解文件内容结构，无需读全文 | ~85% |
-| `mcp__jcodemunch__search_symbols` | 语义搜索符号（按名称/签名/摘要） | 查找特定函数、类、变量定义 | ~90% |
-| `mcp__jcodemunch__get_file_tree` | 目录树（可选含文件摘要） | 浏览项目目录结构 | ~95% |
-| `mcp__jcodemunch__find_references` | 查找符号的所有引用位置 | 了解修改影响范围 | ~85% |
-| `mcp__jcodemunch__get_blast_radius` | 修改影响面分析 | 重构前评估风险 | ~90% |
-| `mcp__repomix__pack_codebase` | 打包代码库（结构化输出） | 需要完整代码上下文时 | ~70% |
-| `mcp__headroom__headroom_compress` | 压缩大段内容（hash 检索） | 需要缓存大段内容供后续引用 | ~95% |
+```
+L0 项目全景：get_repo_map（代码） / pack_codebase（兜底）
+L1 文件结构：get_file_outline（代码） / headroom_compress（Markdown）
+L2 精准内容：search_symbols / get_symbol_source / headroom_retrieve
+L3 精确行  ：Read with offset/limit（最后手段）
+```
 
-**使用规则（强制执行）**：
+#### MCP 三件套职责
+
+| 工具 | 最佳场景 | 限制 |
+|------|---------|------|
+| jCodeMunch-MCP | Python AST | 需先 index_folder；worktree 默认未索引 |
+| Repomix | 任意代码库 | 一次性输出 |
+| Headroom-ai | 大段 Markdown 压缩 | hash 检索 |
+
+#### 5 条唯一例外
+
+1. MCP 工具全部不可用（报错/超时/未索引）
+2. 文件 < 50 行
+3. 已通过 MCP 定位，需要精确读取 1-3 行
+4. **执行类操作**（git/cp/rsync/worktree）→ 用 Bash
+5. **JSON/YAML/TOML 小配置**（< 30 行）→ Read 全文
+
+#### 3 级 6 条违规判定
+
+| 等级 | 违规 |
+|------|------|
+| 🔴 红线 | 连续 3 次 Read 而未用 MCP |
+| 🟠 严重 | 单次 Read > 100 行 / Bash `cat/grep/head file` 探查代码 / worktree 中未先 `index_folder` |
+| 🟡 中等 | MCP 不可用时未尝试 `pack_codebase` 兜底 / 长会话（> 30 轮）未用 `headroom_compress` |
+
+#### worktree 特殊流程（v6.4 新增 · 修复常见根因）
+
+```bash
+# 1. 创建 worktree 后立即索引（关键步骤）
+mcp__jcodemunch__index_folder(
+  path=".worktrees/<name>",
+  identity_mode="git",         # 关键：识别为同一 git repo
+  follow_symlinks=true
+)
+# 2. 验证
+mcp__jcodemunch__resolve_repo(path)
+# 3. 兜底（jcodemunch 失败时）
+mcp__repomix__pack_codebase(directory)
+# 4. 最后 fallback
+Read with offset/limit
+```
+
+#### 5 项自查清单（会话结束前必查）
+
+- [ ] MCP 调用次数 ≥ Read 调用次数？
+- [ ] 单次 Read > 100 行？（应改 MCP）
+- [ ] Bash 探查代码次数 < 5？（含 cat/grep/head）
+- [ ] worktree 中是否先 index_folder？
+- [ ] 长会话是否用 headroom 压缩？
+
+#### MCP 工具速查（按层级）
+
+| 层级 | 工具 | 用途 | Token 节省 |
+|:---:|------|------|:---:|
+| **L0** | `mcp__jcodemunch__get_repo_map` | 项目结构全景图 | ~80% |
+| **L0** | `mcp__repomix__pack_codebase` | 打包代码库（兜底） | ~70% |
+| **L1** | `mcp__jcodemunch__get_file_outline` | 文件符号大纲 | ~85% |
+| **L1** | `mcp__jcodemunch__get_file_tree` | 目录树浏览 | ~95% |
+| **L1** | `mcp__headroom__headroom_compress` | 压缩大段内容 | ~95% |
+| **L2** | `mcp__jcodemunch__search_symbols` | 语义搜索符号 | ~90% |
+| **L2** | `mcp__jcodemunch__get_symbol_source` | 拿单符号源码 | ~90% |
+| **L2** | `mcp__jcodemunch__find_references` | 查找引用位置 | ~85% |
+| **L2** | `mcp__jcodemunch__get_blast_radius` | 修改影响面分析 | ~90% |
+| **L2** | `mcp__headroom__headroom_retrieve` | 按需展开压缩 | ~95% |
+| **L3** | Read with offset/limit | 精确行（最后手段） | 视场景 |
+
+#### 6 场景性能基准
+
+| 场景 | 直接读 | MCP 优化 | 节省 |
+|------|-------|---------|:---:|
+| 阅读单个函数（300 行） | ~800 | ~40 | 95% |
+| 理解项目架构 | ~1.2M | ~370K | 69% |
+| 长会话（50 轮） | ~40K | ~12K | 70% |
+| pytest 输出（200 行） | ~1.2K | ~200 | 83% |
+| worktree 启动 | ~5K | ~200 | 96% |
+| 跨 9 技能审查 | ~34K | ~5K | 85% |
+| **典型场景平均** | — | — | **~80%** |
+
+#### 强制使用规则
 
 1. **任何理解代码的操作，必须先用 MCP 工具** — 禁止直接 Read 全文件（红线）
-2. **标准流程**：`get_repo_map`（定位项目全景）→ `get_file_outline`（理解文件结构）→ `search_symbols`（找关联符号）→ `Read`（仅精确读取目标行）→ `Edit`
-3. **Read 仅用于**：MCP 工具全部不可用、需要精确行内容、文件小于 50 行
-4. **自查机制**：每次会话结束前，检查 MCP 调用次数是否 ≥ Read 调用次数
+2. **标准流程**：`get_repo_map` → `get_file_outline` → `search_symbols` → `Read`（仅精确行）→ `Edit`
+3. **Read 仅用于**：MCP 工具全部不可用、需要精确行内容、文件小于 50 行、JSON/YAML 小配置
+4. **worktree 特殊流程**：见上方强制 4 步
+5. **自查机制**：会话结束前 5 项自查清单必勾选
+
+> **v6.4 升级要点**：
+> - 从 2 级违规 → 3 级 6 条
+> - 从 4 场景基准 → 6 场景
+> - 新增 worktree 特殊流程（修复 v6.4 任务根因）
+> - 新增 4 层探查策略（L0-L3）
+> - 新增 5 项自查清单
 
 ### 🧭 路由类（2个 · v6.2.1 回滚合并 8：loop 保留)
 
