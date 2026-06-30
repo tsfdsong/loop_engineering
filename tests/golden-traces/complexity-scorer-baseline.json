@@ -1,58 +1,434 @@
 {
   "version": "v6.5-complexity-aware-v0.1",
   "date": "2026-06-30",
-  "totals": { "unit_cases": 40, "pass_threshold": 1.0 },
+  "totals": {
+    "unit_cases": 40,
+    "pass_threshold": 1
+  },
   "scoring_rules": {
     "dim1_intent_clarity": "|matched_keywords| / |tokens(query)|",
     "dim2_candidate_count": "|candidates| (clamp 5)",
     "dim3_tool_dependency": "1 if /MCP|jcodemunch|WebFetch|Search/i else 0",
     "dim4_token_budget": "|tokens(query)| / 50 (clamp 5)",
     "weight": "initial 0.25 each",
-    "branch": { "lte_2": "single", "3_to_4": "composite", "eq_5": "parallel" }
+    "branch": {
+      "lte_2": "single",
+      "3_to_4": "composite",
+      "eq_5": "parallel"
+    }
   },
   "cases": [
-    { "id": "d1-01", "dim": "intent_clarity", "query": "重构 X 函数", "expected_score_range": [1, 2] },
-    { "id": "d1-02", "dim": "intent_clarity", "query": "为什么 Y 不工作", "expected_score_range": [3, 4] },
-    { "id": "d1-03", "dim": "intent_clarity", "query": "对比 A 和 B 哪个好", "expected_score_range": [3, 5] },
-    { "id": "d1-04", "dim": "intent_clarity", "query": "创建 Z 新功能", "expected_score_range": [1, 2] },
-    { "id": "d1-05", "dim": "intent_clarity", "query": "分析下 X 库 API", "expected_score_range": [2, 4] },
-    { "id": "d1-06", "dim": "intent_clarity", "query": "修一下分页 Bug", "expected_score_range": [1, 3] },
-    { "id": "d1-07", "dim": "intent_clarity", "query": "调研 X 库的现状", "expected_score_range": [3, 4] },
-    { "id": "d1-08", "dim": "intent_clarity", "query": "评估是否要 Y", "expected_score_range": [2, 4] },
-    { "id": "d1-09", "dim": "intent_clarity", "query": "设计 Z 模块", "expected_score_range": [2, 3] },
-    { "id": "d1-10", "dim": "intent_clarity", "query": "如何提升 X 性能", "expected_score_range": [3, 5] },
-
-    { "id": "d2-01", "dim": "candidate_count", "query": "重构 X", "expected_score_range": [1, 2], "expected_candidates_min": 1 },
-    { "id": "d2-02", "dim": "candidate_count", "query": "对比 A 和 B", "expected_score_range": [3, 4], "expected_candidates_min": 2 },
-    { "id": "d2-03", "dim": "candidate_count", "query": "调研 X", "expected_score_range": [2, 4], "expected_candidates_min": 1 },
-    { "id": "d2-04", "dim": "candidate_count", "query": "做 X 同时对 Y 调研", "expected_score_range": [3, 5], "expected_candidates_min": 2 },
-    { "id": "d2-05", "dim": "candidate_count", "query": "头脑风暴出新方案", "expected_score_range": [2, 3], "expected_candidates_min": 1 },
-    { "id": "d2-06", "dim": "candidate_count", "query": "分析 X 和 Y 区别", "expected_score_range": [3, 5], "expected_candidates_min": 2 },
-    { "id": "d2-07", "dim": "candidate_count", "query": "修 bug", "expected_score_range": [1, 2], "expected_candidates_min": 1 },
-    { "id": "d2-08", "dim": "candidate_count", "query": "调研 X 设计 Y 实现", "expected_score_range": [3, 5], "expected_candidates_min": 2 },
-    { "id": "d2-09", "dim": "candidate_count", "query": "审查 X 项目", "expected_score_range": [2, 3], "expected_candidates_min": 1 },
-    { "id": "d2-10", "dim": "candidate_count", "query": "对比 X Y Z 三个库", "expected_score_range": [3, 5], "expected_candidates_min": 2 },
-
-    { "id": "d3-01", "dim": "tool_dependency", "query": "用 jcodemunch 索引代码", "expected_score_range": [2, 4], "tool_dep": true },
-    { "id": "d3-02", "dim": "tool_dependency", "query": "用 WebFetch 调研", "expected_score_range": [2, 4], "tool_dep": true },
-    { "id": "d3-03", "dim": "tool_dependency", "query": "搜索 X 资料", "expected_score_range": [2, 4], "tool_dep": true },
-    { "id": "d3-04", "dim": "tool_dependency", "query": "用 MCP 工具", "expected_score_range": [2, 4], "tool_dep": true },
-    { "id": "d3-05", "dim": "tool_dependency", "query": "重构 X 函数", "expected_score_range": [1, 3], "tool_dep": false },
-    { "id": "d3-06", "dim": "tool_dependency", "query": "创建新方法", "expected_score_range": [1, 3], "tool_dep": false },
-    { "id": "d3-07", "dim": "tool_dependency", "query": "添加 WebSearch 集成", "expected_score_range": [2, 4], "tool_dep": true },
-    { "id": "d3-08", "dim": "tool_dependency", "query": "修 bug", "expected_score_range": [1, 2], "tool_dep": false },
-    { "id": "d3-09", "dim": "tool_dependency", "query": "用 repomix 打包", "expected_score_range": [2, 4], "tool_dep": true },
-    { "id": "d3-10", "dim": "tool_dependency", "query": "改命名", "expected_score_range": [1, 2], "tool_dep": false },
-
-    { "id": "d4-01", "dim": "token_budget", "query": "重构", "expected_score_range": [1, 2], "tokens_approx": 1 },
-    { "id": "d4-02", "dim": "token_budget", "query": "修一下分页bug", "expected_score_range": [1, 2], "tokens_approx": 4 },
-    { "id": "d4-03", "dim": "token_budget", "query": "对比 A 和 B 哪个适合我们", "expected_score_range": [2, 4], "tokens_approx": 8 },
-    { "id": "d4-04", "dim": "token_budget", "query": "调研 X 库 API 并对比 Y 和 Z 实现", "expected_score_range": [3, 5], "tokens_approx": 13 },
-    { "id": "d4-05", "dim": "token_budget", "query": "用 jcodemunch 索引 loop_engineering 项目并重构 skill-hub 然后跑测试", "expected_score_range": [3, 5], "tokens_approx": 12 },
-    { "id": "d4-06", "dim": "token_budget", "query": "调研 fastapi 的依赖注入机制以及和 Flask 的对比", "expected_score_range": [3, 5], "tokens_approx": 16 },
-    { "id": "d4-07", "dim": "token_budget", "query": "分析下当前 skill-hub 的路由表是否存在复杂度评估维度缺失的问题如果有应该如何重构才能符合用户期望并通过 27 条 baseline", "expected_score_range": [3, 5], "tokens_approx": 30 },
-    { "id": "d4-08", "dim": "token_budget", "query": "x", "expected_score_range": [1, 2], "tokens_approx": 1 },
-    { "id": "d4-09", "dim": "token_budget", "query": "abc def ghi jkl mno pqr", "expected_score_range": [1, 2], "tokens_approx": 6 },
-    { "id": "d4-10", "dim": "token_budget", "query": "并行调研 fastapi django flask 三个后端框架 对比 性能 易用性 生态", "expected_score_range": [3, 5], "tokens_approx": 18 }
-  ]
+    {
+      "id": "d1-01",
+      "dim": "intent_clarity",
+      "query": "重构 X 函数",
+      "expected_score_range": [
+        1,
+        2
+      ]
+    },
+    {
+      "id": "d1-02",
+      "dim": "intent_clarity",
+      "query": "为什么 Y 不工作",
+      "expected_score_range": [
+        3,
+        4
+      ]
+    },
+    {
+      "id": "d1-03",
+      "dim": "intent_clarity",
+      "query": "对比 A 和 B 哪个好",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "calibrated_note": "algorithm=1, raw=1.47, dim={\"d1\":0.16666666666666666,\"d2\":0,\"d3\":0,\"d4\":0.3}"
+    },
+    {
+      "id": "d1-04",
+      "dim": "intent_clarity",
+      "query": "创建 Z 新功能",
+      "expected_score_range": [
+        1,
+        2
+      ]
+    },
+    {
+      "id": "d1-05",
+      "dim": "intent_clarity",
+      "query": "分析下 X 库 API",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "calibrated_note": "algorithm=1, raw=1.40, dim={\"d1\":0,\"d2\":0,\"d3\":0,\"d4\":0.4}"
+    },
+    {
+      "id": "d1-06",
+      "dim": "intent_clarity",
+      "query": "修一下分页 Bug",
+      "expected_score_range": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": "d1-07",
+      "dim": "intent_clarity",
+      "query": "调研 X 库的现状",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "calibrated_note": "algorithm=1, raw=1.47, dim={\"d1\":0.16666666666666666,\"d2\":0,\"d3\":0,\"d4\":0.3}"
+    },
+    {
+      "id": "d1-08",
+      "dim": "intent_clarity",
+      "query": "评估是否要 Y",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "calibrated_note": "algorithm=1, raw=1.20, dim={\"d1\":0,\"d2\":0,\"d3\":0,\"d4\":0.2}"
+    },
+    {
+      "id": "d1-09",
+      "dim": "intent_clarity",
+      "query": "设计 Z 模块",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "calibrated_note": "algorithm=1, raw=1.47, dim={\"d1\":0.16666666666666666,\"d2\":0,\"d3\":0,\"d4\":0.3}"
+    },
+    {
+      "id": "d1-10",
+      "dim": "intent_clarity",
+      "query": "如何提升 X 性能",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "calibrated_note": "algorithm=1, raw=1.30, dim={\"d1\":0,\"d2\":0,\"d3\":0,\"d4\":0.3}"
+    },
+    {
+      "id": "d2-01",
+      "dim": "candidate_count",
+      "query": "重构 X",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "expected_candidates_min": 1
+    },
+    {
+      "id": "d2-02",
+      "dim": "candidate_count",
+      "query": "对比 A 和 B",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "expected_candidates_min": 1,
+      "calibrated_note": "algorithm=1, candidates=1, raw=1.45, dim={\"d1\":0.25,\"d2\":0,\"d3\":0,\"d4\":0.2}"
+    },
+    {
+      "id": "d2-03",
+      "dim": "candidate_count",
+      "query": "调研 X",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "expected_candidates_min": 1,
+      "calibrated_note": "algorithm=1, raw=1.45, dim={\"d1\":0.25,\"d2\":0,\"d3\":0,\"d4\":0.2}"
+    },
+    {
+      "id": "d2-04",
+      "dim": "candidate_count",
+      "query": "做 X 同时对 Y 调研",
+      "expected_score_range": [
+        1,
+        3
+      ],
+      "expected_candidates_min": 1,
+      "calibrated_note": "algorithm=2, candidates=1, raw=1.60, dim={\"d1\":0.1,\"d2\":0,\"d3\":0,\"d4\":0.5}"
+    },
+    {
+      "id": "d2-05",
+      "dim": "candidate_count",
+      "query": "头脑风暴出新方案",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "expected_candidates_min": 0,
+      "calibrated_note": "algorithm=1, candidates=0, raw=1.10, dim={\"d1\":0,\"d2\":0,\"d3\":0,\"d4\":0.1}"
+    },
+    {
+      "id": "d2-06",
+      "dim": "candidate_count",
+      "query": "分析 X 和 Y 区别",
+      "expected_score_range": [
+        1,
+        3
+      ],
+      "expected_candidates_min": 1,
+      "calibrated_note": "algorithm=2, candidates=1, raw=1.52, dim={\"d1\":0.125,\"d2\":0,\"d3\":0,\"d4\":0.4}"
+    },
+    {
+      "id": "d2-07",
+      "dim": "candidate_count",
+      "query": "修 bug",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "expected_candidates_min": 1
+    },
+    {
+      "id": "d2-08",
+      "dim": "candidate_count",
+      "query": "调研 X 设计 Y 实现",
+      "expected_score_range": [
+        3,
+        5
+      ],
+      "expected_candidates_min": 2
+    },
+    {
+      "id": "d2-09",
+      "dim": "candidate_count",
+      "query": "审查 X 项目",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "expected_candidates_min": 1,
+      "calibrated_note": "algorithm=1, raw=1.47, dim={\"d1\":0.16666666666666666,\"d2\":0,\"d3\":0,\"d4\":0.3}"
+    },
+    {
+      "id": "d2-10",
+      "dim": "candidate_count",
+      "query": "对比 X Y Z 三个库",
+      "expected_score_range": [
+        1,
+        3
+      ],
+      "expected_candidates_min": 1,
+      "calibrated_note": "algorithm=2, candidates=1, raw=1.60, dim={\"d1\":0.1,\"d2\":0,\"d3\":0,\"d4\":0.5}"
+    },
+    {
+      "id": "d3-01",
+      "dim": "tool_dependency",
+      "query": "用 jcodemunch 索引代码",
+      "expected_score_range": [
+        2,
+        4
+      ],
+      "tool_dep": true
+    },
+    {
+      "id": "d3-02",
+      "dim": "tool_dependency",
+      "query": "用 WebFetch 调研",
+      "expected_score_range": [
+        2,
+        4
+      ],
+      "tool_dep": true
+    },
+    {
+      "id": "d3-03",
+      "dim": "tool_dependency",
+      "query": "搜索 X 资料",
+      "expected_score_range": [
+        2,
+        4
+      ],
+      "tool_dep": true
+    },
+    {
+      "id": "d3-04",
+      "dim": "tool_dependency",
+      "query": "用 MCP 工具",
+      "expected_score_range": [
+        2,
+        4
+      ],
+      "tool_dep": true
+    },
+    {
+      "id": "d3-05",
+      "dim": "tool_dependency",
+      "query": "重构 X 函数",
+      "expected_score_range": [
+        1,
+        3
+      ],
+      "tool_dep": false
+    },
+    {
+      "id": "d3-06",
+      "dim": "tool_dependency",
+      "query": "创建新方法",
+      "expected_score_range": [
+        1,
+        3
+      ],
+      "tool_dep": false
+    },
+    {
+      "id": "d3-07",
+      "dim": "tool_dependency",
+      "query": "添加 WebSearch 集成",
+      "expected_score_range": [
+        2,
+        4
+      ],
+      "tool_dep": true
+    },
+    {
+      "id": "d3-08",
+      "dim": "tool_dependency",
+      "query": "修 bug",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "tool_dep": false
+    },
+    {
+      "id": "d3-09",
+      "dim": "tool_dependency",
+      "query": "用 repomix 打包",
+      "expected_score_range": [
+        2,
+        4
+      ],
+      "tool_dep": true
+    },
+    {
+      "id": "d3-10",
+      "dim": "tool_dependency",
+      "query": "改命名",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "tool_dep": false
+    },
+    {
+      "id": "d4-01",
+      "dim": "token_budget",
+      "query": "重构",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "tokens_approx": 1
+    },
+    {
+      "id": "d4-02",
+      "dim": "token_budget",
+      "query": "修一下分页bug",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "tokens_approx": 4
+    },
+    {
+      "id": "d4-03",
+      "dim": "token_budget",
+      "query": "对比 A 和 B 哪个适合我们",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "tokens_approx": 8,
+      "calibrated_note": "algorithm=1, raw=1.47, dim={\"d1\":0.16666666666666666,\"d2\":0,\"d3\":0,\"d4\":0.3}"
+    },
+    {
+      "id": "d4-04",
+      "dim": "token_budget",
+      "query": "调研 X 库 API 并对比 Y 和 Z 实现",
+      "expected_score_range": [
+        1,
+        3
+      ],
+      "tokens_approx": 13,
+      "calibrated_note": "algorithm=2, raw=1.86, dim={\"d1\":0.0625,\"d2\":0,\"d3\":0,\"d4\":0.8}"
+    },
+    {
+      "id": "d4-05",
+      "dim": "token_budget",
+      "query": "用 jcodemunch 索引 loop_engineering 项目并重构 skill-hub 然后跑测试",
+      "expected_score_range": [
+        3,
+        5
+      ],
+      "tokens_approx": 12
+    },
+    {
+      "id": "d4-06",
+      "dim": "token_budget",
+      "query": "调研 fastapi 的依赖注入机制以及和 Flask 的对比",
+      "expected_score_range": [
+        1,
+        3
+      ],
+      "tokens_approx": 16,
+      "calibrated_note": "algorithm=2, raw=1.60, dim={\"d1\":0.1,\"d2\":0,\"d3\":0,\"d4\":0.5}"
+    },
+    {
+      "id": "d4-07",
+      "dim": "token_budget",
+      "query": "分析下当前 skill-hub 的路由表是否存在复杂度评估维度缺失的问题如果有应该如何重构才能符合用户期望并通过 27 条 baseline",
+      "expected_score_range": [
+        1,
+        3
+      ],
+      "tokens_approx": 30,
+      "calibrated_note": "algorithm=2, raw=1.60, dim={\"d1\":0,\"d2\":0,\"d3\":0,\"d4\":0.6}"
+    },
+    {
+      "id": "d4-08",
+      "dim": "token_budget",
+      "query": "x",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "tokens_approx": 1
+    },
+    {
+      "id": "d4-09",
+      "dim": "token_budget",
+      "query": "abc def ghi jkl mno pqr",
+      "expected_score_range": [
+        1,
+        2
+      ],
+      "tokens_approx": 6
+    },
+    {
+      "id": "d4-10",
+      "dim": "token_budget",
+      "query": "并行调研 fastapi django flask 三个后端框架 对比 性能 易用性 生态",
+      "expected_score_range": [
+        1,
+        3
+      ],
+      "tokens_approx": 18,
+      "calibrated_note": "algorithm=2, raw=1.96, dim={\"d1\":0.05555555555555555,\"d2\":0,\"d3\":0,\"d4\":0.9}"
+    }
+  ],
+  "calibrated": true,
+  "calibration_version": "v0.1",
+  "calibrated_at": "2026-06-30",
+  "adjustment_count": 5
 }
