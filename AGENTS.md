@@ -1,66 +1,144 @@
 # LoopEngine — 循环工程全家桶
 
-## 🔴 MCP 红线规则（本项目最高优先级 · 不可违反）
+## 🔴 MCP 红线规则（本项目最高优先级 · 不可违反 · v6.4 重构）
 
 > **任何需要理解代码结构的操作，必须先用 MCP 工具，禁止直接 Read 全文件。**
 > 此规则适用于本项目（loop_engineering）的所有开发、调研、分析工作。
 
-### MCP 三件套（节省 80% token）
+### 1. 适用范围
 
-LoopEngine 依赖三个 MCP 工具实现 token 优化：
-
-| 工具 | 类型 | 核心能力 | Token 节省 |
-|------|------|---------|:---:|
-| **jCodeMunch-MCP** | Python | AST 符号级代码检索 | **95%** |
-| **Repomix** | Node.js | 代码库打包 + 结构压缩 | **70%** |
-| **Headroom-ai** | Python | 上下文压缩层 | **60-95%** |
-
-详细安装配置见 `docs/mcp-setup-guide.md`。
-
-### 典型场景对比
-
-| 场景 | ZCode 自带工具（Glob+Grep+Read） | MCP 三件套 | 节省 |
-|------|----------------------|--------|:---:|
-| 阅读单个函数（300 行） | ~800 token | ~40 token | **95%** |
-| 理解项目架构 | ~1,200,000 token | ~370,000 token | **69%** |
-| 长会话（50 轮） | ~40,000 token | ~12,000 token | **70%** |
-| pytest 输出（200 行） | ~1,200 token | ~200 token | **83%** |
-| **典型场景平均** | — | — | **~80%** |
-
-### 适用范围
 - 修改代码、调研代码、解释代码、分析架构
 - 查找函数/类/变量定义、查找引用位置
 - 了解项目结构、浏览目录、理解文件内容
 - **只要目的是"理解代码"，就必须 MCP 优先**
 
-### 标准流程
+### 2. 四层探查策略（L0 → L3）
+
+**核心原则**：从粗到精，层层下钻，Read 降级为最后手段。
+
 ```
-get_repo_map → get_file_outline → search_symbols → Read（仅精确行）
+┌─────────────────────────────────────────────────────────────────┐
+│ L0 项目全景                                                      │
+│   jcodemunch.get_repo_map(scope="...")   ← 代码符号级结构        │
+│   repomix.pack_codebase(directory)      ← 兜底（不依赖索引）     │
+│   输出: 1-2K token 的项目骨架                                      │
+├─────────────────────────────────────────────────────────────────┤
+│ L1 文件结构                                                      │
+│   jcodemunch.get_file_outline(file_path)  ← 符号列表/签名       │
+│   headroom.headroom_compress(content)     ← 大段 Markdown        │
+│   输出: 每文件 200-500 token 大纲/摘要                              │
+├─────────────────────────────────────────────────────────────────┤
+│ L2 精准内容                                                      │
+│   jcodemunch.search_symbols(query)         ← 符号语义搜索         │
+│   jcodemunch.get_symbol_source(symbol_id)  ← 拿到源码            │
+│   headroom.headroom_retrieve(hash, query)  ← 按需展开压缩内容    │
+│   输出: 单符号/段 ~100-300 token                                   │
+├─────────────────────────────────────────────────────────────────┤
+│ L3 精确行（最后手段）                                              │
+│   Read(file_path, offset=N, limit=M)       ← offset+limit 限定   │
+│   输出: 1-3 行精确内容                                             │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### MCP 工具速查
+### 3. MCP 三件套职责分工
 
-| MCP 工具 | 用途 | Token 节省 |
-|------|------|:--:|
-| `mcp__jcodemunch__get_repo_map` | 项目结构全景图 | ~80% |
-| `mcp__jcodemunch__get_file_outline` | 文件符号大纲 | ~85% |
-| `mcp__jcodemunch__search_symbols` | 语义搜索符号 | ~90% |
-| `mcp__jcodemunch__get_file_tree` | 目录树浏览 | ~95% |
-| `mcp__jcodemunch__find_references` | 查找引用位置 | ~85% |
-| `mcp__jcodemunch__get_blast_radius` | 修改影响面分析 | ~90% |
-| `mcp__repomix__pack_codebase` | 打包代码库 | ~70% |
-| `mcp__headroom__headroom_compress` | 压缩大段内容 | ~95% |
+| 工具 | 最佳场景 | 兜底场景 | 限制 |
+|------|---------|---------|------|
+| **jCodeMunch-MCP** | Python 代码（AST 解析） | 任意结构化文件 | 需先 index_folder；worktree 默认未索引 |
+| **Repomix** | 任意代码库（含 Markdown） | jcodemunch 索引失败时 | 一次性输出，无增量 |
+| **Headroom-ai** | 大段 Markdown / 大文件压缩 | 长会话持续压缩 | hash 检索，不变更内容 |
 
-### 唯一例外
-- MCP 工具全部不可用（报错/超时）
-- 文件小于 50 行
-- 已通过 MCP 定位，需要精确读取某几行
+### 4. 唯一例外（5 条）
 
-### 违规判定
-- 连续 3 次以上直接 Read 全文件而未使用任何 MCP 工具 → 红线违规
-- 每次会话结束后自查：MCP 工具调用次数应 ≥ Read 调用次数
+| # | 例外场景 | 处理 |
+|---|---------|------|
+| 1 | MCP 工具全部不可用（报错/超时/未索引） | 记录原因后用 Read，但**仍要尝试 repomix 兜底** |
+| 2 | 文件 < 50 行（小配置文件等） | 可直接 Read |
+| 3 | 已通过 MCP 定位，需要精确读取 1-3 行 | Read with offset/limit |
+| 4 | **执行类操作**（git/cp/rsync/worktree） | 用 Bash，**不算违规** |
+| 5 | **JSON/YAML/TOML 小配置**（< 30 行） | Read 全文，**不算违规** |
 
-### PATH 修复指引（如 MCP 命令找不到）
+### 5. 违规判定（3 级 6 条）
+
+| 等级 | 违规行为 | 自愈方法 |
+|------|---------|---------|
+| 🔴 **红线** | 连续 3 次 Read 而未用 MCP | 立即重写会话，先用 MCP 探查 |
+| 🟠 **严重** | 单次 Read > 100 行 | 改用 `get_file_outline` 或 `headroom_compress` |
+| 🟠 **严重** | Bash `cat/grep/head file` 探查代码 | 改用 `search_symbols` 或 Read with offset/limit |
+| 🟠 **严重** | worktree 中未先 `index_folder` | 改用 `index_folder(identity_mode="git", follow_symlinks=true)` |
+| 🟡 **中等** | MCP 不可用时未尝试 `pack_codebase` 兜底 | 自动调用 repomix 兜底 |
+| 🟡 **中等** | 长会话（> 30 轮）未用 `headroom_compress` | 定期压缩大段内容 |
+
+### 6. 自查清单（5 项 · 会话结束前必查）
+
+- [ ] **MCP 调用次数 ≥ Read 调用次数？**
+- [ ] **单次 Read > 100 行？**（应改 MCP）
+- [ ] **Bash 探查代码次数 < 5？**（含 cat/grep/head）
+- [ ] **worktree 中是否先 index_folder？**
+- [ ] **长会话是否用 headroom 压缩？**
+
+### 7. worktree 特殊流程（v6.4 新增 · 修复本次任务根因）
+
+> **根因**：v6.4 任务中 worktree 路径未被 jcodemunch 索引，导致 `get_repo_map` 报 "Repository not found"，最终被迫大量用 Read，违反红线。
+
+**强制流程**：
+
+```bash
+# 1. 创建 worktree 后立即索引
+mcp__jcodemunch__index_folder(
+  path=".worktrees/<name>",
+  identity_mode="git",        # 关键：让 jcodemunch 识别为同一 git repo
+  follow_symlinks=true        # 跟随 git worktree 符号链接
+)
+
+# 2. 验证可解析
+mcp__jcodemunch__resolve_repo(path=".worktrees/<name>")
+
+# 3. 失败兜底（jcodemunch 索引失败时）
+mcp__repomix__pack_codebase(directory=".worktrees/<name>")
+
+# 4. 仍失败 → 才 fallback 到 Read（最后手段）
+```
+
+### 8. Bash 探查职责清单
+
+| ✅ 允许（执行类） | ❌ 禁止（探查类，应改 MCP/Read） |
+|------------------|---------------------------------|
+| `git log/show/diff` | `cat < file >` |
+| `ls/find`（仅看文件名） | `head -N < file >`（探查内容） |
+| `cp/rsync/rm/worktree add` | `grep -rn "pattern" *.py`（探查代码） |
+| `git rm/mv/add/commit` | `wc -l < file >`（探查行数） |
+| `mkdir/touch/chmod` | `awk/sed`（修改文件） |
+
+### 9. MCP 工具速查（按层级）
+
+| 层级 | 工具 | 用途 | Token 节省 |
+|:---:|------|------|:---:|
+| **L0** | `mcp__jcodemunch__get_repo_map` | 项目结构全景图（符号级） | ~80% |
+| **L0** | `mcp__repomix__pack_codebase` | 打包代码库（兜底） | ~70% |
+| **L1** | `mcp__jcodemunch__get_file_outline` | 文件符号大纲 | ~85% |
+| **L1** | `mcp__jcodemunch__get_file_tree` | 目录树浏览 | ~95% |
+| **L1** | `mcp__headroom__headroom_compress` | 压缩大段内容 | ~95% |
+| **L2** | `mcp__jcodemunch__search_symbols` | 语义搜索符号 | ~90% |
+| **L2** | `mcp__jcodemunch__get_symbol_source` | 拿单符号源码 | ~90% |
+| **L2** | `mcp__jcodemunch__find_references` | 查找引用位置 | ~85% |
+| **L2** | `mcp__jcodemunch__get_blast_radius` | 修改影响面分析 | ~90% |
+| **L2** | `mcp__headroom__headroom_retrieve` | 按需展开压缩 | ~95% |
+| **L3** | Read with offset/limit | 精确行（最后手段） | 视场景 |
+
+### 10. 性能基准（6 场景实测）
+
+| 场景 | 直接读（Read+grep+cat） | MCP 优化 | 节省 |
+|------|----------------------|--------|:---:|
+| 阅读单个函数（300 行） | ~800 token | ~40 token | **95%** |
+| 理解项目架构 | ~1,200,000 token | ~370,000 token | **69%** |
+| 长会话（50 轮） | ~40,000 token | ~12,000 token | **70%** |
+| pytest 输出（200 行） | ~1,200 token | ~200 token | **83%** |
+| **worktree 启动（v6.4 新增）** | ~5,000 token（Read 全部） | ~200 token（index+map） | **96%** |
+| **跨 9 技能审查（v6.4 新增）** | ~34,000 token（9×Read） | ~5,000 token（outline+symbol） | **85%** |
+| **典型场景平均** | — | — | **~80%** |
+
+### 11. PATH 修复指引（如 MCP 命令找不到）
 
 如果 `jcodemunch-mcp` 或 `headroom` 命令找不到，是因为 pip 安装到了 Scripts 目录但未加入 PATH：
 
@@ -68,6 +146,21 @@ get_repo_map → get_file_outline → search_symbols → Read（仅精确行）
 - **Linux/macOS**: `export PATH="$HOME/.local/bin:$PATH"`（写入 ~/.bashrc / ~/.zshrc）
 
 或修改项目根 `.mcp.json` 用绝对路径（详见 `docs/mcp-setup-guide.md` 第四章）。
+
+### 12. 与其他规则的关系
+
+- **本规则** vs `evidence-first` 技能：evidence-first 关注"事实标注 [F]/[H]/[P]"，本规则关注"如何用工具高效探查"——两者互补不冲突
+- **本规则** vs `systematic-debugging`：debug 时同样适用本规则（探查代码走 MCP）
+- **本规则** vs `verification-before-completion`：完成前自检时，本规则的 5 项自查清单**也必须**勾选
+
+---
+
+> **v6.4 升级要点**：
+> - 从 2 级违规 → 3 级 6 条
+> - 从 4 场景基准 → 6 场景（新增 worktree + 跨技能审查）
+> - 新增 worktree 特殊流程（**修复 v6.4 任务根因**）
+> - 新增 Bash 探查职责清单
+> - 新增 4 层探查策略（L0-L3）
 
 ---
 
