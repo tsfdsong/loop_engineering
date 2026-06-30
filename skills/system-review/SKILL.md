@@ -1,6 +1,6 @@
 ---
 name: system-review
-description: 系统级项目审查 —— 用三步方法论（横向自洽性→纵向架构深度→持续改进）审查项目整体一致性、架构质量、改进机会，附 ATAM/arc42 业界参考检查点。代码级审查走 code-reviewer，系统级走 system-review。
+description: "Use when reviewing entire system/architecture/project, checking consistency across modules, or doing ATAM-style architectural evaluation. Triggers on '审查系统', '审查架构', '系统审计', 'system review', 'architecture review'. Do NOT use for: single-file PR review (use code-reviewer), or code-level issues (use refactoring)."
 metadata:
   version: "1.1"
   type: methodology

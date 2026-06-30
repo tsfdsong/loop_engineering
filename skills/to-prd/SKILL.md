@@ -1,6 +1,6 @@
 ---
 name: to-prd
-description: Turn the current conversation into a PRD and publish it to the project issue tracker — no interview, just synthesis of what you've already discussed.
+description: "Use when synthesizing the current discussion into a formal PRD document for publication. Triggers on '/to-prd', '生成 PRD', '整理需求文档'. Do NOT use for: exploring new ideas (use brainstorming), or technical implementation (use writing-plans). Requires user-invoked only."
 disable-model-invocation: true
 category: "project-management"
 risk: "safe"
