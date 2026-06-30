@@ -11,6 +11,32 @@
 //
 // branch_router(score):
 //   <=2 → 'single'   | 3-4 → 'composite'   | =5 → 'parallel'
+//
+// v0.5 env knobs (system-review fix):
+//   LOOPENGINE_COMPLEXITY_AWARE=disabled  → safe_route 走"未评分"分支（mode='single'）
+//   LOOPENGINE_COMPLEXITY_TRACE=on        → 每个 call emit 一行 JSON 到 stderr
+//   注：env 检查每次调用时动态读取（支持测试 + 运行时切换）
+
+function isV65Enabled() {
+  return (process.env.LOOPENGINE_COMPLEXITY_AWARE ?? 'enabled') !== 'disabled';
+}
+function isTraceEnabled() {
+  return process.env.LOOPENGINE_COMPLEXITY_TRACE === 'on';
+}
+
+function emit_trace(entry) {
+  if (!isTraceEnabled()) return;
+  const line = JSON.stringify({ ts: new Date().toISOString(), ...entry });
+  try { process.stderr.write(line + '\n'); } catch (_) { /* swallow: trace 自身永不阻塞任务 */ }
+}
+
+function short_query_hash(query) {
+  // 简单 hash 用于 trace，平衡隐私（不写入原文）
+  if (!query) return null;
+  let h = 0;
+  for (let i = 0; i < query.length; i++) h = ((h << 5) - h + query.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(16);
+}
 
 const KEYWORDS = {
   'brainstorming':              ['创意', '设计', '头脑风暴', '想法', '方案'],
@@ -101,11 +127,38 @@ function branch_router(score) {
 }
 
 function safe_route(query) {
+  const t0 = process.hrtime.bigint();
+  const trace = { query_hash: short_query_hash(query), fallback: null, latency_ms: null, v65: isV65Enabled() ? 'enabled' : 'disabled' };
+
+  // v0.5 回滚开关（system-review S1-1 fix）
+  if (!isV65Enabled()) {
+    trace.fallback = false;
+    trace.latency_ms = Number(process.hrtime.bigint() - t0) / 1e6;
+    trace.mode = 'single';
+    trace.complexity_score = null;
+    trace.reason = 'v65-disabled';
+    emit_trace(trace);
+    return { mode: 'single', complexity_score: null, dim_breakdown: null, fallback: false, v65: 'disabled' };
+  }
+
   try {
     if (!query || typeof query !== 'string') throw new Error('empty or non-string query');
-    const { score, dim_breakdown } = complexity_scorer(query);
-    return { mode: branch_router(score), complexity_score: score, dim_breakdown, fallback: false };
+    const { score, dim_breakdown, raw } = complexity_scorer(query);
+    const mode = branch_router(score);
+    trace.fallback = false;
+    trace.latency_ms = Number(process.hrtime.bigint() - t0) / 1e6;
+    trace.mode = mode;
+    trace.complexity_score = score;
+    trace.raw = raw;
+    trace.dim_breakdown = dim_breakdown;
+    emit_trace(trace);
+    return { mode, complexity_score: score, dim_breakdown, fallback: false, raw };
   } catch (e) {
+    trace.fallback = true;
+    trace.latency_ms = Number(process.hrtime.bigint() - t0) / 1e6;
+    trace.error = e.message;
+    trace.mode = 'single';
+    emit_trace(trace);
     return { mode: 'single', complexity_score: 0, dim_breakdown: null, fallback: true, error: e.message };
   }
 }
