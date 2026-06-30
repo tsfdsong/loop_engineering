@@ -1,6 +1,6 @@
 ---
 name: testing
-description: "测试超级技能 —— 4 层测试金字塔（单元 → 集成 → E2E） + TDD 严格红绿重构循环。覆盖 Jest 模式、工厂函数、Mock、TDD 铁律、Cypress/Playwright 端到端。"
+description: "Use when writing tests, setting up TDD, adding test coverage, or designing test strategies. Triggers on '测试', 'TDD', '单元测试', '端到端', 'mock', 'test'. Do NOT use for: fixing test failures (use systematic-debugging), or code review (use code-reviewer)."
 metadata:
   version: "2.1"
   type: skill

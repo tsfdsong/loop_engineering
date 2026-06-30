@@ -1,6 +1,6 @@
 ---
 name: clean-code
-description: "代码质量超级技能 —— 4 源风格融合（Martin 原则式 + McConnell 要点式 + self 规范表格式 + pragmatic-programmer 工程决策式）。从微观命名到宏观工程决策的完整代码质量体系。"
+description: "Use when applying code quality principles, naming conventions, commit standards, DRY/YAGNI, or general code craftsmanship questions. Triggers on '代码规范', '可读', '命名', 'commit 规范', 'DRY', 'YAGNI'. Do NOT use for: large refactors (use refactoring), or architecture (use software-architecture)."
 metadata:
   version: "2.1"
   type: skill

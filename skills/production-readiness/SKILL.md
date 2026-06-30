@@ -1,6 +1,6 @@
 ---
 name: production-readiness
-description: "生产就绪超级技能 —— 3 阶段上线流程（审计 → 稳定 → 发布）。含生产级代码审计 + 稳定性模式（超时/断路器/隔舱）+ 发布模式（蓝绿/金丝雀/滚动）+ 容量规划。"
+description: "Use when preparing for production deployment, doing pre-launch audits, designing stability patterns (circuit breaker, retry, timeout), or planning release strategy (blue-green, canary). Triggers on 上线, 生产, 部署, 断路器, 金丝雀, production. Do NOT use for: CI setup (use github-actions-templates), or local dev (use testing)."
 metadata:
   version: "2.1"
   type: skill

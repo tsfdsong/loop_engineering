@@ -1,6 +1,6 @@
 ---
 name: evidence-first
-description: 事实优先协议 — 任何项目分析/比较/评估/设计/重构前必须先建立事实清单，区分 [事实 F]/[假设 H]/[原则 P]，长篇论述前自检 4 问。源自 2026-06-29 v5.4 兼容性胡乱分析事故。
+description: "Use when comparing options, evaluating designs, making architectural decisions, or any 'X vs Y' / 'should I' / 'why' question. Triggers on '分析', '比较', '评估', '选型', '为什么'. Do NOT use for: pure implementation (use refactoring/testing), or brainstorming new ideas (use brainstorming)."
 metadata:
   version: "1.0"
   type: skill

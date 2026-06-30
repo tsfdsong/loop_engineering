@@ -1,6 +1,6 @@
 ---
 name: go
-description: /go 全自动编排 —— 输入功能描述,全自动任务分级→深度需求分析→最佳方案推荐→拆分→多工具调度→断点恢复→降级兜底→全局回归→交付。全程无人干预。
+description: "Use when executing cross-module engineering tasks with worktree isolation, automatic splitting, and system review. Triggers on '/go', '编排', 'worktree 并发', '多模块'. Do NOT use for: single-task closed-loop (use loop), or pure research (use deep-research)."
 metadata:
   version: "4.0"
   type: slash-command

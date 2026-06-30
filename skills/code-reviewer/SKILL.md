@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: "代码审查超级技能 —— 4 阶段 CR 完整工作流（提交前自查 → 请求审查 → 接收反馈 → 闭环修复）。被 loop G9 调用 / 用户主叫，涵盖 AI 自动审查 + 请求审查 + 接收反馈 + 闭环修复。"
+description: "Use when reviewing code, requesting review, or processing review feedback. Triggers on 'CR', 'review', '审查', '代码审查', 'code review'. Do NOT use for: system-wide architecture review (use system-review), or improving code quality (use refactoring)."
 metadata:
   version: "2.0"
   type: skill

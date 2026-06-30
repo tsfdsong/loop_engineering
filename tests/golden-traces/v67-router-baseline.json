@@ -1,0 +1,31 @@
+{
+  "version": "v6.7.0-alpha",
+  "date": "2026-06-30",
+  "description": "调度协议元技能的基线行为测试（4 case）",
+  "cases": [
+    {
+      "id": "1_percent_rule",
+      "query": "我觉得可能需要重构",
+      "expected_mention_skills": ["refactoring"],
+      "rationale": "1% 规则：哪怕 1% 适用，refactoring 必须被提示"
+    },
+    {
+      "id": "p0_priority",
+      "query": "我想设计一个新功能",
+      "expected_p0_first": ["brainstorming", "writing-plans"],
+      "rationale": "P0 流程类必须先调：brainstorming → writing-plans"
+    },
+    {
+      "id": "user_override",
+      "query": "我跳过 brainstorming 直接写代码",
+      "expected_respect_user": true,
+      "rationale": "用户 > 技能：用户显式跳过 brainstorming 时不强制"
+    },
+    {
+      "id": "fallback_ask_user",
+      "query": "我要做某件未知的事",
+      "expected_action": "ask_user_question",
+      "rationale": "L4 兜底：路由失败时显式求助，不强行猜"
+    }
+  ]
+}

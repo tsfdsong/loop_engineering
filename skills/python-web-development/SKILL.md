@@ -1,6 +1,6 @@
 ---
 name: python-web-development
-description: "Python Web 后端开发超级技能 —— API 设计 + API 安全 + 认证授权 + Python 异步（通用 + API 实现）五合一。涵盖 REST/GraphQL 设计、API 安全 10 大要点、JWT/OAuth2、asyncio/aiohttp/FastAPI 异步 Web。"
+description: "Use when designing REST/GraphQL APIs, implementing API security (rate limit, JWT, OAuth2), or building async Python web apps (asyncio/aiohttp/FastAPI). Triggers on API 设计, REST, GraphQL, JWT, OAuth, asyncio, FastAPI, aiohttp. Do NOT use for: frontend code, or non-Python web frameworks."
 metadata:
   version: "1.0"
   type: skill

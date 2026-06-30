@@ -1,6 +1,6 @@
 ---
 name: domain-driven-design
-description: "DDD 超级技能 —— 复杂业务领域建模完整工具集。涵盖 DDD 入门（Vernon Distilled）+ 原书（Evans）+ 战术编码（self）+ 落地实战（Vernon Implementing DDD）四合一。"
+description: "Use when modeling complex business domains, designing bounded contexts, aggregates, or applying tactical/strategic DDD patterns. Triggers on DDD, 领域, 限界上下文, 聚合根, domain model. Do NOT use for: pure architecture (use software-architecture), or simple CRUD (no skill needed)."
 metadata:
   version: "2.0"
   type: skill

@@ -1,7 +1,7 @@
 ---
 name: deep-research
 display_name: 深度调研
-description: "Use for **data-driven** research and reporting — 调研 / 对比 / 选型 / 综述 / 报告 / 市场分析 / 竞品分析 / 技术文献综述 / 内部代码库调研 / 'research X' / 'compare A vs B' / 'survey X' / 'summarize X' / '帮我了解 X'。Based on external sources (WebFetch / WebSearch / jcodemunch), **NOT user conversation alone** (that's brainstorming). 4-stage plan→search→reason→report with WDM + Munger inversion. **Fully local**, $0 cost. **NOT for — go to brainstorming instead**: 做什么 / 怎么做 / 思路 / 架构 / 创意 / 方案 / 设计 / 创建新功能 / 添加组件 / 头脑风暴 / 'I want to do X'. Also NOT for: 实施计划 (writing-plans), 架构/系统审查 (system-review), 文档协同撰写 (doc-coauthoring), 编码 (loop / go)."
+description: "Use when conducting data-driven research: 调研/对比/选型/综述/报告/市场分析/竞品分析. Triggers on 调研, 对比, 选型, review, survey, research. Do NOT use for: brainstorming new features (use brainstorming), implementation plans (use writing-plans), or architecture review (use system-review)."
 ---
 
 # Deep Research（深度调研）— 4 阶段本地化调研闭环

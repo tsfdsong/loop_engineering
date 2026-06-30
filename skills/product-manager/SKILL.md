@@ -1,6 +1,6 @@
 ---
 name: product-manager
-description: "Senior PM agent with 6 knowledge domains, 30+ frameworks, 12 templates, and 32 SaaS metrics with formulas. Pure Markdown, zero scripts."
+description: "Use when creating PRDs, product specs, requirements docs, RICE/Kano/MoSCoW prioritization, or user stories. Triggers on PRD, 需求, RICE, Kano, 用户故事, product spec. Do NOT use for: pure brainstorming (use brainstorming), or technical implementation (use writing-plans)."
 risk: safe
 version: "1.0.0"
 author: "Digidai"

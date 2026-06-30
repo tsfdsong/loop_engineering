@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation."
+description: "Use when creating features, building components, adding functionality, or modifying behavior. Triggers when the user wants to design something new or is unsure what they want. Do NOT use for: pure research (use deep-research), debugging (use systematic-debugging), or code review (use code-reviewer)."
 ---
 
 # Brainstorming Ideas Into Designs
