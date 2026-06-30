@@ -1,7 +1,7 @@
 {
   "name": "loopengine",
-  "description": "LoopEngine for Claude Code: loop闭环编码 + go全自动编排 + skill-hub 36技能智能调度（v6.2.1 回滚合并 8 后）",
-  "version": "1.0.1",
+  "description": "LoopEngine for Claude Code: loop闭环编码 + go全自动编排 + skill-hub 33技能智能调度（v6.4 真正融合超级技能后）",
+  "version": "1.0.2",
   "author": {
     "name": "tsfdsong"
   },

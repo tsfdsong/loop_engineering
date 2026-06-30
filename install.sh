@@ -488,12 +488,32 @@ except Exception as e:
     #   ZCode 桌面版启动时优先扫描 ~/.agents/skills/ 目录里的 SKILL.md，
     #   marketplace.json 中 loopengine 注册失败时（ZCode 启动会重写）会回退到该路径。
     # 治本：把 skills/ 同步到 ~/.agents/skills/，让 ZCode 直接从此路径加载最新技能。
-    # v6.3 后：无 v5.4 backup 逻辑（v5.4 兼容性已彻底清理）
+    # v6.4 后：
+    #   - 删除"孤儿技能"逻辑（v6.4 新增）—— 清理 ~/.agents/skills/ 中已不在源里的技能目录
+    #   - 无 v5.4 backup 逻辑（v5.4 兼容性已彻底清理）
     AGENTS_SKILLS_DIR="$HOME/.agents/skills"
     ZCODE_SKILLS_SRC="$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/$ZCODE_VERSION/skills"
     if [ -d "$ZCODE_SKILLS_SRC" ]; then
         echo -e "  ${CYAN}▶  同步 skills 到 ~/.agents/skills/ 优先路径...${RESET}"
         mkdir -p "$AGENTS_SKILLS_DIR"
+        # v6.4 新增：清理 ~/.agents/skills/ 中已不在源里的"孤儿技能"目录
+        # 保留 skill-hub（在源中）和 skill-creator（外部插件）
+        # 场景：v6.4 删除 api-development/code-engineering 后，用户目录残留
+        ORPHAN_REMOVED=0
+        for d in "$AGENTS_SKILLS_DIR"/*/; do
+            [ -d "$d" ] || continue
+            name=$(basename "$d")
+            # 保留项目源中存在的技能 + skill-hub（自身）+ skill-creator（外部）
+            if [ ! -d "$ZCODE_SKILLS_SRC/$name" ] && \
+               [ "$name" != "skill-hub" ] && \
+               [ "$name" != "skill-creator" ]; then
+                rm -rf "$d"
+                ORPHAN_REMOVED=$((ORPHAN_REMOVED + 1))
+            fi
+        done
+        if [ "$ORPHAN_REMOVED" -gt 0 ]; then
+            echo -e "  ${CYAN}   清理孤儿技能：${RESET}$ORPHAN_REMOVED 个"
+        fi
         # 同步整个 skills/ 目录（cp -r .../. 保留目标目录结构，覆盖同名技能）
         if cp -r "$ZCODE_SKILLS_SRC/." "$AGENTS_SKILLS_DIR/" 2>/dev/null; then
             SKILL_COUNT=$(ls -1 "$AGENTS_SKILLS_DIR" 2>/dev/null | grep -c 'SKILL\.md$' || true)

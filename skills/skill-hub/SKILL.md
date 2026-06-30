@@ -1,12 +1,37 @@
 ---
 name: skill-hub
-description: 技能调度中心 —— 根据用户意图自动路由到最合适的技能。v6.2 合并 7 组 + v6.2.1 回滚合并 8（保留 loop 自研核心，删除 loop-library）。v6.3 清理 v5.4/v6.0/v6.1 旧版本遗留，无向下兼容层。
+description: 技能调度中心 —— 根据用户意图自动路由到最合适的技能。v6.4 真正融合超级技能（消除简单文件堆叠，改为流程化工作流）+ 合并 code-engineering Python 异步到 python-web-development + 清理 v6.2 合并漏网孤儿目录。
 metadata:
-  version: "6.3"
-  installed_skills: 36
+  version: "6.4"
+  installed_skills: 33
   skill_count_note: |
-    installed_skills: 36 = v6.1 (45) - v6.2 合并删除 (7) + v6.2.1 回滚合并 8 (1)。
-    skills/ 目录实际条目数 = 38（36 个技能 + shared/ + skill-hub/ 自身）。
+    installed_skills: 33 = v6.3 实际 40 - v6.4 净减 7。
+    skills/ 目录实际条目数 = 35（33 个技能 + shared/ + skill-hub/ 自身）。
+    v6.4 净减 7 = -8（删除）+ 1（新建）：
+      - 删除：api-development、code-engineering（v6.2 合并产物，v6.4 重组）
+      - 删除 6 个 v6.2 合并漏网孤儿：api-design-principles、async-python-patterns、
+        clean-architecture、philosophy-of-software-design、production-code-audit、testing-patterns
+      - 新建：python-web-development
+    v6.3 计数说明（v6.4 修正）：
+      - v6.3 skill-hub 报 36，但实际目录 40（包含 6 个 v6.2 合并漏网目录）
+      - v6.4 实际报 33 = 40 - 7，修正 v6.3 的口径不一致
+    v6.4 重组（消除简单文件堆叠 → 真正融为一体）：
+      - code-reviewer：从 3 部分英文堆叠 → 4 阶段 CR 工作流
+      - software-architecture：从 3 本书并排 → 三层递进结构（修死引用）
+      - refactoring：从 4 源并排 → 重构全流程（识别→计划→小步→验证）
+      - clean-code：从 4 源风格混乱 → 4 个明确维度（原则/要点/规范/决策）
+      - testing：从 3 源并排 → 4 层测试金字塔 + TDD 横切
+      - production-readiness：从 2 源并排 → 3 阶段上线流程
+      - system-review：新增"设计哲学背靠"附录（Ousterhout）
+    v6.4 合并明细（1 组）：
+      - api-development + code-engineering(Python 异步) → python-web-development (-1)
+      - code-engineering(Ousterhout 哲学) → system-review 附录（不计数）
+    v6.4 内联小文件（references 行数 < 50 的内容已融入 SKILL.md）：
+      - refactoring/references/legacy-code-full.md（31 行）
+      - clean-code/references/pragmatic-programmer-full.md（34 行）
+      - production-readiness/references/release-it-full.md（30 行）
+      - software-architecture/references/{poeaa,ddia}-full.md（32+33 行）
+      - testing/references/e2e-testing-full.md（49 行）
     v6.3 清理 v5.4/v6.0/v6.1 旧版本遗留：
       - v5.4 黄金轨迹 / 事故案例 / 兼容性字段 已删除
       - v6.0 references（5 个 Orchestrator 文件）已删除
@@ -69,14 +94,15 @@ metadata:
 
 ## 技能全景 & 调度规则
 
-### 📝 代码质量（2个 · v6.2 合并：clean-code + code-engineering)
+### 📝 代码质量（1个 · v6.4 强化：clean-code 4 维度)
 
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
-| **`clean-code`** ⭐ | 干净代码、可读性、命名、代码规范、**软件构造、commit规范、DRY、正交** | **代码质量超级技能**——Martin + McConnell + 自家规范 + pragmatic-programmer 四合一 |
-| **`code-engineering`** ⭐ | 复杂度、深模块、信息隐藏、**异步、asyncio、协程** | **软件工程超级技能**——Ousterhout 哲学 + async-python 双源 |
+| **`clean-code`** ⭐ | 干净代码、可读性、命名、代码规范、**软件构造、commit规范、DRY、正交、可逆、曳光弹** | **代码质量超级技能**——4 源 4 维度（原则/要点/规范/决策）。Martin 原则 + McConnell 要点 + self 规范 + pragmatic-programmer 决策。 |
 
-**冲突裁决**：说"代码太乱/代码规范/commit规范/DRY"→ clean-code（v6.2 起含 4 源）；说"系统太复杂/异步开发"→ code-engineering（v6.2 新合并）
+**冲突裁决**：说"代码太乱/代码规范/commit规范/DRY"→ clean-code（v6.4 起 4 维度明确分离）
+
+> v6.4 变化：code-engineering 技能**已拆分**——Ousterhout 哲学迁入 `system-review` 附录；Python 异步部分并入 `python-web-development`（见下）。
 
 ### 🏗️ 架构设计（2个技能 · v6.2 合并 clean-architecture + poeaa + ddia)
 
@@ -130,21 +156,25 @@ evidence-first（开始 · 事实优先）
   → verification-before-completion（完成 · 验证）
 ```
 
-### 🔌 API 开发（1个超级技能 · v6.2 合并 api-design + api-security + auth-implementation)
+### 🐍 Python Web 开发（1个超级技能 · v6.4 合并 api-development + code-engineering Python 异步)
 
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
-| **`api-development`** ⭐ | API 设计、REST、GraphQL、**API 安全、限流、JWT、OAuth、认证、权限、CORS、CSRF** | **API 全栈超级技能**——设计 + 安全 + 认证三合一 |
+| **`python-web-development`** ⭐ | API 设计、REST、GraphQL、**API 安全、限流、JWT、OAuth、asyncio、aiohttp、FastAPI、协程、并发** | **Python 后端开发超级技能**——5 源 5 阶段工作流：API 设计 → API 安全 → 认证授权 → 异步决策 → 异步实现 |
+
+**冲突裁决**：说"设计 API / API 安全 / JWT 认证"→ python-web-development；说"异步开发 / asyncio / FastAPI"→ python-web-development；说"通用代码质量"→ clean-code
+
+> v6.4 变化：v6.2 合并的 `api-development` + `code-engineering`（Python 异步部分）合并为 `python-web-development`，主题统一为"Python 后端开发完整工作流"。
 
 > 注：本项目**不**包含文档生成类技能（`code-documentation-doc-generate`、`api-documentation-generator`）和文档处理类技能（`docx`、`pdf`）——它们与软件开发流程非直接相关，已被剥离。需要时自行安装对应官方插件。
 
-### 🔍 代码审查（1个 · v6.1.1 合并 requesting + receiving)
+### 🔍 代码审查（1个 · v6.4 重组 4 阶段工作流)
 
 | 技能 | 触发关键词 | 适用场景 |
 |------|-----------|----------|
-| **`code-reviewer`** ⭐ | CR、代码审查、review 代码、检查代码、**请求审查、提交审查、收到审查意见、处理反馈** | **代码审查超级技能**——AI 自动审查 + 请求审查 + 接收反馈三合一（被 loop G9 调用） |
+| **`code-reviewer`** ⭐ | CR、代码审查、review 代码、检查代码、**请求审查、提交审查、收到审查意见、处理反馈、闭环修复** | **代码审查超级技能**——4 阶段 CR 工作流：提交前自查 → 请求审查 → 接收反馈 → 闭环修复（被 loop G9 调用） |
 
-**冲突裁决**：说"审查这段代码/请求审查/收到审查反馈"→ code-reviewer（v6.1.1 起三合一）；说"审查项目/架构/系统"→ `system-review`
+**冲突裁决**：说"审查这段代码/请求审查/收到审查反馈/闭环修复"→ code-reviewer（v6.4 起 4 阶段工作流）；说"审查项目/架构/系统"→ `system-review`
 
 ### ✅ 验证（1个，独占）
 
