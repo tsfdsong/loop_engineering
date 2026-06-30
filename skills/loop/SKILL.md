@@ -1,6 +1,6 @@
 ---
 name: loop
-description: 循环工程斜杠命令 —— /loop [--auto] 功能描述 + 验收条件，自动完成闭环编码→门禁矩阵→自愈→交付全流程。--auto 模式供 go 编排层调用。
+description: "Use when executing single-task closed-loop coding with automatic gates and self-healing. Triggers on '/loop', '闭环编码', '单任务'. Do NOT use for: multi-task parallel (use go or subagent-driven-development), or pure research (use deep-research)."
 metadata:
   version: "4.1"
   type: slash-command

@@ -1,6 +1,6 @@
 ---
 name: refactoring
-description: "Refactoring 超级技能 —— 重构全流程（识别 → 计划 → 小步 → 验证）+ 4 源融合（Fowler + refactoring.guru 速查 + legacy-code + framework-migration）。含遗留代码安全改造 + 框架迁移 strangler fig 模式。"
+description: "Use when improving existing code structure, fixing code smells, reducing complexity, or applying design patterns. Triggers on '重构', '坏味道', '太长', '重复代码', 'refactor', 'legacy code'. Do NOT use for: new features (use brainstorming), or debugging (use systematic-debugging)."
 metadata:
   version: "2.1"
   type: skill

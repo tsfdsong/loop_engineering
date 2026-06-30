@@ -1,6 +1,6 @@
 ---
 name: systematic-debugging
-description: Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes
+description: "Use when investigating bugs, errors, test failures, unexpected behavior, or 'X doesn't work'. Triggers on 'bug', '报错', '不工作', 'debug', '排查', '修'. Do NOT use for: new features (use brainstorming), or system architecture issues (use system-review)."
 ---
 
 # Systematic Debugging

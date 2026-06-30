@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-description: Use when you have a spec or requirements for a multi-step task, before touching code
+description: "Use when you have an approved design and need to break it into implementable tasks. Triggers on '写计划', 'plan', '拆分任务', '实现方案'. Do NOT use for: brainstorming design (use brainstorming), or executing existing plans (use executing-plans)."
 ---
 
 # Writing Plans
