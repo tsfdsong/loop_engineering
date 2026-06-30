@@ -1,6 +1,6 @@
 ---
 name: context-driven-development
-description: "Guide for implementing and maintaining context as a managed artifact alongside code, enabling consistent AI interactions and team alignment through structured project documentation."
+description: "Use when implementing or maintaining project context as a managed artifact (CLAUDE.md, AGENTS.md, structured docs). Triggers on 'AI 上下文', '项目文档', 'context management'. Do NOT use for: pure documentation (use writing-skills), or onboarding (use using-loopengine)."
 risk: unknown
 source: community
 date_added: '2026-02-27'

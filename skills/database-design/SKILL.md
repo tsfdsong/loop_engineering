@@ -1,6 +1,6 @@
 ---
 name: database-design
-description: "Database design principles and decision-making. Schema design, indexing strategy, ORM selection, serverless databases."
+description: "Use when designing database schemas, indexes, migrations, or choosing between SQL/NoSQL/ORM/serverless. Triggers on '数据库', 'SQL', '表设计', '索引', 'schema', 'migration'. Do NOT use for: application code (use python-web-development), or pure architecture (use software-architecture)."
 risk: safe
 source: community
 date_added: "2026-02-27"

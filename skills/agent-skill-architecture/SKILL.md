@@ -1,6 +1,6 @@
 ---
 name: agent-skill-architecture
-description: Agent 技能架构设计规范 —— 设计或审查 Agent 技能时自动加载，强制执行分层、交互、质量、文件组织的硬规则。
+description: "Use when designing or reviewing Agent skills, or when creating/editing skill architecture. Triggers on '技能设计', '技能架构', 'SKILL.md 设计'. Do NOT use for: using skills (just call Skill tool), or pure code (use refactoring)."
 metadata:
   version: "1.0"
   type: rule

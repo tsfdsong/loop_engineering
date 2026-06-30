@@ -1,6 +1,6 @@
 ---
 name: github-actions-templates
-description: "Production-ready GitHub Actions workflow patterns for testing, building, and deploying applications."
+description: "Use when setting up CI/CD pipelines, GitHub Actions workflows, automated testing/building/deploying. Triggers on CI/CD, 部署, 流水线, GitHub Actions, workflow. Do NOT use for: pure deployment strategy (use production-readiness), or non-CI automation."
 risk: critical
 source: community
 date_added: "2026-02-27"

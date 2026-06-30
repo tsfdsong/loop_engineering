@@ -1,7 +1,7 @@
 ---
 name: drawio-skill
 version: 1.14.0
-description: Use when the user requests diagrams, flowcharts, architecture diagrams, ER diagrams, UML / sequence / class diagrams, network topology, ML/DL model figures (Transformer/CNN/LSTM), mind maps, or any visualization. Also use proactively when explaining systems with 3+ components, complex data flows, or relationships that benefit from visual representation. Best suited when the diagram needs custom styling, rich shape vocabulary, swimlanes, or exportable images (PNG/SVG/PDF/JPG). Generates .drawio XML and exports locally via the native draw.io desktop CLI.
+description: "Use when requesting or creating diagrams: flowcharts, architecture diagrams, ER/UML/sequence diagrams, network topology, ML model figures, mind maps. Triggers on 画图, 流程图, 架构图, 时序图, diagram, flowchart. Do NOT use for: text-based explanations, or generating code (use python-web-development)."
 license: MIT
 homepage: https://github.com/Agents365-ai/drawio-skill
 compatibility: Requires draw.io desktop app CLI on PATH (macOS/Linux/Windows). Self-check step requires a vision-enabled model (e.g., Claude Sonnet/Opus); gracefully skipped if unavailable. Optional auto-layout (scripts/autolayout.py) needs Graphviz (dot).

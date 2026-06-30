@@ -1,6 +1,6 @@
 ---
 name: software-architecture
-description: "软件架构超级技能 —— 三层递进结构（Clean Arch 单进程分层 → POEAA 企业模式 → DDIA 分布式系统）。从单体到分布的完整架构设计路径。"
+description: "Use when designing system architecture, choosing patterns (MVC, microservices, event-driven), or making distributed systems decisions (replication, partitioning, consistency). Triggers on 架构, 分层, 企业模式, 分布式, 微服务, architecture, distributed. Do NOT use for: DDD modeling (use domain-driven-design), or code quality (use clean-code)."
 metadata:
   version: "2.1"
   type: skill
