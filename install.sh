@@ -168,12 +168,13 @@ echo ""
 echo -e "${BOLD}⚙️  Step 4: 配置 ZCode 桌面版 MCP (~/.zcode/cli/config.json)...${RESET}"
 write_zcode_desktop_config
 
-# ── Step 5: 注入全局红线规则（4 条 · 2026-06-30 扩展） ───────────────────
-# 把 AGENTS.md 中的 4 条 🔴 红线章节注入到所有 AI 工具的**用户级**规则文件：
+# ── Step 5: 注入全局红线规则（5 条 · 2026-06-30 扩展为 v6.9） ──────────────
+# 把 AGENTS.md 中的 5 条 🔴 红线章节注入到所有 AI 工具的**用户级**规则文件：
 #   1. 用户交互红线       → LOOPENGINE-MANAGED INTERACTION-RULES
 #   2. MCP 红线规则       → LOOPENGINE-MANAGED MCP-RULES
 #   3. 事实优先硬规则     → LOOPENGINE-MANAGED EVIDENCE-RULES
 #   4. 摘要输出红线       → LOOPENGINE-MANAGED SUMMARY-RULES（v6.8 新增）
+#   5. 完成前验证红线     → LOOPENGINE-MANAGED VERIFICATION-RULES（v6.9 新增）
 # 关键设计：sentinel markers（HTML 注释）+ Python 合并，保证：
 #   1. 幂等性 —— 重复执行不重复插入（找到旧块则替换）
 #   2. 用户保留 —— 用户在文件其他章节的自定义内容**不会被覆盖**
@@ -191,6 +192,7 @@ install_managed_rules() {
         "MCP 红线规则:MCP-RULES"
         "事实优先硬规则:EVIDENCE-RULES"
         "摘要输出红线:SUMMARY-RULES"
+        "完成前验证红线:VERIFICATION-RULES"
     )
 
     # 目标：(标签 | 用户级规则文件路径)
@@ -303,7 +305,7 @@ PYEOF
 }
 
 echo ""
-echo -e "${BOLD}🌐 Step 5: 注入全局红线规则（7 个 AI 工具 × 4 条红线）...${RESET}"
+echo -e "${BOLD}🌐 Step 5: 注入全局红线规则（7 个 AI 工具 × 5 条红线）...${RESET}"
 install_managed_rules
 
 # ── 总结 ────────────────────────────────────────────────────

@@ -58,7 +58,7 @@ export const LoopEnginePlugin = async ({ client, directory }) => {
   const getBootstrapContent = () => {
     if (_bootstrapCache !== undefined) return _bootstrapCache;
 
-    // Load orch as the bootstrap skill (replaces skill-hub / using-superpowers)
+    // Load orch as the bootstrap skill
     const skillPath = path.join(loopengineSkillsDir, 'orch', 'SKILL.md');
     if (!fs.existsSync(skillPath)) {
       _bootstrapCache = null;

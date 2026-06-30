@@ -8,7 +8,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-# Read orch content (replaces skill-hub as the bootstrap skill)
+# Read orch content (the bootstrap skill)
 orch_content=$(cat "${PLUGIN_ROOT}/skills/orch/SKILL.md" 2>&1 || echo "Error reading orch skill")
 
 # Escape string for JSON embedding using bash parameter substitution.
