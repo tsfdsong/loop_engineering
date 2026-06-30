@@ -31,8 +31,6 @@ FAILED=0
 # ═══════════════════════════════════════════════════════════
 # ZCode 桌面版更新
 # ═══════════════════════════════════════════════════════════
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-
 ZCODE_PACKAGES_DIR=""
 if [ -d "$LOCALAPPDATA/Programs/ZCode/resources/glm/packages/loopengine-plugin" ]; then
     ZCODE_PACKAGES_DIR="$LOCALAPPDATA/Programs/ZCode/resources/glm/packages/loopengine-plugin"
@@ -40,23 +38,15 @@ elif [ -d "$HOME/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-
     ZCODE_PACKAGES_DIR="$HOME/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin"
 fi
 
-# 自动检测 CLI 缓存最新版本（避免硬编码 1.0.0/1.0.1 与未来 1.0.2/1.1.0 等不一致）
+# 自动检测实际安装的版本（避免硬编码 1.0.0 与未来 1.0.2/1.1.0 等版本不一致）
 ZCODE_CACHE_BASE="$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine"
-ZCODE_CACHE_DIR=$(ls -1d "$ZCODE_CACHE_BASE"/*/ 2>/dev/null | sort -V | tail -1 | sed 's:/$::' || echo "")
-
-# 治本 v2：当内置包缺失但 CLI 缓存存在时（首次部署或被清理场景），
-# 主动从项目源（脚本所在目录）初始化内置包，让三层链路流通
-# 之前流程会"静默失效"——根因 = Step 1+2 都依赖内置包存在
-if [ -z "$ZCODE_PACKAGES_DIR" ] && [ -n "$ZCODE_CACHE_DIR" ] && [ -d "$SCRIPT_DIR/skills" ]; then
-    ZCODE_PACKAGES_DIR="$HOME/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin"
-    mkdir -p "$(dirname "$ZCODE_PACKAGES_DIR")"
-    if cp -r "$SCRIPT_DIR/." "$ZCODE_PACKAGES_DIR/" 2>/dev/null; then
-        echo -e "  ${CYAN}ℹ${RESET}  内置包缺失 → 已从项目源（$SCRIPT_DIR）初始化"
-        echo -e "  ${GREEN}✅${RESET} 内置包路径: $ZCODE_PACKAGES_DIR"
-    else
-        echo -e "  ${YELLOW}⚠${RESET}  内置包初始化失败（$SCRIPT_DIR → $ZCODE_PACKAGES_DIR）"
-        ZCODE_PACKAGES_DIR=""
-    fi
+if [ -d "$ZCODE_CACHE_BASE/1.0.1" ]; then
+    ZCODE_CACHE_DIR="$ZCODE_CACHE_BASE/1.0.1"
+elif [ -d "$ZCODE_CACHE_BASE/1.0.0" ]; then
+    ZCODE_CACHE_DIR="$ZCODE_CACHE_BASE/1.0.0"
+else
+    # 兜底：取该目录下最新的版本号
+    ZCODE_CACHE_DIR=$(ls -1d "$ZCODE_CACHE_BASE"/*/ 2>/dev/null | sort -V | tail -1 | sed 's:/$::' || echo "")
 fi
 
 if [ -n "$ZCODE_PACKAGES_DIR" ] || [ -d "$ZCODE_CACHE_DIR" ]; then
@@ -103,6 +93,7 @@ if [ -n "$ZCODE_PACKAGES_DIR" ] || [ -d "$ZCODE_CACHE_DIR" ]; then
 
     # Step 5: 调用 MCP 自愈脚本（保证 ZCode 重启后 MCP 不丢失）
     # 根因：ZCode 启动时重写 marketplace.json，CLI 缓存 plugin.json 无 mcpServers → MCP 工具消失
+    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
     ENSURE_SCRIPT="$SCRIPT_DIR/scripts/zcode-mcp-ensure.sh"
     if [ -f "$ENSURE_SCRIPT" ]; then
         echo -e "  ${CYAN}▶  MCP 自愈（修复 plugin.json mcpServers + marketplace 注册）...${RESET}"
@@ -167,28 +158,17 @@ if [ -n "$ZCODE_PACKAGES_DIR" ] || [ -d "$ZCODE_CACHE_DIR" ]; then
     else
         echo -e "  ${GREEN}✅${RESET}  plugin.json 含 mcpServers"
     fi
-    # 跨版本兼容：必备技能（任何版本都应存在）+ 可选技能（v4.0+ 才有的新技能）
-    ESSENTIAL_SKILLS=("skill-hub" "evidence-first" "systematic-debugging" "verification-before-completion" "brainstorming")
-    MISSING_ESSENTIAL=()
-    for s in "${ESSENTIAL_SKILLS[@]}"; do
-        [ ! -d "$ZCODE_CACHE_DIR/skills/$s" ] && MISSING_ESSENTIAL+=("$s")
+    CRITICAL_SKILLS=("skill-hub" "go" "loop" "system-review" "using-loopengine")
+    MISSING=()
+    for s in "${CRITICAL_SKILLS[@]}"; do
+        [ ! -d "$ZCODE_CACHE_DIR/skills/$s" ] && MISSING+=("$s")
     done
-    OPTIONAL_SKILLS=("go" "loop" "subagent-driven-development" "system-review" "skill-router")
-    MISSING_OPTIONAL=()
-    for s in "${OPTIONAL_SKILLS[@]}"; do
-        [ ! -d "$ZCODE_CACHE_DIR/skills/$s" ] && MISSING_OPTIONAL+=("$s")
-    done
-    if [ ${#MISSING_ESSENTIAL[@]} -eq 0 ]; then
-        echo -e "  ${GREEN}✅${RESET}  必备技能完整 (${#ESSENTIAL_SKILLS[@]}/${#ESSENTIAL_SKILLS[@]}): ${ESSENTIAL_SKILLS[*]}"
+    if [ ${#MISSING[@]} -eq 0 ]; then
+        echo -e "  ${GREEN}✅${RESET}  关键技能目录完整（5/5）"
     else
-        echo -e "  ${RED}❌${RESET}  必备技能缺失 (${#MISSING_ESSENTIAL[@]}/${#ESSENTIAL_SKILLS[@]}): ${MISSING_ESSENTIAL[*]}"
+        echo -e "  ${RED}❌${RESET}  关键技能缺失: ${MISSING[*]}"
         CACHE_OK=0
     fi
-    if [ ${#MISSING_OPTIONAL[@]} -gt 0 ]; then
-        echo -e "  ${YELLOW}ℹ${RESET}  可选技能（v4.0+）缺失：${MISSING_OPTIONAL[*]}（非阻塞 — 老项目可能没有）"
-    fi
-    TOTAL_SKILL_COUNT=$(find "$ZCODE_CACHE_DIR/skills" -name "SKILL.md" 2>/dev/null | wc -l)
-    echo -e "  ${CYAN}ℹ${RESET}  缓存总技能数: ${GREEN}${TOTAL_SKILL_COUNT}${RESET}"
     for stale in .git .idea .vscode __pycache__ .DS_Store Thumbs.db; do
         [ -e "$ZCODE_CACHE_DIR/$stale" ] && rm -rf "$ZCODE_CACHE_DIR/$stale" 2>/dev/null && \
             echo -e "  ${YELLOW}🧹${RESET}  清理冗余: $stale"
