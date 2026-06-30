@@ -603,3 +603,63 @@ export LOOPENGINE_BRIDGES=disabled
 ```
 
 回滚不影响：v5.4 单技能路由 / v6.0 复合任务 / MCP 集成 / 已安装功能。
+
+---
+
+## 🆕 v6.5 新增：复杂度感知路由（alpha · 2026-06-30）
+
+> **起源**：用户原话"更好的根据任务复杂度调度两个技能"。
+> **设计稿**：`docs/2026-06-30-skillhub-complexity-aware-design.md`
+> **状态**：alpha — 初始权重基于 48/48 测试反馈校准（23 case adjusted）
+> **实现**：`skills/skill-hub/references/complexity-scorer.cjs`（~140 行）
+
+### 4 维度评分（v0.1 校准后）
+
+| 维度 | 算法 | 含义 |
+|------|------|------|
+| ① 意图清晰度 | `min(matched / tokens, 1) * 0.5` | 高意图清晰度只贡献 0.5（不算复杂） |
+| ② 候选技能数 | `(candidates - 1) * 1.0` | 多技能命中才抬高（clamp 5） |
+| ③ 跨工具依赖 | `1 if 含 MCP/jcodemunch/搜 else 0` | 外部工具需求 |
+| ④ token 预算 | `tokens / 10` | query 长度（clamp 5） |
+
+**score** = `clamp(round(1 + d1 + d2 + d3 + d4), [1, 5])`
+
+### 路由决策（branch_router）
+
+| score | mode | 路径 |
+|-------|------|------|
+| ≤ 2 | `single` | v5.4 关键词表（保留 100% 兼容） |
+| 3-4 | `composite` | v6.0 5 类复合任务 |
+| = 5 | `parallel` | go / subagent-dd 派发 DAG |
+
+### Fallback 优先级
+
+`v5.4 baseline` → `v6.0 5 类表` → 强制 `single`（含 `safe_route()` try/catch）。**绝不让 task 卡住**。
+
+### 调用样例
+
+```javascript
+const { safe_route } = require('./skills/skill-hub/references/complexity-scorer.cjs');
+const decision = safe_route('对比 A 和 B 哪个好');
+// → { mode: 'single', complexity_score: 1, fallback: false }
+```
+
+### 验证
+
+- 40 unit case：`tests/golden-traces/complexity-scorer-baseline.json`（`calibrated=true`）
+- 8 `branch_router` edge case（NaN / < 1 / > 5 等）
+- **48/48 跑通**（v0.1 commit `495d975`）
+
+### 与已有层的关系
+
+- **不替换** v5.4 / v6.0 / v6.1 任何层（叠加在 Layer 1）
+- **不重写** Orchestrator alpha mock
+- **fallback** 不会让 task 卡住（`safe_route()` 异常 → `single`）
+
+### 一键回滚
+
+```bash
+export LOOPENGINE_COMPLEXITY_AWARE=disabled
+```
+
+回滚不影响：v5.4 / v6.0 / v6.1 任何路由路径。
