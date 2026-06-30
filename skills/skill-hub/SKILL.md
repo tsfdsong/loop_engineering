@@ -648,7 +648,8 @@ const decision = safe_route('对比 A 和 B 哪个好');
 
 - 40 unit case：`tests/golden-traces/complexity-scorer-baseline.json`（`calibrated=true`）
 - 8 `branch_router` edge case（NaN / < 1 / > 5 等）
-- **48/48 跑通**（v0.1 commit `495d975`）
+- 9 env+trace case：`tests/complexity-scorer-env.test.cjs`（system-review fix 验证）
+- **57/57 跑通**（v0.1 commit `495d975` + fix commit `04a5551`）
 
 ### 与已有层的关系
 
@@ -656,10 +657,25 @@ const decision = safe_route('对比 A 和 B 哪个好');
 - **不重写** Orchestrator alpha mock
 - **fallback** 不会让 task 卡住（`safe_route()` 异常 → `single`）
 
-### 一键回滚
+### 一键回滚（system-review S1-1 实际生效）
 
 ```bash
 export LOOPENGINE_COMPLEXITY_AWARE=disabled
+# safe_route 走"未评分"分支：mode='single', complexity_score=null, v65='disabled'
+# 注意：动态读取 env，无需重启；测试和生产都支持
 ```
 
 回滚不影响：v5.4 / v6.0 / v6.1 任何路由路径。
+
+### Trace 钩子（system-review S2-1）
+
+```bash
+export LOOPENGINE_COMPLEXITY_TRACE=on
+# 每个 safe_route 调用 emit 一行 JSON 到 stderr：
+# {"ts":"2026-06-30T...","v65":"enabled","query_hash":"abc123","mode":"single",
+#  "complexity_score":1,"raw":1.5,"fallback":false,"latency_ms":0.12}
+#
+# 用途：v0.6 调权重时收集 trace 数据；不会阻塞任务（emit_trace 异常被吞）
+```
+
+默认 `off`；关闭时 safe_route 静默。
