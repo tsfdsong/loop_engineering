@@ -112,9 +112,14 @@ function complexity_scorer(query) {
   const d2 = dim2_candidate_count(query);
   const d3 = dim3_tool_dependency(query);
   const d4 = dim4_token_budget(query);
-  const raw = 1 + (d1 + d2 + d3 + d4);
+  // v6.7 P0 流程类优先级维度（参照 superpowers Skill Priority）
+  const P0_SKILLS = ['brainstorming', 'systematic-debugging', 'evidence-first', 'writing-plans'];
+  const candidates = matchSkills(query);
+  const hasP0 = candidates.some(c => P0_SKILLS.includes(c));
+  const d5 = hasP0 ? 0.5 : 0;  // P0 命中加权 +0.5（不抬高主分但记录到 dim_breakdown）
+  const raw = 1 + (d1 + d2 + d3 + d4 + d5);
   const score = Math.max(1, Math.min(5, Math.round(raw)));
-  return { score, dim_breakdown: { d1, d2, d3, d4 }, raw };
+  return { score, dim_breakdown: { d1, d2, d3, d4, d5, hasP0 }, raw };
 }
 
 function branch_router(score) {
