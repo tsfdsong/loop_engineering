@@ -96,7 +96,10 @@
     "G10_system_review": "pending"
   },
   "checkpoint": {
-    "last_completed_step": "step-2.7",
-    "next_step": "step-3.1"
+    "last_completed_step": "task-1.8-commit",
+    "last_commit": "f8a872b",
+    "next_step": "task-2.1",
+    "completed_tasks": ["task-1"],
+    "pending_tasks": ["task-2", "task-3", "task-4"]
   }
 }
