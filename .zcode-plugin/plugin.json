@@ -9,26 +9,5 @@
   "homepage": "https://github.com/tsfdsong/loop_engineering",
   "repository": "https://github.com/tsfdsong/loop_engineering",
   "license": "MIT",
-  "skills": "skills",
-  "mcpServers": {
-    "jcodemunch": {
-      "command": "C:/Users/admin/AppData/Roaming/Python/Python314/Scripts/jcodemunch-mcp",
-      "args": [
-        "serve"
-      ]
-    },
-    "repomix": {
-      "command": "C:/Users/admin/AppData/Roaming/npm/repomix",
-      "args": [
-        "--mcp"
-      ]
-    },
-    "headroom": {
-      "command": "C:/Users/admin/AppData/Roaming/Python/Python314/Scripts/headroom",
-      "args": [
-        "mcp",
-        "serve"
-      ]
-    }
-  }
+  "skills": "skills"
 }
