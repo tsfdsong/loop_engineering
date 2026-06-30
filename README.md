@@ -166,7 +166,7 @@ jcodemunch-mcp index_folder .
 | 🛠️ 技能管理 | 3 | `writing-skills` `skill-creator¹` `agent-skill-architecture` |
 | 🗄️ 数据库 | 1 | `database-design` |
 | 🛠️ 工具 | 3 | `drawio-skill` `agent-browser` `using-loopengine` |
-| 🧭 路由 | 3 | `loop` `loop-library` `skill-router` |
+| 🧭 路由 | 2 | `loop` `loop-library` |
 | 🔍 审查 | 2 | `system-review` `code-reviewer`¹⁾ |
 
 > ¹ 跨插件引用：`skill-creator` 由 ZCode 官方 `skill-creator` 插件提供。  
