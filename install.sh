@@ -3,7 +3,7 @@
 # LoopEngine 一键安装 — 极简 curl 一条龙
 # ════════════════════════════════════════════════════════════
 # 一行安装:
-#   curl -fsSL https://raw.githubusercontent.com/tsfdsong/loop_engineering/main/install.sh | bash
+#   curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
 #
 # 设计哲学:
 #   • 不依赖 ZCode 内部插件市场 / marketplace.json / plugin.json 注册

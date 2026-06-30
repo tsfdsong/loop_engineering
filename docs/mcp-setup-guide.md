@@ -44,7 +44,7 @@ LoopEngine 依赖 **三个 MCP 工具** 为 AI 提供"省 90% token"的代码探
 执行 LoopEngine 安装脚本，会自动检测 + 安装 + 配置 MCP 三件套：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tsfdsong/loop_engineering/main/install.sh | bash
+curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
 ```
 
 脚本会自动：

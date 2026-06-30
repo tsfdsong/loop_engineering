@@ -1,26 +1,18 @@
 #!/usr/bin/env bash
 # ════════════════════════════════════════════════════════════
-# LoopEngine 一键更新 — 等价于 curl install.sh | bash
+# LoopEngine 一键更新
 # ════════════════════════════════════════════════════════════
-# 设计哲学: 「更新 = 重新走 install」
-# update.sh = git pull 本地源码 + exec install.sh
+# 因为 install.sh 总是拉最新源码，所以更新 = 重新安装:
+#   curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
 #
-# 一行更新:
-#   bash <(curl -fsSL https://raw.githubusercontent.com/tsfdsong/loop_engineering/main/update.sh)
+# 本文件 = 本地已有仓库用户专用: git pull + exec install.sh
 # ════════════════════════════════════════════════════════════
 
 set -euo pipefail
 
 SELF="$(cd "$(dirname "$0")" && pwd)"
 
-echo -e "\033[1m\033[36m🔄 LoopEngine 更新: 拉取源码 + 重跑 install\033[0m"
-
-# Step 1: 同步本地源码到 main HEAD
-echo "  📥 git pull origin main..."
-cd "$SELF" && git pull --quiet origin main 2>/dev/null || {
-    echo "  ⚠️  git pull 失败 — 直接走 install.sh (本地源码可能不是最新)"
-}
-
-# Step 2: exec install.sh (重新部署技能 + MCP)
-echo "  🔄 重新跑 install.sh..."
-exec bash "$SELF/install.sh"
+echo -e "\033[1m\033[36m🔄 LoopEngine 更新: git pull + 重跑 install\033[0m"
+cd "$SELF"
+git pull --quiet origin main 2>/dev/null || echo "  ⚠️  git pull 失败 — 继续按本地源码安装"
+exec bash install.sh

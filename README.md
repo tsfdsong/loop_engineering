@@ -76,7 +76,7 @@ jcodemunch-mcp index_folder .
 | 平台 | 安装命令 | 验证 |
 |------|---------|:--:|
 | **Claude Code** | `claude plugin marketplace add https://github.com/tsfdsong/loop_engineering` 然后 `claude plugin install loopengine` | ✅ 实机 |
-| **ZCode** | `curl -fsSL https://raw.githubusercontent.com/tsfdsong/loop_engineering/main/install.sh \| bash`（推荐一键脚本，自动同步到 `~/.agents/skills/` 优先路径） | ✅ 实机 |
+| **ZCode** | `curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh \| bash`（推荐一键脚本，自动同步到 `~/.agents/skills/` 优先路径） | ✅ 实机 |
 | **Codex** | 插件市场搜索 `loopengine` | ⏳ |
 | **Cursor** | `/add-plugin tsfdsong/loop_engineering` | ⏳ 应用内 |
 | **Gemini CLI** | `gemini extensions install https://github.com/tsfdsong/loop_engineering` | ⏳ |

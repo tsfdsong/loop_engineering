@@ -5,7 +5,7 @@
 ## 一行安装
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tsfdsong/loop_engineering/main/install.sh | bash
+curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
 ```
 
 **装完即用**。无需重启 AI 工具，无需懂任何目录约定。
@@ -42,7 +42,7 @@ curl -fsSL https://raw.githubusercontent.com/tsfdsong/loop_engineering/main/inst
 **更新 = 重新安装**：
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/tsfdsong/loop_engineering/main/update.sh)
+bash <(curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/update.sh)
 ```
 
 或本地项目内：
