@@ -94,6 +94,80 @@ install_pkg "jcodemunch-mcp"  "jcodemunch-mcp"
 install_pkg "headroom"        "headroom"
 install_pkg "repomix"         "repomix"
 
+# ── Step 4: 写入 ZCode 桌面版 MCP 配置（~/.zcode/cli/config.json） ─────
+# 关键：项目根 .mcp.json 只对当前工作区生效；桌面版 ZCode 真正读的是
+#       用户级 cli/config.json 的 mcp.servers 字段。
+#       2026-06-30 实测发现：手动在桌面 UI 配置三次才成功，根因就是缺这步。
+write_zcode_desktop_config() {
+    local cfg="$HOME/.zcode/cli/config.json"
+
+    # 探测三个 MCP exe 实际路径（Windows 优先 .exe / .cmd）
+    local jcode_exe="" head_exe="" repo_exe=""
+
+    # jcodemunch-mcp: PATH → pip user Scripts → npm
+    for c in jcodemunch-mcp jcodemunch-mcp.exe; do
+        if command -v "$c" >/dev/null 2>&1; then jcode_exe=$(command -v "$c"); break; fi
+    done
+    [ -z "$jcode_exe" ] && [ -f "$HOME/AppData/Roaming/Python/Python314/Scripts/jcodemunch-mcp.exe" ] && \
+        jcode_exe="$HOME/AppData/Roaming/Python/Python314/Scripts/jcodemunch-mcp.exe"
+
+    # headroom
+    for c in headroom headroom.exe; do
+        if command -v "$c" >/dev/null 2>&1; then head_exe=$(command -v "$c"); break; fi
+    done
+    [ -z "$head_exe" ] && [ -f "$HOME/AppData/Roaming/Python/Python314/Scripts/headroom.exe" ] && \
+        head_exe="$HOME/AppData/Roaming/Python/Python314/Scripts/headroom.exe"
+
+    # repomix: .cmd 在 Windows 上 spawn 必需
+    for c in repomix.cmd repomix; do
+        if command -v "$c" >/dev/null 2>&1; then repo_exe=$(command -v "$c"); break; fi
+    done
+    [ -z "$repo_exe" ] && [ -f "$HOME/AppData/Roaming/npm/repomix.cmd" ] && \
+        repo_exe="$HOME/AppData/Roaming/npm/repomix.cmd"
+
+    # Windows 路径统一转正斜杠（JSON 推荐，且 Python 在 win 上两种都吃）
+    jcode_exe=$(echo "$jcode_exe" | sed 's|\\|/|g')
+    head_exe=$(echo "$head_exe"  | sed 's|\\|/|g')
+    repo_exe=$(echo "$repo_exe"  | sed 's|\\|/|g')
+
+    if [ -z "$jcode_exe" ] || [ -z "$head_exe" ] || [ -z "$repo_exe" ]; then
+        echo -e "  ${YELLOW}⚠${RESET}  三个 MCP 工具未全部找到，跳过桌面版配置写入"
+        echo -e "  ${YELLOW}⚠${RESET}  手动重装: pip install --user jcodemunch-mcp headroom && npm i -g repomix"
+        return 0
+    fi
+
+    mkdir -p "$(dirname "$cfg")"
+
+    # Python merge（保留用户其他顶层字段，如 provider/model/自定义设置）
+    python - "$cfg" "$jcode_exe" "$head_exe" "$repo_exe" <<'PYEOF'
+import json, os, sys
+cfg, jcode, head, repo = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+data = {}
+if os.path.isfile(cfg):
+    try:
+        with open(cfg, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except Exception:
+        data = {}
+data.setdefault('mcp', {}).setdefault('servers', {})
+# 桌面版 ZCode 用 type="stdio" + command + args（不是 .mcp.json 的 mcpServers）
+data['mcp']['servers']['jcodemunch'] = {'type': 'stdio', 'command': jcode, 'args': ['serve']}
+data['mcp']['servers']['repomix']    = {'type': 'stdio', 'command': repo,  'args': ['--mcp']}
+data['mcp']['servers']['headroom']   = {'type': 'stdio', 'command': head,  'args': ['mcp', 'serve']}
+with open(cfg, 'w', encoding='utf-8') as f:
+    json.dump(data, f, indent=2, ensure_ascii=False)
+print(f"  ✅ {cfg}")
+PYEOF
+    if [ -f "$cfg" ]; then
+        echo -e "  ${GREEN}✅${RESET} [ZCode 桌面版 MCP] $cfg"
+        TARGETS+=("ZCode 桌面版 MCP:$cfg")
+    fi
+}
+
+echo ""
+echo -e "${BOLD}⚙️  Step 4: 配置 ZCode 桌面版 MCP (~/.zcode/cli/config.json)...${RESET}"
+write_zcode_desktop_config
+
 # ── 总结 ────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"

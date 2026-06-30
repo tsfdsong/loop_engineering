@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
-# LoopEngine ZCode MCP 自愈脚本 v1.0
+# LoopEngine ZCode MCP 自愈脚本 v1.1
 # ────────────────────────────────────────────────────────────
 # 用途：保证 ZCode 桌面版重启后 MCP 三件套（jcodemunch/repomix/headroom）不丢失
 #
-# 根因（2026-06-28 实测发现）：
-#   ZCode 桌面版启动时会自动重写 marketplace.json，把"未在内置包目录找到对应插件"的条目删除；
-#   并优先从 CLI 缓存 plugins/cache/.../loopengine/<ver>/.zcode-plugin/plugin.json 加载 MCP 配置。
-#   如果该 plugin.json 没有 mcpServers 字段 → MCP 工具不显示。
+# 根因（2026-06-30 实测发现 — v1.1 更新）：
+#   ZCode 桌面版 MCP 的真正入口不是 plugin.json，也不是 marketplace.json，
+#   而是用户级配置文件：
+#       ~/.zcode/cli/config.json       （结构：mcp.servers.<name>）
+#   手动在桌面 UI 配置三次才成功，就是反复试错这个文件的位置和 schema。
+#   install.sh 不写它，桌面版就找不到 MCP。
 #
-# 本脚本做的事：
+# 本脚本做的事（5 步）：
 #   1. 探测 jcodemunch-mcp / headroom / repomix 三个可执行文件绝对路径
-#   2. 在所有可能的 loopengine plugin.json 缓存位置注入 mcpServers 字段
-#   3. 在所有可能的 marketplace.json 中加回 loopengine 注册
-#   4. 验证三个 MCP 工具 stdio 握手通过
+#   2. 写入 ~/.zcode/cli/config.json 的 mcp.servers（桌面版真正入口）【v1.1 新增】
+#   3. 兼容写入 plugin.json 缓存位置（v1.0 旧路径，部分版本仍读）
+#   4. 兼容写入 marketplace.json（部分版本仍依赖）
+#   5. stdIO 握手验证三个 server
 #
 # 用法：
 #   bash scripts/zcode-mcp-ensure.sh
@@ -40,7 +43,7 @@ err()  { log "${RED}❌${RESET} $1"; }
 info() { log "${CYAN}ℹ️ ${RESET} $1"; }
 
 log ""
-log "${BOLD}${CYAN}═══ LoopEngine ZCode MCP 自愈脚本 v1.0 ═══${RESET}"
+log "${BOLD}${CYAN}═══ LoopEngine ZCode MCP 自愈脚本 v1.1 ═══${RESET}"
 log ""
 
 # ── Step 1: 探测三个 MCP 工具的绝对路径 ──
@@ -275,12 +278,42 @@ done
 ok "marketplace 注册完成"
 log ""
 
-# ── Step 4: 同步写 ZCode CLI 全局 mcp-servers.json（兼容老版本） ──
-log "${BOLD}📝 Step 4: 写 ZCode CLI 全局 mcp-servers.json（兼容）...${RESET}"
+# ── Step 4: 写入 ZCode 桌面版真正配置 ~/.zcode/cli/config.json（v1.1 核心） ──
+# 这是桌面版 MCP 的真正入口！手动 UI 配置也是写到这里。
+log "${BOLD}📝 Step 4: 写入 ZCode 桌面版 MCP 真正入口 (~/.zcode/cli/config.json)...${RESET}"
+ZCODE_CFG="$HOME/.zcode/cli/config.json"
+mkdir -p "$(dirname "$ZCODE_CFG")"
+
+# Windows 路径 → Python 路径（/c/Users → C:/Users，避免 Python 解析混乱）
+to_py_path() {
+    echo "$1" | sed 's|^/\([a-z]\)/|\1:/|'
+}
+ZCODE_CFG_PY=$(to_py_path "$ZCODE_CFG")
+
+python - "$ZCODE_CFG_PY" "$JCODE_EXE_FWD" "$HEAD_EXE_FWD" "$REPO_EXE_FWD" <<'PYEOF'
+import json, os, sys
+cfg, jcode, head, repo = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+data = {}
+if os.path.isfile(cfg):
+    try:
+        with open(cfg, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except Exception:
+        data = {}
+data.setdefault('mcp', {}).setdefault('servers', {})
+# 桌面版 ZCode 用 type="stdio" + command + args（不是 .mcp.json 的 mcpServers）
+data['mcp']['servers']['jcodemunch'] = {'type': 'stdio', 'command': jcode, 'args': ['serve']}
+data['mcp']['servers']['repomix']    = {'type': 'stdio', 'command': repo,  'args': ['--mcp']}
+data['mcp']['servers']['headroom']   = {'type': 'stdio', 'command': head,  'args': ['mcp', 'serve']}
+with open(cfg, 'w', encoding='utf-8') as f:
+    json.dump(data, f, indent=2, ensure_ascii=False)
+print(f"  ✅ {cfg}")
+PYEOF
+ok "已写: $ZCODE_CFG"
+log ""
+
+# 同时保留旧 mcp-servers.json 作为向下兼容（部分 ZCode 版本会读）
 ZCODE_MCP="$HOME/.zcode/cli/mcp-servers.json"
-if [ ! -d "$(dirname "$ZCODE_MCP")" ]; then
-    mkdir -p "$(dirname "$ZCODE_MCP")"
-fi
 cat > "$ZCODE_MCP" <<EOF
 {
   "mcpServers": {
@@ -290,7 +323,7 @@ cat > "$ZCODE_MCP" <<EOF
   }
 }
 EOF
-ok "已写: $ZCODE_MCP"
+info "兼容文件 (老版本): $ZCODE_MCP"
 log ""
 
 # ── Step 5: 验证三个 MCP 工具 stdio 握手 ──

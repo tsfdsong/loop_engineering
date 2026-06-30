@@ -15,4 +15,5 @@ SELF="$(cd "$(dirname "$0")" && pwd)"
 echo -e "\033[1m\033[36m🔄 LoopEngine 更新: git pull + 重跑 install\033[0m"
 cd "$SELF"
 git pull --quiet origin main 2>/dev/null || echo "  ⚠️  git pull 失败 — 继续按本地源码安装"
+echo -e "\033[1m\033[36m   ↳ install.sh 会自动重写 ~/.zcode/cli/config.json（桌面版 MCP 真正入口）\033[0m"
 exec bash install.sh

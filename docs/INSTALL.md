@@ -19,6 +19,7 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 | 1️⃣ 拉源码 | `git clone --depth 1` 到 `/tmp/loopengine-install-$$/`，自动清理 |
 | 2️⃣ 复制技能 | 把 `skills/*` 复制到 AI 工具的**约定技能目录**（见下表） |
 | 3️⃣ MCP | 用 pip/npm 装 jcodemunch-mcp / headroom / repomix（已装会跳过） |
+| 4️⃣ 桌面版 MCP | **自动写入 `~/.zcode/cli/config.json` 的 `mcp.servers`**（ZCode 桌面版真正入口） |
 
 ### 自动部署的目标目录
 
@@ -101,4 +102,5 @@ bash scripts/zcode-mcp-ensure.sh
 | `pip install` 失败 | 先 `pip install --upgrade pip`；用 `python -m pip install --user <pkg>` 替代 |
 | `npm install -g` 失败 | 检查 Node.js；Linux/macOS 上需要 sudo 或 `npm config set prefix` |
 | 装完 ZCode 还是看不到 loopengine 技能 | 跑 `bash scripts/zcode-mcp-ensure.sh`（加载 marketplace + plugin.json） |
-| MCP 工具不显示 | 同上 |
+| **ZCode MCP 工具不显示**（v1.1 新根因） | 检查 `cat ~/.zcode/cli/config.json` 是否有 `mcp.servers` 三个 server；缺失就重跑 `bash install.sh` |
+| MCP 工具显示了但调用失败 | 命令路径要带 Windows 扩展名（`jcodemunch-mcp.exe` / `repomix.cmd` / `headroom.exe`），install.sh 已自动处理 |

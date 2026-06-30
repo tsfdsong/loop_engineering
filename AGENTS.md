@@ -254,30 +254,41 @@ xcopy "$env:LOCALAPPDATA\Programs\ZCode\resources\glm\packages\loopengine-plugin
 
 </details>
 
-### 旧版 ZCode 桌面版 MCP 重启丢失红线（2026-06-28 实测发现）
+### 旧版 ZCode 桌面版 MCP 重启丢失红线（2026-06-28 发现 → 2026-06-30 修正根因）
 
 <details>
 <summary>展开</summary>
 
-**症状**：安装/更新后 MCP 三件套正常加载，但**重启 ZCode 后消失**。
+**症状**：安装/更新后 MCP 三件套正常加载，但**重启 ZCode 后消失**（用户在桌面 UI 手动配三次才成功）。
 
-**根因**：
+**2026-06-28 旧根因（部分错）**：
 1. ZCode 启动时自动重写 marketplace.json，只保留"内置包目录能找到的插件"
 2. ZCode 优先从 CLI 缓存 `plugin.json` 加载 MCP（不是项目源）
 3. CLI 缓存的 `plugin.json` 默认没有 `mcpServers` 字段
 
-**v2.0 治本**：让 install.sh 直接 cp skills/ 到 `~/.agents/skills/`（用户级 fallback），绕开 marketplace 注册链。
+**2026-06-30 实测推翻 [F]**：通过 `grep -rli jcodemunch ~/.zcode ~/AppData/Roaming/ZCode` 全局搜索确认：
+
+| # | 事实 | 修正 |
+|---|------|------|
+| 1 | ZCode 桌面版 MCP 真正入口是 **`~/.zcode/cli/config.json`** 的 `mcp.servers` 字段 | ✅ 推翻 "从 plugin.json 读" 旧结论 |
+| 2 | 项目根 `.mcp.json` 桌面版不读，只对工作区级 CLI 生效 | ✅ 新发现 |
+| 3 | `~/.zcode/cli/config.json` 顶层还有 `provider`（模型配置），install.sh 必须 merge 不覆盖 | ✅ 新发现 |
+| 4 | Windows 命令必须带 `.exe` / `.cmd` 扩展名，Node spawn 不补 | ✅ 新发现（v1.0 没踩过） |
+
+**v1.1 治本**：`install.sh` Step 4 + `scripts/zcode-mcp-ensure.sh` Step 3 自动探测 3 个 exe 路径 → merge 写入 `~/.zcode/cli/config.json` 的 `mcp.servers`（保留用户 `provider` 等顶层字段）。
 
 **调试**：
 
 ```bash
-# 看 CLI 缓存 plugin.json 是否有 mcpServers
-grep -A2 "mcpServers" ~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/*/.zcode-plugin/plugin.json
+# 1) 看桌面版 config.json 的 mcp.servers（v1.1 真正入口）
+cat ~/.zcode/cli/config.json | python -c "import json,sys; d=json.load(sys.stdin); print(json.dumps(d.get('mcp',{}).get('servers',{}), indent=2, ensure_ascii=False))"
 
-# 看 marketplace.json 是否含 loopengine
-grep "loopengine" ~/.zcode/cli/plugins/marketplaces/*/marketplace.json
+# 2) 看三个 exe 是否能跑（带正确扩展名）
+"C:/Users/<user>/AppData/Roaming/Python/Python314/Scripts/jcodemunch-mcp.exe" --version
+"C:/Users/<user>/AppData/Roaming/npm/repomix.cmd" --version
+"C:/Users/<user>/AppData/Roaming/Python/Python314/Scripts/headroom.exe" --version
 
-# 必要时跑自愈
+# 3) 必要时跑自愈（merge 写 config.json）
 bash scripts/zcode-mcp-ensure.sh
 ```
 
