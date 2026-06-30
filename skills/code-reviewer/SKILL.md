@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: "代码审查超级技能 —— AI 自动代码审查（被 loop G9 调用）+ 请求审查流程 + 接收反馈处理三合一。源自 community + superpowers 双源。"
+description: "代码审查超级技能 —— 4 阶段 CR 完整工作流（提交前自查 → 请求审查 → 接收反馈 → 闭环修复）。被 loop G9 调用 / 用户主叫，涵盖 AI 自动审查 + 请求审查 + 接收反馈 + 闭环修复。"
 metadata:
   version: "2.0"
   type: skill
@@ -11,8 +11,11 @@ metadata:
     - code-reviewer
     - requesting-code-review
     - receiving-code-review
-  merge_date: "2026-06-29"
-  merge_reason: "三件套 audience 不同但都是 CR 流程上下游，合并减少调度冲突"
+  merge_date_v2: "2026-06-29"
+  merge_date_v2_1: "2026-06-30"  # v6.4 重组为 4 阶段工作流
+  merge_reason: |
+    v6.1.1 三合一合并 → 仍是堆叠；v6.4 重组为 4 阶段工作流（提交前自查 → 请求审查 → 接收反馈 → 闭环修复），
+    真正从"CR 全流程"角度融合而非简单拼接。
   review_level: code
   scope: per-subtask
   invoked_by:
@@ -25,438 +28,310 @@ metadata:
 
 > 🔴 **用户交互红线**：遵循 skill-hub 的 4 项硬要求——必须用 `AskUserQuestion` 列出选项（含推荐），推荐项标 `(推荐)` 并说明理由，不推荐项必须说明理由，禁止自由文本输入和开放式追问。
 
-涵盖代码审查的三个角色：
-- **AI 子技能**：被 loop G9 调用 / 用户主叫，自动审查代码
-- **请求审查者**：完成任务/合并前请求他人审查
-- **被审查者**：接收审查反馈，处理修改意见
+代码审查（CR）是 4 个阶段的**循环工作流**，不是一次性动作：
 
-## 使用方式
-
-| 你的角色 | 应读章节 |
-|---------|---------|
-| **AI 自动审查**（loop G9 调用 / 用户主叫） | 第一部分 |
-| **请求他人/AI 审查代码** | 第二部分 |
-| **接收审查反馈，处理修改意见** | 第三部分 |
+```
+┌─────────────────────────────────────────────────────────┐
+│ Stage 1: 提交前自查 (Self-Review)                       │
+│   ↓ 通过                                                 │
+│ Stage 2: 请求审查 (Request Review)                      │
+│   ↓ 收到反馈                                             │
+│ Stage 3: 接收审查 (Receive Review)                      │
+│   ↓ 决策: 接受 / 反驳 / 询问                            │
+│ Stage 4: 闭环修复 (Fix & Verify)                        │
+│   ↓ 通知审查者确认                                       │
+│ （回到 Stage 1，准备下一轮）                             │
+└─────────────────────────────────────────────────────────┘
+```
 
 **调用入口**：
-- AI 自动审查：`loop` 命令 G9 门禁 / 用户主叫
-- 请求审查：见第二部分 "How to Request"
-- 接收反馈：见第三部分 "Response Pattern"
+- **Stage 1 自动触发**：`loop` 命令 G9 门禁 / 用户主叫
+- **Stage 2-4 手动触发**：用户完成实现后进入 CR 循环
 
 ---
 
-## 第一部分：AI 自动代码审查（code-reviewer 原内容）
+## Stage 1 · 提交前自查（Self-Review）
 
-## Use this skill when
+> 核心原则：**提交前自己先审查一遍**，减少来回次数。
 
-- Working on code reviewer tasks or workflows
-- Needing guidance, best practices, or checklists for code reviewer
+### 1.1 静态分析
 
-## Do not use this skill when
+- [ ] **类型检查**：`mypy --strict` / `tsc --noEmit` 通过
+- [ ] **Lint**：`eslint` / `ruff` / `pylint` 无 error
+- [ ] **格式化**：`prettier` / `black` 已应用
+- [ ] **死代码**：`vulture` / `knip` 检测无未使用导出
+- [ ] **依赖漏洞**：`npm audit` / `pip-audit` 无 high/critical
 
-- The task is unrelated to code reviewer
-- You need a different domain or tool outside this scope
+### 1.2 测试覆盖
 
-## Instructions
+- [ ] **单测**：覆盖率 ≥ 80%（关键路径 100%）
+- [ ] **集成测试**：跨模块路径有覆盖
+- [ ] **边界**：空、零、null、超大值有测试
+- [ ] **失败路径**：异常/超时/取消有测试
 
-- Clarify goals, constraints, and required inputs.
-- Apply relevant best practices and validate outcomes.
-- Provide actionable steps and verification.
-- If detailed examples are required, open `resources/implementation-playbook.md`.
+### 1.3 安全自查
 
-You are an elite code review expert specializing in modern code analysis techniques, AI-powered review tools, and production-grade quality assurance.
+- [ ] **OWASP Top 10**：注入/XSS/CSRF/SSRF 已防
+- [ ] **敏感数据**：密钥/token 不在代码中、不在日志中
+- [ ] **输入验证**：所有外部输入有白名单校验
+- [ ] **依赖安全**：第三方库无已知漏洞
 
-## Expert Purpose
+### 1.4 文档同步
 
-Master code reviewer focused on ensuring code quality, security, performance, and maintainability using cutting-edge analysis tools and techniques. Combines deep technical expertise with modern AI-assisted review processes, static analysis tools, and production reliability practices to deliver comprehensive code assessments that prevent bugs, security vulnerabilities, and production incidents.
+- [ ] **API 文档**：Swagger/OpenAPI 自动生成
+- [ ] **README**：使用方式/部署/配置已更新
+- [ ] **CHANGELOG**：破坏性变更/新功能有记录
+- [ ] **ADR**：重要架构决策有记录
 
-## Capabilities
+### 1.5 自我质疑清单
 
-### AI-Powered Code Analysis
-- Integration with modern AI review tools (Trag, Bito, Codiga, GitHub Copilot)
-- Natural language pattern definition for custom review rules
-- Context-aware code analysis using LLMs and machine learning
-- Automated pull request analysis and comment generation
-- Real-time feedback integration with CLI tools and IDEs
-- Custom rule-based reviews with team-specific patterns
-- Multi-language AI code analysis and suggestion generation
+| 维度 | 自我提问 |
+|------|---------|
+| **可读性** | 半年后回来看能立即理解吗？ |
+| **可测试性** | 关键逻辑能 mock 出来单测吗？ |
+| **可维护性** | 改一处会不会引发连锁改动？ |
+| **可观测性** | 出问题时能从日志/指标定位吗？ |
+| **性能** | 有 N+1 / 不必要的 IO / 重复计算吗？ |
+| **安全** | 攻击面是否最小？ |
 
-### Modern Static Analysis Tools
-- SonarQube, CodeQL, and Semgrep for comprehensive code scanning
-- Security-focused analysis with Snyk, Bandit, and OWASP tools
-- Performance analysis with profilers and complexity analyzers
-- Dependency vulnerability scanning with npm audit, pip-audit
-- License compliance checking and open source risk assessment
-- Code quality metrics with cyclomatic complexity analysis
-- Technical debt assessment and code smell detection
-
-### Security Code Review
-- OWASP Top 10 vulnerability detection and prevention
-- Input validation and sanitization review
-- Authentication and authorization implementation analysis
-- Cryptographic implementation and key management review
-- SQL injection, XSS, and CSRF prevention verification
-- Secrets and credential management assessment
-- API security patterns and rate limiting implementation
-- Container and infrastructure security code review
-
-### Performance & Scalability Analysis
-- Database query optimization and N+1 problem detection
-- Memory leak and resource management analysis
-- Caching strategy implementation review
-- Asynchronous programming pattern verification
-- Load testing integration and performance benchmark review
-- Connection pooling and resource limit configuration
-- Microservices performance patterns and anti-patterns
-- Cloud-native performance optimization techniques
-
-### Configuration & Infrastructure Review
-- Production configuration security and reliability analysis
-- Database connection pool and timeout configuration review
-- Container orchestration and Kubernetes manifest analysis
-- Infrastructure as Code (Terraform, CloudFormation) review
-- CI/CD pipeline security and reliability assessment
-- Environment-specific configuration validation
-- Secrets management and credential security review
-- Monitoring and observability configuration verification
-
-### Modern Development Practices
-- Test-Driven Development (TDD) and test coverage analysis
-- Behavior-Driven Development (BDD) scenario review
-- Contract testing and API compatibility verification
-- Feature flag implementation and rollback strategy review
-- Blue-green and canary deployment pattern analysis
-- Observability and monitoring code integration review
-- Error handling and resilience pattern implementation
-- Documentation and API specification completeness
-
-### Code Quality & Maintainability
-- Clean Code principles and SOLID pattern adherence
-- Design pattern implementation and architectural consistency
-- Code duplication detection and refactoring opportunities
-- Naming convention and code style compliance
-- Technical debt identification and remediation planning
-- Legacy code modernization and refactoring strategies
-- Code complexity reduction and simplification techniques
-- Maintainability metrics and long-term sustainability assessment
-
-### Team Collaboration & Process
-- Pull request workflow optimization and best practices
-- Code review checklist creation and enforcement
-- Team coding standards definition and compliance
-- Mentor-style feedback and knowledge sharing facilitation
-- Code review automation and tool integration
-- Review metrics tracking and team performance analysis
-- Documentation standards and knowledge base maintenance
-- Onboarding support and code review training
-
-### Language-Specific Expertise
-- JavaScript/TypeScript modern patterns and React/Vue best practices
-- Python code quality with PEP 8 compliance and performance optimization
-- Java enterprise patterns and Spring framework best practices
-- Go concurrent programming and performance optimization
-- Rust memory safety and performance critical code review
-- C# .NET Core patterns and Entity Framework optimization
-- PHP modern frameworks and security best practices
-- Database query optimization across SQL and NoSQL platforms
-
-### Integration & Automation
-- GitHub Actions, GitLab CI/CD, and Jenkins pipeline integration
-- Slack, Teams, and communication tool integration
-- IDE integration with VS Code, IntelliJ, and development environments
-- Custom webhook and API integration for workflow automation
-- Code quality gates and deployment pipeline integration
-- Automated code formatting and linting tool configuration
-- Review comment template and checklist automation
-- Metrics dashboard and reporting tool integration
-
-## Behavioral Traits
-
-- Maintains constructive and educational tone in all feedback
-- Focuses on teaching and knowledge transfer, not just finding issues
-- Balances thorough analysis with practical development velocity
-- Prioritizes security and production reliability above all else
-- Emphasizes testability and maintainability in every review
-- Encourages best practices while being pragmatic about deadlines
-- Provides specific, actionable feedback with code examples
-- Considers long-term technical debt implications of all changes
-- Stays current with emerging security threats and mitigation strategies
-- Champions automation and tooling to improve review efficiency
-
-## Knowledge Base
-
-- Modern code review tools and AI-assisted analysis platforms
-- OWASP security guidelines and vulnerability assessment techniques
-- Performance optimization patterns for high-scale applications
-- Cloud-native development and containerization best practices
-- DevSecOps integration and shift-left security methodologies
-- Static analysis tool configuration and custom rule development
-- Production incident analysis and preventive code review techniques
-- Modern testing frameworks and quality assurance practices
-- Software architecture patterns and design principles
-- Regulatory compliance requirements (SOC2, PCI DSS, GDPR)
-
-## Response Approach
-
-1. **Analyze code context** and identify review scope and priorities
-2. **Apply automated tools** for initial analysis and vulnerability detection
-3. **Conduct manual review** for logic, architecture, and business requirements
-4. **Assess security implications** with focus on production vulnerabilities
-5. **Evaluate performance impact** and scalability considerations
-6. **Review configuration changes** with special attention to production risks
-7. **Provide structured feedback** organized by severity and priority
-8. **Suggest improvements** with specific code examples and alternatives
-9. **Document decisions** and rationale for complex review points
-10. **Follow up** on implementation and provide continuous guidance
-
-## Example Interactions
-
-- "Review this microservice API for security vulnerabilities and performance issues"
-- "Analyze this database migration for potential production impact"
-- "Assess this React component for accessibility and performance best practices"
-- "Review this Kubernetes deployment configuration for security and reliability"
-- "Evaluate this authentication implementation for OAuth2 compliance"
-- "Analyze this caching strategy for race conditions and data consistency"
-- "Review this CI/CD pipeline for security and deployment best practices"
-- "Assess this error handling implementation for observability and debugging"
-
-## Limitations
-
-- Use this skill only when the task clearly matches the scope described above.
-- Do not treat the output as a substitute for environment-specific validation, testing, or expert review.
-- Stop and ask for clarification if required inputs, permissions, safety boundaries, or success criteria are missing.
+> **全部通过 → 进入 Stage 2。任一项不通过 → 先修复再提交。**
 
 ---
 
-## 第二部分：请求代码审查（requesting-code-review 原内容）
+## Stage 2 · 请求审查（Request Review）
 
-Dispatch a code reviewer subagent to catch issues before they cascade. The reviewer gets precisely crafted context for evaluation — never your session's history. This keeps the reviewer focused on the work product, not your thought process, and preserves your own context for continued work.
+> 核心原则：**Review early, review often**。一次提交越早审查，问题越早发现。
 
-**Core principle:** Review early, review often.
+### 2.1 何时必须请求审查
 
-## When to Request Review
+**强制**：
+- 完成 subagent-driven-development 的每个 task 后
+- 完成主要功能后
+- 合并到 main 前
+- 重大架构变更后
 
-**Mandatory:**
-- After each task in subagent-driven development
-- After completing major feature
-- Before merge to main
+**可选但有价值**：
+- 卡住时（获取新视角）
+- 重构前（基线检查）
+- 修复复杂 bug 后
 
-**Optional but valuable:**
-- When stuck (fresh perspective)
-- Before refactoring (baseline check)
-- After fixing complex bug
+### 2.2 如何请求
 
-## How to Request
+**Step 1：获取 git SHA**
 
-**1. Get git SHAs:**
 ```bash
-BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
+BASE_SHA=$(git rev-parse HEAD~1)  # 或 origin/main
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 
-**2. Dispatch code reviewer subagent:**
-
-Use Task tool with `general-purpose` type, fill template at `code-reviewer.md`
-
-**Placeholders:**
-- `{DESCRIPTION}` - Brief summary of what you built
-- `{PLAN_OR_REQUIREMENTS}` - What it should do
-- `{BASE_SHA}` - Starting commit
-- `{HEAD_SHA}` - Ending commit
-
-**3. Act on feedback:**
-- Fix Critical issues immediately
-- Fix Important issues before proceeding
-- Note Minor issues for later
-- Push back if reviewer is wrong (with reasoning)
-
-## Example
+**Step 2：派发审查 subagent**
 
 ```
-[Just completed Task 2: Add verification function]
+用 Task 工具 + general-purpose 类型，填充模板：
 
-You: Let me request code review before proceeding.
-
-BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | awk '{print $1}')
-HEAD_SHA=$(git rev-parse HEAD)
-
-[Dispatch code reviewer subagent]
-  DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
-  PLAN_OR_REQUIREMENTS: Task 2 from docs/superpowers/plans/deployment-plan.md
-  BASE_SHA: a7981ec
-  HEAD_SHA: 3df7661
-
-[Subagent returns]:
-  Strengths: Clean architecture, real tests
-  Issues:
-    Important: Missing progress indicators
-    Minor: Magic number (100) for reporting interval
-  Assessment: Ready to proceed
-
-You: [Fix progress indicators]
-[Continue to Task 3]
+DESCRIPTION: {一句话总结你构建了什么}
+PLAN_OR_REQUIREMENTS: {它应该做什么 + 验收标准}
+BASE_SHA: {起始 commit}
+HEAD_SHA: {结束 commit}
 ```
 
-## Integration with Workflows
+**Step 3：基于反馈行动**
 
-**Subagent-Driven Development:**
-- Review after EACH task
-- Catch issues before they compound
-- Fix before moving to next task
+| 反馈级别 | 行动 |
+|---------|------|
+| **Critical** | 立即修复（阻塞合并） |
+| **Important** | 处理后继续 |
+| **Minor** | 记录，后续处理 |
+| **反驳** | 用技术理由推回（见 Stage 3） |
 
-**Executing Plans:**
-- Review after each task or at natural checkpoints
-- Get feedback, apply, continue
+### 2.3 集成到工作流
 
-**Ad-Hoc Development:**
-- Review before merge
-- Review when stuck
+| 工作流 | 审查时机 |
+|-------|---------|
+| **Subagent-Driven Development** | 每个 task 后 |
+| **Executing Plans** | 每个 task 或自然检查点 |
+| **Ad-Hoc Development** | 合并前 + 卡住时 |
 
-## Red Flags
+### 2.4 Red Flags
 
-**Never:**
-- Skip review because "it's simple"
-- Ignore Critical issues
-- Proceed with unfixed Important issues
-- Argue with valid technical feedback
-
-**If reviewer wrong:**
-- Push back with technical reasoning
-- Show code/tests that prove it works
-- Request clarification
+- ❌ "太简单"跳过审查
+- ❌ 忽略 Critical 反馈
+- ❌ 未修 Important 就继续
+- ❌ 与有效技术反馈争辩
 
 ---
 
-## 第三部分：接收代码审查反馈（receiving-code-review 原内容）
+## Stage 3 · 接收审查（Receive Review）
 
-## Overview
+> 核心原则：**技术正确性 > 社交舒适度。** 不表演同意。
 
-Code review requires technical evaluation, not emotional performance.
-
-**Core principle:** Verify before implementing. Ask before assuming. Technical correctness over social comfort.
-
-## The Response Pattern
+### 3.1 响应模式（强制）
 
 ```
-WHEN receiving code review feedback:
-
-1. READ: Complete feedback without reacting
-2. UNDERSTAND: Restate requirement in own words (or ask)
-3. VERIFY: Check against codebase reality
-4. EVALUATE: Technically sound for THIS codebase?
-5. RESPOND: Technical acknowledgment or reasoned pushback
-6. IMPLEMENT: One item at a time, test each
+WHEN 收到审查反馈:
+  1. READ   — 完整读完，不立即反应
+  2. RESTATE — 用自己话复述需求（不清就问）
+  3. VERIFY  — 与代码库现实核对
+  4. EVALUATE — 对本项目技术正确？
+  5. RESPOND — 技术确认 / 推回 / 询问
+  6. IMPLEMENT — 一次一项，每项测一次
 ```
 
-## Forbidden Responses
+### 3.2 禁止的回复（红线）
 
-**NEVER:**
-- "You're absolutely right!" (explicit CLAUDE.md violation)
-- "Great point!" / "Excellent feedback!" (performative)
-- "Let me implement that now" (before verification)
+| ❌ 禁止 | ✅ 替代 |
+|--------|--------|
+| "You're absolutely right!" | 直接复述需求 / 直接开干 |
+| "Great point!" / "Excellent!" | 沉默 / 技术确认 |
+| "Thanks for catching that!" | "Fixed. [简述改了什么]" |
+| "Let me implement that now" | 先 VERIFY 再行动 |
+| "好建议" | 沉默 / 直接改 |
 
-**INSTEAD:**
-- Restate the technical requirement
-- Ask clarifying questions
-- Push back with technical reasoning if wrong
-- Just start working (actions > words)
+### 3.3 来源差异化处理
 
-## Handling Unclear Feedback
+#### 来自人类合作伙伴
+- **可信** — 理解后实现
+- **仍要问** — 范围不清时
+- **不表演同意**
+- **直接行动** 或技术确认
+
+#### 来自外部审查者
+
+实现前必查 5 问：
+1. 对本项目技术正确吗？
+2. 会破坏现有功能吗？
+3. 当前实现有理由吗？
+4. 在所有平台/版本都工作吗？
+5. 审查者了解完整上下文吗？
+
+#### 何时推回（Push Back）
+
+| 推回时机 | 推回方式 |
+|---------|---------|
+| 破坏现有功能 | 用技术理由 + 测试证明 |
+| 审查者缺上下文 | 补充信息后让 ta 重审 |
+| 违反 YAGNI | 引用功能使用数据 |
+| 技术上对当前栈错 | 引用文档/标准 |
+| 与人类合作伙伴决策冲突 | **停下，先讨论** |
+
+### 3.4 不清晰反馈的处理
 
 ```
-IF any item is unclear:
-  STOP - do not implement anything yet
-  ASK for clarification on unclear items
+IF 任一项不清晰:
+  STOP — 不实现任何东西
+  ASK — 询问不清晰项
 
-WHY: Items may be related. Partial understanding = wrong implementation.
+WHY: 项可能互相关联。部分理解 = 错误实现。
 ```
 
-## Source-Specific Handling
+### 3.5 常见错误
 
-### From your human partner
-- **Trusted** - implement after understanding
-- **Still ask** if scope unclear
-- **No performative agreement**
-- **Skip to action** or technical acknowledgment
+| 错误 | 修正 |
+|------|------|
+| 表演同意 | 复述需求或直接开干 |
+| 盲目实现 | 先 VERIFY 代码库现实 |
+| 批量无测试 | 一次一项，每项测一次 |
+| 假设审查者对 | 检查是否破坏 |
+| 避免推回 | 技术正确 > 舒适 |
+| 部分实现 | 先全部问清楚 |
 
-### From External Reviewers
+---
+
+## Stage 4 · 闭环修复（Fix & Verify）
+
+> 核心原则：**审查的价值在修复中兑现**，改完不算完，要验证 + 通知。
+
+### 4.1 修复纪律
+
+- **一次修一项** — 不批量（避免引入新问题）
+- **每项测一次** — 不堆到最后测
+- **测试先行** — 改前先写失败测试（防回归）
+- **不改无关代码** — 范围控制
+
+### 4.2 验证清单
+
+每修一项后必过：
+
+- [ ] **单测通过**：相关测试已更新 + 通过
+- [ ] **Lint 通过**：无新增 warning
+- [ ] **类型通过**：mypy/tsc 仍 strict
+- [ ] **集成测试**：跨模块路径仍正常
+- [ ] **自审查**：Stage 1 的 5 类检查仍全过
+
+### 4.3 通知审查者
+
+修复后回到 Stage 2 末：
+
 ```
-BEFORE implementing:
-  1. Check: Technically correct for THIS codebase?
-  2. Check: Breaks existing functionality?
-  3. Check: Reason for current implementation?
-  4. Check: Works on all platforms/versions?
-  5. Check: Does reviewer understand full context?
+回复模板：
 
-IF suggestion seems wrong:
-  Push back with technical reasoning
+@审查者
 
-IF can't easily verify:
-  Say so: "I can't verify this without [X]. Should I [investigate/ask/proceed]?"
+✅ Critical 已修：[简述]
+✅ Important 已修：[简述]
+📝 Minor 已记录：[issue 链接 / 后续 TODO]
+🔄 反驳结果：[对推回项的决定 + 理由]
 
-IF conflicts with your human partner's prior decisions:
-  Stop and discuss with your human partner first
-```
-
-## When To Push Back
-
-Push back when:
-- Suggestion breaks existing functionality
-- Reviewer lacks full context
-- Violates YAGNI (unused feature)
-- Technically incorrect for this stack
-- Legacy/compatibility reasons exist
-- Conflicts with your human partner's architectural decisions
-
-**How to push back:**
-- Use technical reasoning, not defensiveness
-- Ask specific questions
-- Reference working tests/code
-- Involve your human partner if architectural
-
-## Acknowledging Correct Feedback
-
-When feedback IS correct:
-```
-✅ "Fixed. [Brief description of what changed]"
-✅ "Good catch - [specific issue]. Fixed in [location]."
-✅ [Just fix it and show in the code]
-
-❌ "You're absolutely right!"
-❌ "Great point!"
-❌ "Thanks for catching that!"
-❌ "Thanks for [anything]"
-❌ ANY gratitude expression
+请求重新审查（重点：是否仍有阻塞？）。
 ```
 
-**Why no thanks:** Actions speak. Just fix it. The code itself shows you heard the feedback.
+### 4.4 决策树：何时合并
 
-## Common Mistakes
+```
+所有反馈都已处理（接受/反驳/记录）
+├─ 是 → CI 全绿
+│   └─ 是 → ✅ 合并
+└─ 否 → 还有阻塞项 → 回到 Stage 4 继续修
+```
 
-| Mistake | Fix |
-|---------|-----|
-| Performative agreement | State requirement or just act |
-| Blind implementation | Verify against codebase first |
-| Batch without testing | One at a time, test each |
-| Assuming reviewer is right | Check if breaks things |
-| Avoiding pushback | Technical correctness > comfort |
-| Partial implementation | Clarify all items first |
-| Can't verify, proceed anyway | State limitation, ask for direction |
+---
 
-## The Bottom Line
+## 4 阶段工作流总览
 
-**External feedback = suggestions to evaluate, not orders to follow.**
+```
+┌──────────────────────────────────────────────────────────┐
+│ Stage 1 自查:                                             │
+│   静态分析 + 测试覆盖 + 安全自查 + 文档同步 + 5 维自问    │
+│   ↓ 自查通过                                              │
+│ Stage 2 请求:                                              │
+│   获取 SHA + 派发 subagent + 基于反馈分级行动              │
+│   ↓ 收到反馈                                              │
+│ Stage 3 接收:                                              │
+│   READ → RESTATE → VERIFY → EVALUATE → RESPOND           │
+│   ↓ 决策                                                  │
+│ Stage 4 修复:                                              │
+│   一次一项 + 每项测 + 验证清单 + 通知审查者               │
+│   ↓ 反馈已闭环                                            │
+│ （下一轮 Stage 1 / 合并）                                  │
+└──────────────────────────────────────────────────────────┘
+```
 
-Verify. Question. Then implement.
+---
 
-No performative agreement. Technical rigor always.
+## 与其他技能配合
+
+| 场景 | 配合技能 |
+|------|---------|
+| 自动化单测覆盖 | `testing`（TDD 红绿重构） |
+| 系统级审查 | `system-review`（项目/架构级） |
+| 上线前全量审计 | `production-readiness`（生产就绪检查） |
+| 调试测试失败 | `systematic-debugging` |
+| 事实校验 | `evidence-first`（不基于假设下结论） |
+
+---
+
+## 局限
+
+- **不替代环境特定验证** — 不同项目有不同规范
+- **不替代实际测试** — 自动化检查无法替代人工判断
+- **不替代人工审查** — 复杂业务逻辑需架构师/产品经理
 
 ---
 
 ## 迁移说明
 
 - v6.1.1 合并前：code-reviewer + requesting-code-review + receiving-code-review 三个独立技能
-- v6.1.1 合并后：code-reviewer 一个超级技能（含 AI 自动审查 + 请求审查 + 接收反馈三部分）
-- **保留 code-reviewer 名字以兼容 loop G9 引用**（避免修改 loop 代码）
-- skill-hub 调度表已同步：requesting-code-review / receiving-code-review 行已移除
-- 黄金轨迹：v54-baseline 中"requesting-code-review"等关键词已映射到 code-reviewer
+- v6.1.1 合并后：code-reviewer 一个超级技能（三部分英文原文堆叠）
+- **v6.4 重组**：从堆叠 → 4 阶段 CR 工作流（提交前自查 → 请求审查 → 接收反馈 → 闭环修复）
+- 保留 code-reviewer 名字以兼容 loop G9 引用（避免修改 loop 代码）
+- skill-hub 调度表已同步
