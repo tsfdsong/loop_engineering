@@ -482,7 +482,7 @@ LoopEngine 1.0.2+ 重写后一次跑完 5 件事：
 }
 ```
 
-自动调用（`install.sh` / `update.sh` 内部已集成）：
+自动调用（`install.sh` 内部已集成，v1.2.0 起 install + update 合一）：
 ```bash
 curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
 ```

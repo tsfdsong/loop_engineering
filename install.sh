@@ -21,12 +21,11 @@
 #   • 一次拉源码 → 渲染 plugin manifest → 部署 7 工具 + MCP 三件套 + 5 红线
 #   • 装完就能用，不依赖 AI 工具的"重启"行为
 #   • 幂等：重复执行不破坏（sentinel markers + 模板渲染）
-#   • 单点真源：v1.2.0 起 install.sh = install + update，update.sh 删除
+#   • 单点真源：v1.2.0 起 install.sh = install + update
 #
-# v1.2.0 修复（2026-07-01 update.sh 合并）：
+# v1.2.0 修复（2026-07-01 智能模式合一）：
 #   • 新增参数：--dry-run / --force / --help
 #   • Step 0 智能模式：自动判断 首次装 / 升级 / 同版本 5秒等待
-#   • 删除 update.sh：功能已合并到 install.sh 智能模式
 #   • docs/INSTALL.md 更新：去掉 update.sh 章节，改用 bash install.sh
 #
 # v1.1.0 历史修复（保留）：

@@ -499,21 +499,16 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 
 **装完即用**。覆盖 ZCode / Claude Code / Codex / Gemini / Copilot / Pi 等 AI 编程工具的约定技能目录。详见 `docs/INSTALL.md`。
 
-### 更新
+### 更新（v1.2.0 起 install.sh 智能合一）
 
 ```bash
-bash <(curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/update.sh)
+bash <(curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh)
 ```
 
-更新 = git pull 最新 + exec install.sh 重装。
-
----
-
-## 历史
-
-> v1.0.x 历史踩坑已归档到 [docs/legacy/](./docs/legacy/)。
->
-> **v1.1.0 起**（2026-07-01）：install.sh 一次 curl 安装 + 7 工具全量同步（skills/hooks/AGENTS/plugin manifest/5 红线）+ update.sh 自愈入口 + 6 plugin manifest 模板+overlay + 废弃 zcode-mcp-ensure.sh。详见 `git log --oneline --grep v1.1`。
+**v1.2.0 起** install.sh = install + update 智能模式合一：
+- 未装 → 首次安装
+- 已装旧版 → 升级
+- 已装同版 → 5 秒等待（`--force` 跳过 / `--dry-run` 只检查不安装）
 
 ---
 
