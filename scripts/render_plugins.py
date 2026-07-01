@@ -25,6 +25,7 @@
 # 同步更新：package.json 的 version 与 .plugin-template.json 的 version 必须一致。
 # ────────────────────────────────────────────────────────────
 
+import glob
 import json
 import os
 import sys
@@ -59,17 +60,28 @@ def strip_meta(d: dict) -> dict:
     return out
 
 
+# ── P4 重构：抽公共 JSON I/O 公共函数 ─────────────────────────
+def _read_json(path: str) -> dict:
+    """读 JSON 文件，UTF-8 编码。"""
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _write_json(path: str, data: dict) -> None:
+    """写 JSON 文件（带 newline + ensure_ascii=False + indent=2）。"""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+
 def render_plugin_json(template: dict, overlay_path: str, out_path: str, label: str) -> bool:
     """渲染单个工具的 plugin.json。返回 True 成功。label 是人类可读名（如 "claude-plugin/plugin.json"）。"""
     if not os.path.isfile(overlay_path):
         return False
-    with open(overlay_path, "r", encoding="utf-8") as f:
-        overlay = json.load(f)
+    overlay = _read_json(overlay_path)
     merged = deep_merge(template, overlay)
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(merged, f, indent=2, ensure_ascii=False)
-        f.write("\n")
+    _write_json(out_path, merged)
     print(f"  ✅ {label}")
     return True
 
@@ -78,15 +90,11 @@ def render_marketplace(template: dict, mp_path: str, out_path: str, label: str) 
     """渲染 marketplace.json（独立 schema：含 plugins[] 数组），同步版本号。"""
     if not os.path.isfile(mp_path):
         return False
-    with open(mp_path, "r", encoding="utf-8") as f:
-        mp = strip_meta(json.load(f))
+    mp = strip_meta(_read_json(mp_path))
     for plugin in mp.get("plugins", []):
         plugin["version"] = template.get("version", plugin.get("version"))
         plugin["description"] = template.get("description", plugin.get("description"))
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(mp, f, indent=2, ensure_ascii=False)
-        f.write("\n")
+    _write_json(out_path, mp)
     print(f"  ✅ {label}")
     return True
 
@@ -107,26 +115,19 @@ def main():
         print(f"  ❌ 模板不存在: {template_path}", file=sys.stderr)
         sys.exit(1)
 
-    with open(template_path, "r", encoding="utf-8") as f:
-        template = strip_meta(json.load(f))
+    template = strip_meta(_read_json(template_path))
 
     os.makedirs(out_dir, exist_ok=True)
     rendered = 0
 
-    # 工具 plugin.json overlay 目录列表（与 install.sh Step 2 部署目标一致）
-    plugin_dirs = [
-        ".claude-plugin",
-        ".codex-plugin",
-        ".cursor-plugin",
-        ".kimi-plugin",
-        ".zcode-plugin",
-    ]
-    for d in plugin_dirs:
-        overlay = os.path.join(project_root, d, "plugin.json")
-        # 短名映射：.claude-plugin → claude-plugin（去前导点）
-        short = d.lstrip(".")
-        out = os.path.join(out_dir, short, "plugin.json")
-        if render_plugin_json(template, overlay, out, f"{short}/plugin.json"):
+    # ── P5 重构：自动发现 .*-plugin/plugin.json（不再硬编码 5 个目录名）──
+    overlay_paths = sorted(glob.glob(os.path.join(project_root, ".*-plugin", "plugin.json")))
+    for overlay_path in overlay_paths:
+        # 从 .claude-plugin/plugin.json 提取 claude-plugin（去前导点）
+        parent_name = os.path.basename(os.path.dirname(overlay_path))  # e.g. ".claude-plugin"
+        short = parent_name.lstrip(".")
+        out_path = os.path.join(out_dir, short, "plugin.json")
+        if render_plugin_json(template, overlay_path, out_path, f"{short}/plugin.json"):
             rendered += 1
 
     # gemini-extension.json（顶层）

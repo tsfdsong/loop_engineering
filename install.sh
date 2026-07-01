@@ -106,27 +106,49 @@ fi
 echo ""
 
 # ── Step 0: 版本自检 + 智能模式（v1.2.0 升级）──────────────
+# 抽出 2 个函数（P1）：describe_install_state（纯状态判断） + smart_check_version（输出+等待）
+# 状态: first_install / same_version / upgrade
+describe_install_state() {
+    local installed="$1" target="$2"
+    if [ -z "$installed" ]; then
+        echo "first_install"
+    elif [ "$installed" = "$target" ]; then
+        echo "same_version"
+    else
+        echo "upgrade"
+    fi
+}
+
+# 输出 + 等待（Step 0 用）
+smart_check_version() {
+    local installed="$1" target="$2"
+    local state
+    state=$(describe_install_state "$installed" "$target")
+    case "$state" in
+        first_install)
+            echo -e "  ${GREEN}✅${RESET}  首次安装 v${target}"
+            ;;
+        same_version)
+            if [ "$FORCE" = true ]; then
+                echo -e "  ${YELLOW}⚠${RESET}  检测到 v${installed}（同版）— --force 强制重装"
+            elif [ "$DRY_RUN" = true ]; then
+                echo -e "  ${GREEN}✅${RESET}  已装 v${installed}（同版）— dry-run 将跳过安装"
+            else
+                echo -e "  ${YELLOW}⚠${RESET}  检测到已安装 v${installed}（同版），5 秒后继续（强制重装请 --force）..."
+                sleep 5
+            fi
+            ;;
+        upgrade)
+            echo -e "  ${GREEN}✅${RESET}  检测到 v${installed:-?}，升级到 v${target}"
+            ;;
+    esac
+}
+
 echo -e "${BOLD}🔍 Step 0: 版本自检（智能模式）...${RESET}"
 INSTALLED_VERSION_FILE="$HOME/.loopengine/.installed_version"
 INSTALLED_VERSION=""
-if [ -f "$INSTALLED_VERSION_FILE" ]; then
-    INSTALLED_VERSION=$(cat "$INSTALLED_VERSION_FILE" 2>/dev/null || echo "")
-fi
-
-if [ -z "$INSTALLED_VERSION" ]; then
-    echo -e "  ${GREEN}✅${RESET}  首次安装 v${VERSION}"
-elif [ "$INSTALLED_VERSION" = "$VERSION" ]; then
-    if [ "$FORCE" = true ]; then
-        echo -e "  ${YELLOW}⚠${RESET}  检测到 v${INSTALLED_VERSION}（同版）— --force 强制重装"
-    elif [ "$DRY_RUN" = true ]; then
-        echo -e "  ${GREEN}✅${RESET}  已装 v${INSTALLED_VERSION}（同版）— dry-run 将跳过安装"
-    else
-        echo -e "  ${YELLOW}⚠${RESET}  检测到已安装 v${INSTALLED_VERSION}（同版），5 秒后继续（强制重装请 --force）..."
-        sleep 5
-    fi
-else
-    echo -e "  ${GREEN}✅${RESET}  检测到 v${INSTALLED_VERSION:-?}，升级到 v${VERSION}"
-fi
+[ -f "$INSTALLED_VERSION_FILE" ] && INSTALLED_VERSION=$(cat "$INSTALLED_VERSION_FILE" 2>/dev/null || echo "")
+smart_check_version "$INSTALLED_VERSION" "$VERSION"
 
 # ── Step 1: 拉最新源码 ────────────────────────────────────
 WORK="${TMPDIR:-/tmp}/loopengine-install-$$"
@@ -144,21 +166,27 @@ echo -e "  ${GREEN}✅${RESET} 已克隆到 $WORK · ${SKILL_COUNT} 个技能"
 
 # ── --dry-run 早退出（v1.2.0 新增）────────────────────────
 # 拉完源码 + 自检后即退出，不执行 Step 2-6 部署
+# 输出计划：复用 describe_install_state（P1 重构）
 if [ "$DRY_RUN" = true ]; then
     echo ""
     echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo -e "${BOLD}${CYAN}🔍 --dry-run 模式总结（不执行部署）${RESET}"
     echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    if [ -z "$INSTALLED_VERSION" ]; then
-        echo -e "  ${CYAN}•${RESET} 状态: 未安装"
-        echo -e "  ${CYAN}•${RESET} 计划: 首次安装 v${VERSION}"
-    elif [ "$INSTALLED_VERSION" = "$VERSION" ]; then
-        echo -e "  ${CYAN}•${RESET} 状态: 已装 v${INSTALLED_VERSION}（同版）"
-        echo -e "  ${CYAN}•${RESET} 计划: 无需更新（如需强制重装请 --force）"
-    else
-        echo -e "  ${CYAN}•${RESET} 状态: 已装 v${INSTALLED_VERSION:-?}"
-        echo -e "  ${CYAN}•${RESET} 计划: 升级到 v${VERSION}（如需执行请去掉 --dry-run）"
-    fi
+    state=$(describe_install_state "$INSTALLED_VERSION" "$VERSION")
+    case "$state" in
+        first_install)
+            echo -e "  ${CYAN}•${RESET} 状态: 未安装"
+            echo -e "  ${CYAN}•${RESET} 计划: 首次安装 v${VERSION}"
+            ;;
+        same_version)
+            echo -e "  ${CYAN}•${RESET} 状态: 已装 v${INSTALLED_VERSION}（同版）"
+            echo -e "  ${CYAN}•${RESET} 计划: 无需更新（如需强制重装请 --force）"
+            ;;
+        upgrade)
+            echo -e "  ${CYAN}•${RESET} 状态: 已装 v${INSTALLED_VERSION:-?}"
+            echo -e "  ${CYAN}•${RESET} 计划: 升级到 v${VERSION}（如需执行请去掉 --dry-run）"
+            ;;
+    esac
     echo -e "  ${CYAN}•${RESET} 远端版本: v${VERSION}"
     echo -e "  ${CYAN}•${RESET} 技能数: ${SKILL_COUNT}"
     echo -e "  ${CYAN}•${RESET} 工作目录: $WORK"
@@ -167,17 +195,17 @@ if [ "$DRY_RUN" = true ]; then
 fi
 
 # ── Step 2: 部署（5 个子步骤 · v1.1.0 扩展）─────────────
-# 7 个目标工具的"约定技能目录" + 同步内容映射
-# 格式：tool|skills_dir|docs_dir|plugin_dir
-TOOL_TARGETS=(
-    "ZCode|.zcode/skills/loopengine|.zcode/skills/loopengine|.zcode/skills/loopengine"
-    "Claude Code|.claude/skills/loopengine|.claude/skills/loopengine|.claude/skills/loopengine"
-    "Codex|.codex/skills/loopengine|.codex/skills/loopengine|.codex/skills/loopengine"
-    "Gemini CLI|.gemini/extensions/loopengine/skills|.gemini/extensions/loopengine|.gemini/extensions/loopengine"
-    "GitHub Copilot|.copilot/skills/loopengine|.copilot/skills/loopengine|.copilot/skills/loopengine"
-    "Pi|.pi/skills/loopengine|.pi/skills/loopengine|.pi/skills/loopengine"
-    "ZCode 内置包|AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin/skills|AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin|AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin"
-    "ZCode CLI 缓存|.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/skills|.zcode/cli/plugins/cache/zcode-plugins-official/loopengine|.zcode/cli/plugins/cache/zcode-plugins-official/loopengine"
+# 8 个目标工具的"约定根目录" + 单一映射（P2 重构：3 列同值 → 单列）
+# 格式：label|root_dir（skills/hooks/plugin 全部部署到 root_dir）
+TOOL_ROOT_DIRS=(
+    "ZCode|$HOME/.zcode/skills/loopengine"
+    "Claude Code|$HOME/.claude/skills/loopengine"
+    "Codex|$HOME/.codex/skills/loopengine"
+    "Gemini CLI|$HOME/.gemini/extensions/loopengine"
+    "GitHub Copilot|$HOME/.copilot/skills/loopengine"
+    "Pi|$HOME/.pi/skills/loopengine"
+    "ZCode 内置包|$HOME/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin"
+    "ZCode CLI 缓存|$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine"
 )
 
 # 通用复制函数：源 → 目标（保留目录，先清空再 cp）
@@ -228,40 +256,37 @@ else
     exit 1
 fi
 
-# Step 2b: 复制 skills/ 到 7 工具的 skills_dir
+# Step 2b: 复制 skills/ 到 8 工具的 root_dir
 echo -e "  ${BOLD}Step 2b: 复制 skills/ 到 8 个目标...${RESET}"
-for entry in "${TOOL_TARGETS[@]}"; do
-    IFS='|' read -r label skills_dir docs_dir plugin_dir <<< "$entry"
-    copy_tree "$label skills" "$SKILLS_DIR" "$HOME/$skills_dir"
+for entry in "${TOOL_ROOT_DIRS[@]}"; do
+    IFS='|' read -r label root_dir <<< "$entry"
+    copy_tree "$label skills" "$SKILLS_DIR" "$root_dir"
 done
 
-# Step 2c: 复制 hooks/ 到 7 工具的 docs_dir
+# Step 2c: 复制 hooks/ 到 8 工具的 root_dir/hooks
 echo -e "  ${BOLD}Step 2c: 复制 hooks/ 到 8 个目标...${RESET}"
-for entry in "${TOOL_TARGETS[@]}"; do
-    IFS='|' read -r label skills_dir docs_dir plugin_dir <<< "$entry"
-    # hooks 复制到 docs_dir 下（作为插件资源，与 skills 平级）
-    copy_tree "$label hooks" "$WORK/hooks" "$HOME/$docs_dir/hooks"
+for entry in "${TOOL_ROOT_DIRS[@]}"; do
+    IFS='|' read -r label root_dir <<< "$entry"
+    copy_tree "$label hooks" "$WORK/hooks" "$root_dir/hooks"
 done
 
-# Step 2d: 复制 plugin manifest 到 7 工具的 plugin_dir
+# Step 2d: 部署 6 plugin manifest 到 8 工具的 root_dir/.xxx-plugin
 echo -e "  ${BOLD}Step 2d: 部署 6 个 plugin manifest...${RESET}"
-# 各工具对应不同的 manifest 路径
-# 通用映射：tool → manifest source file → target
-for entry in "${TOOL_TARGETS[@]}"; do
-    IFS='|' read -r label skills_dir docs_dir plugin_dir <<< "$entry"
+for entry in "${TOOL_ROOT_DIRS[@]}"; do
+    IFS='|' read -r label root_dir <<< "$entry"
     case "$label" in
         "ZCode"|"ZCode 内置包"|"ZCode CLI 缓存")
-            copy_file "$label plugin.json" "$RENDERED_DIR/zcode-plugin/plugin.json" "$HOME/$plugin_dir/.zcode-plugin/plugin.json"
+            copy_file "$label plugin.json" "$RENDERED_DIR/zcode-plugin/plugin.json" "$root_dir/.zcode-plugin/plugin.json"
             ;;
         "Claude Code")
-            copy_file "$label plugin.json" "$RENDERED_DIR/claude-plugin/plugin.json" "$HOME/$plugin_dir/.claude-plugin/plugin.json"
-            copy_file "$label marketplace.json" "$RENDERED_DIR/claude-plugin/marketplace.json" "$HOME/$plugin_dir/.claude-plugin/marketplace.json"
+            copy_file "$label plugin.json" "$RENDERED_DIR/claude-plugin/plugin.json" "$root_dir/.claude-plugin/plugin.json"
+            copy_file "$label marketplace.json" "$RENDERED_DIR/claude-plugin/marketplace.json" "$root_dir/.claude-plugin/marketplace.json"
             ;;
         "Codex")
-            copy_file "$label plugin.json" "$RENDERED_DIR/codex-plugin/plugin.json" "$HOME/$plugin_dir/.codex-plugin/plugin.json"
+            copy_file "$label plugin.json" "$RENDERED_DIR/codex-plugin/plugin.json" "$root_dir/.codex-plugin/plugin.json"
             ;;
         "Gemini CLI")
-            copy_file "$label gemini-extension.json" "$RENDERED_DIR/gemini-extension.json" "$HOME/$plugin_dir/gemini-extension.json"
+            copy_file "$label gemini-extension.json" "$RENDERED_DIR/gemini-extension.json" "$root_dir/gemini-extension.json"
             ;;
         "GitHub Copilot")
             # Copilot 用通用 .mcp.json 即可，不复制 manifest
@@ -272,12 +297,12 @@ for entry in "${TOOL_TARGETS[@]}"; do
     esac
 done
 
-# Step 2e: 复制项目根文档文件到各工具 docs 目录（v1.1.0 新增）
+# Step 2e: 复制项目根文档文件到各工具 root_dir
 echo -e "  ${BOLD}Step 2e: 复制项目根文档 (AGENTS.md / README.md)...${RESET}"
-for entry in "${TOOL_TARGETS[@]}"; do
-    IFS='|' read -r label skills_dir docs_dir plugin_dir <<< "$entry"
-    copy_file "$label AGENTS.md" "$WORK/AGENTS.md" "$HOME/$docs_dir/AGENTS.md"
-    copy_file "$label README.md" "$WORK/README.md" "$HOME/$docs_dir/README.md"
+for entry in "${TOOL_ROOT_DIRS[@]}"; do
+    IFS='|' read -r label root_dir <<< "$entry"
+    copy_file "$label AGENTS.md" "$WORK/AGENTS.md" "$root_dir/AGENTS.md"
+    copy_file "$label README.md" "$WORK/README.md" "$root_dir/README.md"
 done
 
 # ── Step 3: 安装 MCP 三件套（v1.1.0 数组化）─────────────
@@ -498,9 +523,9 @@ check_path() {
 }
 # 至少 1 个 skills 目录应包含 SKILL.md
 SKILL_OK=false
-for entry in "${TOOL_TARGETS[@]}"; do
-    IFS='|' read -r label skills_dir docs_dir plugin_dir <<< "$entry"
-    if [ -d "$HOME/$skills_dir/orch" ] || [ -d "$HOME/$skills_dir/loop" ]; then
+for entry in "${TOOL_ROOT_DIRS[@]}"; do
+    IFS='|' read -r label root_dir <<< "$entry"
+    if [ -d "$root_dir/orch" ] || [ -d "$root_dir/loop" ]; then
         SKILL_OK=true
         break
     fi
