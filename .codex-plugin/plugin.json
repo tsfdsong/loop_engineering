@@ -1,41 +1,7 @@
 {
-  "name": "loopengine",
-  "version": "1.0.2",
-  "description": "LoopEngine — 循环工程全家桶：loop闭环编码 + go全自动编排 + orch 多技能编排（33 技能，单职责化为多技能编排器）",
-  "author": {
-    "name": "tsfdsong"
-  },
-  "homepage": "https://github.com/tsfdsong/loopengine",
-  "repository": "https://github.com/tsfdsong/loopengine",
-  "license": "MIT",
-  "keywords": [
-    "loop-engineering",
-    "orchestration",
-    "skills",
-    "planning",
-    "tdd",
-    "debugging",
-    "code-review",
-    "workflow",
-    "skill-routing",
-    "closed-loop"
-  ],
+  "_comment": "Codex 工具特异字段 overlay。共有字段见 ../.plugin-template.json。Codex 独有 interface 子字段（brandColor/privacy/terms 等）写完整 interface 对象。",
   "skills": "./skills/",
   "hooks": "./hooks/hooks-codex.json",
-  "mcpServers": {
-    "jcodemunch": {
-      "command": "jcodemunch-mcp",
-      "args": ["serve"]
-    },
-    "repomix": {
-      "command": "repomix",
-      "args": ["--mcp"]
-    },
-    "headroom": {
-      "command": "headroom",
-      "args": ["mcp", "serve"]
-    }
-  },
   "interface": {
     "displayName": "LoopEngine",
     "shortDescription": "Loop闭环编码 + go全自动编排 + 33技能智能调度",

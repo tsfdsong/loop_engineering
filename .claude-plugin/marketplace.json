@@ -1,4 +1,5 @@
 {
+  "_comment": "Claude Code marketplace.json 共有字段模板（.claude-plugin 子市场）。共有字段见 ../.plugin-template.json。version 自动同步自 .plugin-template.json。",
   "name": "loopengine-marketplace",
   "description": "Marketplace for LoopEngine — 循环工程全家桶",
   "owner": {
