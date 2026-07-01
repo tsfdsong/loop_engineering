@@ -2,9 +2,14 @@
 # ────────────────────────────────────────────────────────────
 # scripts/merge_zcode_config.py — 合并 MCP 配置到 ZCode 桌面版
 # ────────────────────────────────────────────────────────────
-# 用途：把 3 个 MCP 工具路径注入到 ~/.zcode/cli/config.json 的 mcp.servers
+# 用途：把 2 个真 MCP server 路径注入到 ~/.zcode/cli/config.json 的 mcp.servers
+#       （jcodemunch-mcp + repomix；headroom 是 AI CLI 助手非 MCP server 已剔除）
 # 保留用户其他顶层字段（provider / model / 自定义设置等）。
-# 由 install.sh write_zcode_desktop_config() 调用（替代原内嵌 heredoc）。
+# 由 install.sh write_zcode_desktop_config() 调用。
+#
+# v1.2.3 修复（2026-07-01）：
+#   • 删 headroom entry（包无 MCP server 接口）
+#   • 签名 4 参数 → 3 参数（移除 head_exe）
 # ────────────────────────────────────────────────────────────
 
 import json
@@ -13,12 +18,12 @@ import sys
 
 
 def main():
-    if len(sys.argv) != 5:
-        print(f"Usage: {sys.argv[0]} <config.json> <jcode_exe> <head_exe> <repo_exe>",
+    if len(sys.argv) != 4:
+        print(f"Usage: {sys.argv[0]} <config.json> <jcode_exe> <repo_exe>",
               file=sys.stderr)
         sys.exit(2)
 
-    cfg, jcode, head, repo = sys.argv[1:5]
+    cfg, jcode, repo = sys.argv[1:4]
 
     data = {}
     if os.path.isfile(cfg):
@@ -39,9 +44,8 @@ def main():
     data['mcp']['servers']['repomix'] = {
         'type': 'stdio', 'command': repo, 'args': ['--mcp']
     }
-    data['mcp']['servers']['headroom'] = {
-        'type': 'stdio', 'command': head, 'args': ['mcp', 'serve']
-    }
+    # 兼容清理：v1.2.2 之前写入的空 headroom entry 自动清除
+    data['mcp']['servers'].pop('headroom', None)
 
     # 原子写：先写 .tmp 再 rename，避免中途崩溃留截断 JSON
     tmp = cfg + '.tmp'

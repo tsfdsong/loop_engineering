@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ════════════════════════════════════════════════════════════
-# LoopEngine 一键安装 v1.2.2 — 首次安装 + 版本更新合一
+# LoopEngine 一键安装 v1.2.3 — 首次安装 + 版本更新合一
 # ════════════════════════════════════════════════════════════
 # 一行安装:
 #   curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
@@ -22,6 +22,15 @@
 #   • 装完就能用，不依赖 AI 工具的"重启"行为
 #   • 幂等：重复执行不破坏（sentinel markers + 模板渲染）
 #   • 单点真源：v1.2.2 起 install.sh = install + update
+#
+# v1.2.3 修复（2026-07-01 macOS 跨平台兼容）：
+#   • install_pkg 加 pip3 检测（macOS Homebrew Python 无 pip）
+#   • install_pkg 加 --break-system-packages fallback（PEP 668 兼容）
+#   • MCP_PACKAGES 加 is_mcp_server 列；headroom=false（包无 MCP server 接口）
+#   • write_zcode_desktop_config detect_mcp_exe 加 macOS/Linux fallback
+#     （~/Library/Python/3.*/bin/、~/.local/bin/）
+#   • 删 headroom 桌面 MCP 配置项（package non-MCP server）
+#   • VERSION 1.2.2 → 1.2.3
 #
 # v1.2.2 修复（2026-07-01 Cursor 兼容 + 7 红线同步）：
 #   • extract_rule_block 加 ``` 围栏状态跟踪 — 修复 SUMMARY-RULES 在 4.3 模板
@@ -55,7 +64,7 @@
 
 set -euo pipefail
 
-VERSION="1.2.2"
+VERSION="1.2.3"
 REPO="https://github.com/tsfdsong/loop_engineering"
 BOLD="\033[1m"
 GREEN="\033[32m"
@@ -103,9 +112,14 @@ HELP
 done
 
 # SCRIPT_DIR = $WORK（clone 出来的代码根），用于引用 scripts/*.py。
-# 关键：不能用 BASH_SOURCE — curl | bash 时 BASH_SOURCE 为空；本地 install.sh
-# 也不指向 clone 出来的代码副本。统一用 $WORK 更可靠。
+# 关键：不能用 BASH_SOURCE — curl | bash 时 BASH_SOURCE 为空
+# v1.2.3 修复：增加 LOCAL_SRC_DIR — 当 install.sh 从本地文件运行时（如开发测试），
+#   用本地 scripts/ 覆盖 $WORK/scripts/，使本地修改立即生效。
 SCRIPT_DIR=""  # Step 1 后赋值（$WORK）
+LOCAL_SRC_DIR=""
+if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
+    LOCAL_SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
 
 echo ""
 echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════╗${RESET}"
@@ -176,6 +190,11 @@ if ! git clone --depth 1 --quiet "$REPO" "$WORK" 2>/dev/null; then
 fi
 SKILLS_DIR="$WORK/skills"
 SCRIPT_DIR="$WORK"  # 引用 scripts/*.py 的根
+# v1.2.3 修复：本地优先覆盖 $WORK/scripts/（仅当 install.sh 从本地文件运行）
+if [ -n "$LOCAL_SRC_DIR" ] && [ -d "$LOCAL_SRC_DIR/scripts" ]; then
+    cp -f "$LOCAL_SRC_DIR/scripts"/*.py "$WORK/scripts/" 2>/dev/null && \
+        echo -e "  ${CYAN}ℹ${RESET}  本地 scripts/ 已覆盖 clone 副本（开发模式）" || true
+fi
 SKILL_COUNT=$(find "$SKILLS_DIR" -name SKILL.md 2>/dev/null | wc -l)
 echo -e "  ${GREEN}✅${RESET} 已克隆到 $WORK · ${SKILL_COUNT} 个技能"
 
@@ -325,16 +344,29 @@ for entry in "${TOOL_ROOT_DIRS[@]}"; do
     copy_file "$label README.md" "$WORK/README.md" "$root_dir/README.md"
 done
 
-# ── Step 3: 安装 MCP 三件套（v1.1.0 数组化）─────────────
-# 格式：pkg|cmd1|cmd2|...
+# ── Step 3: 安装 MCP 三件套（v1.1.0 数组化 · v1.2.3 跨平台）─────────────
+# 格式：pkg|cmd1|cmd2|is_mcp_server
+#   - is_mcp_server=false → 只装 Python 包（如 headroom，无 MCP server 接口）
+# 2026-07-01 macOS 修复：加 pip3 检测 + --break-system-packages 解决 PEP 668
 MCP_PACKAGES=(
-    "jcodemunch-mcp|jcodemunch-mcp"
-    "headroom|headroom"
-    "repomix|repomix"
+    "jcodemunch-mcp|jcodemunch-mcp|true"
+    "headroom|headroom|false"
+    "repomix|repomix|true"
 )
 
+# 跨平台 pip 检测（macOS Homebrew Python 只有 pip3，无 pip）
+detect_pip_cmd() {
+    if command -v pip3 >/dev/null 2>&1; then
+        echo "pip3"
+    elif command -v pip >/dev/null 2>&1; then
+        echo "pip"
+    else
+        return 1
+    fi
+}
+
 install_pkg() {
-    local pkg="$1" cmd="$2"
+    local pkg="$1" cmd="$2" is_mcp="$3"
     if command -v "$cmd" >/dev/null 2>&1; then
         echo -e "  ${GREEN}✅${RESET} ${cmd} 已装"
         return 0
@@ -345,18 +377,32 @@ install_pkg() {
             npm install -g "$pkg" 2>/dev/null && { echo -e "  ${GREEN}✅${RESET} ${pkg} (npm)"; return 0; }
         fi
     else
-        if command -v pip >/dev/null 2>&1; then
-            pip install --user "$pkg" 2>/dev/null && { echo -e "  ${GREEN}✅${RESET} ${pkg} (pip)"; return 0; }
+        local pip_cmd
+        if ! pip_cmd=$(detect_pip_cmd); then
+            echo -e "  ${YELLOW}⚠${RESET}  未找到 pip/pip3，跳过 $pkg"
+            return 1
+        fi
+        # 先试普通 --user；失败则加 --break-system-packages（macOS Homebrew PEP 668）
+        if $pip_cmd install --user "$pkg" >/dev/null 2>&1; then
+            echo -e "  ${GREEN}✅${RESET} ${pkg} (${pip_cmd} --user)"
+        elif $pip_cmd install --user --break-system-packages "$pkg" >/dev/null 2>&1; then
+            echo -e "  ${GREEN}✅${RESET} ${pkg} (${pip_cmd} --user --break-system-packages)"
+        else
+            echo -e "  ${YELLOW}⚠${RESET}  ${pkg} 安装失败 — 手动: ${pip_cmd} install --user $pkg"
+            return 1
         fi
     fi
-    echo -e "  ${YELLOW}⚠${RESET}  ${pkg} 安装失败 — 手动: $([ "$pkg" == *"repomix"* ] && echo "npm i -g $pkg" || echo "pip install --user $pkg")"
+    if [ "$is_mcp" = "false" ]; then
+        echo -e "  ${CYAN}ℹ${RESET}  ${cmd} 是 Python 库（非 MCP server），跳过桌面配置"
+    fi
+    return 0
 }
 
 echo ""
 echo -e "${BOLD}🔌 Step 3: 安装 MCP 三件套...${RESET}"
 for entry in "${MCP_PACKAGES[@]}"; do
-    IFS='|' read -r pkg cmd <<< "$entry"
-    install_pkg "$pkg" "$cmd"
+    IFS='|' read -r pkg cmd is_mcp <<< "$entry"
+    install_pkg "$pkg" "$cmd" "$is_mcp"
 done
 
 # ── Step 4: 写 ZCode 桌面版 MCP 配置 ─────────────────────
@@ -367,12 +413,33 @@ done
 
 detect_mcp_exe() {
     local fallback="$1"; shift
+    local basename_target
+    # 优先用传入的候选名（去掉 .exe/.cmd 等 Windows 后缀）
+    basename_target=$(basename "${fallback%.*}" 2>/dev/null || basename "$fallback" 2>/dev/null)
+    # 1) 命令名（依赖 PATH）
     for c in "$@"; do
         if command -v "$c" >/dev/null 2>&1; then
             command -v "$c"
             return 0
         fi
     done
+    # 2) v1.2.3 跨平台：主动扫 PATH 外的常见用户脚本目录
+    #   ~/.local/bin（Linux --user 默认）
+    #   ~/Library/Python/3.*/bin（macOS Homebrew --user 默认）
+    #   ~/AppData/Roaming/Python/Python*/Scripts（Windows）
+    local scan_dirs=(
+        "$HOME/.local/bin"
+        "$HOME/Library/Python/3.9/bin"
+        "$HOME/Library/Python/3.10/bin"
+        "$HOME/Library/Python/3.11/bin"
+        "$HOME/Library/Python/3.12/bin"
+        "$HOME/Library/Python/3.13/bin"
+        "$HOME/Library/Python/3.14/bin"
+    )
+    for d in "${scan_dirs[@]}"; do
+        [ -f "$d/$basename_target" ] && printf '%s' "$d/$basename_target" && return 0
+    done
+    # 3) 最后用传入的 fallback 路径（如 Windows AppData 路径）
     [ -n "$fallback" ] && [ -f "$fallback" ] && printf '%s' "$fallback" && return 0
     return 1
 }
@@ -382,36 +449,34 @@ to_forward_slashes() {
 }
 
 merge_zcode_desktop_config() {
-    local cfg="$1" jcode="$2" head="$3" repo="$4"
+    local cfg="$1" jcode="$2" repo="$3"
     mkdir -p "$(dirname "$cfg")"
-    python "$SCRIPT_DIR/scripts/merge_zcode_config.py" "$cfg" "$jcode" "$head" "$repo"
+    python "$SCRIPT_DIR/scripts/merge_zcode_config.py" "$cfg" "$jcode" "$repo"
 }
 
 write_zcode_desktop_config() {
     local cfg="$HOME/.zcode/cli/config.json"
 
-    local jcode_exe head_exe repo_exe
+    local jcode_exe repo_exe
+    # v1.2.3 跨平台：Windows fallback + macOS/Linux fallback（见 detect_mcp_exe）
     jcode_exe=$(detect_mcp_exe \
         "$HOME/AppData/Roaming/Python/Python314/Scripts/jcodemunch-mcp.exe" \
         jcodemunch-mcp jcodemunch-mcp.exe) || jcode_exe=""
-    head_exe=$(detect_mcp_exe \
-        "$HOME/AppData/Roaming/Python/Python314/Scripts/headroom.exe" \
-        headroom headroom.exe) || head_exe=""
     repo_exe=$(detect_mcp_exe \
         "$HOME/AppData/Roaming/npm/repomix.cmd" \
         repomix.cmd repomix) || repo_exe=""
 
-    if [ -z "$jcode_exe" ] || [ -z "$head_exe" ] || [ -z "$repo_exe" ]; then
-        echo -e "  ${YELLOW}⚠${RESET}  三个 MCP 工具未全部找到，跳过桌面版配置写入"
-        echo -e "  ${YELLOW}⚠${RESET}  手动重装: pip install --user jcodemunch-mcp headroom && npm i -g repomix"
+    # v1.2.3 修复：headroom 包无 MCP server 接口，跳过（非 MCP 工具）
+    if [ -z "$jcode_exe" ] || [ -z "$repo_exe" ]; then
+        echo -e "  ${YELLOW}⚠${RESET}  jcodemunch/repomix 未全部找到，跳过桌面版配置写入"
+        echo -e "  ${YELLOW}⚠${RESET}  手动: pip3 install --user --break-system-packages jcodemunch-mcp && npm i -g repomix"
         return 0
     fi
 
     jcode_exe=$(to_forward_slashes "$jcode_exe")
-    head_exe=$(to_forward_slashes "$head_exe")
     repo_exe=$(to_forward_slashes "$repo_exe")
 
-    if merge_zcode_desktop_config "$cfg" "$jcode_exe" "$head_exe" "$repo_exe"; then
+    if merge_zcode_desktop_config "$cfg" "$jcode_exe" "$repo_exe"; then
         echo -e "  ${GREEN}✅${RESET} [ZCode 桌面版 MCP] $cfg"
         TARGETS+=("ZCode 桌面版 MCP:$cfg")
     else
