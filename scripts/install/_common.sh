@@ -103,10 +103,26 @@ common_clone_repo() {
     fi
     COMMON_SCRIPT_DIR="$COMMON_WORK"
 
-    # 本地优先覆盖 $COMMON_WORK/scripts/（仅当 install.sh 从本地文件运行）
+    # 本地优先覆盖 $COMMON_WORK/scripts/ + 关键 JSON overlay（仅当 install.sh 从本地文件运行）
+    # v1.2.5 扩展：除 .py 外，还覆盖 .plugin-template.json 与 .*-plugin/plugin.json
+    # 否则本地修改 plugin manifest 后，install.sh 仍从远端 clone 的旧版本渲染，修复不可见
     if [ -n "${COMMON_LOCAL_SRC_DIR:-}" ] && [ -d "$COMMON_LOCAL_SRC_DIR/scripts" ]; then
-        cp -f "$COMMON_LOCAL_SRC_DIR/scripts"/*.py "$COMMON_WORK/scripts/" 2>/dev/null && \
-            echo -e "  ${_CYAN}ℹ${_RESET}  本地 scripts/ 已覆盖 clone 副本（开发模式）" || true
+        # v1.2.5 修复: COMMON_LOCAL_SRC_DIR = 项目根（install.sh:84），不是 scripts/
+        # 之前的 ../ 是 bug，去掉
+        cp -f "$COMMON_LOCAL_SRC_DIR/scripts"/*.py "$COMMON_WORK/scripts/" 2>/dev/null
+        # 覆盖 plugin manifest 关键 JSON
+        if [ -f "$COMMON_LOCAL_SRC_DIR/.plugin-template.json" ]; then
+            cp -f "$COMMON_LOCAL_SRC_DIR/.plugin-template.json" "$COMMON_WORK/.plugin-template.json"
+        fi
+        for overlay_dir in .zcode-plugin .claude-plugin .codex-plugin .cursor-plugin .copilot-plugin .pi-plugin; do
+            if [ -f "$COMMON_LOCAL_SRC_DIR/$overlay_dir/plugin.json" ]; then
+                cp -f "$COMMON_LOCAL_SRC_DIR/$overlay_dir/plugin.json" "$COMMON_WORK/$overlay_dir/plugin.json"
+            fi
+        done
+        if [ -f "$COMMON_LOCAL_SRC_DIR/gemini-extension.json" ]; then
+            cp -f "$COMMON_LOCAL_SRC_DIR/gemini-extension.json" "$COMMON_WORK/gemini-extension.json"
+        fi
+        echo -e "  ${_CYAN}ℹ${_RESET}  本地 scripts/ + plugin manifest 已覆盖 clone 副本（开发模式）"
     fi
 
     local skill_count
@@ -151,10 +167,39 @@ common_deploy_to_9_tools() {
         "ZCode CLI 缓存|$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine"
     )
 
-    echo -e "  ${_BOLD}Step 2b: 复制 skills/ 到 9 个目标...${_RESET}"
+    echo -e "  ${_BOLD}Step 2b-pre: 清理 9 个目标 plugin 顶层散落的旧平铺技能目录...${_RESET}"
+    # v1.2.5 修复: 旧 install.sh 把技能平铺到 plugin 顶层,本次修复改为 skills/ 子目录后,
+    # 顶层遗留的 33 个旧技能目录会导致 ZCode 桌面版重复识别(同时看到顶层 orch/ 和 skills/orch/)
+    # 保留元目录与元文件: hooks/ skills/ .*-plugin/ AGENTS.md README.md package.json marketplace.json gemini-extension.json
     for entry in "${tool_root_dirs[@]}"; do
         IFS='|' read -r label root_dir <<< "$entry"
-        common_copy_tree "$label skills" "$skills_dir" "$root_dir"
+        if [ -d "$root_dir" ]; then
+            # 顶层非元目录/元文件 一律 rm -rf
+            find "$root_dir" -mindepth 1 -maxdepth 1 \
+                ! -name 'hooks' \
+                ! -name 'skills' \
+                ! -name '.zcode-plugin' \
+                ! -name '.claude-plugin' \
+                ! -name '.codex-plugin' \
+                ! -name '.cursor-plugin' \
+                ! -name '.copilot-plugin' \
+                ! -name '.pi-plugin' \
+                ! -name 'AGENTS.md' \
+                ! -name 'README.md' \
+                ! -name 'package.json' \
+                ! -name 'marketplace.json' \
+                ! -name 'gemini-extension.json' \
+                -exec rm -rf {} + 2>/dev/null
+            echo -e "  ${_GREEN}✅${_RESET}  [$label] 顶层清理完成: $root_dir"
+        fi
+    done
+
+    echo -e "  ${_BOLD}Step 2b: 复制 skills/ 到 9 个目标的 skills/ 子目录...${_RESET}"
+    for entry in "${tool_root_dirs[@]}"; do
+        IFS='|' read -r label root_dir <<< "$entry"
+        # v1.2.5 修复：9 工具统一使用 skills/ 子目录
+        # (ZCode/Codex/Cursor manifest 已声明 "skills": "skills" 或 "./skills/", 此次修复让其匹配实际部署)
+        common_copy_tree "$label skills" "$skills_dir" "$root_dir/skills"
     done
 
     echo -e "  ${_BOLD}Step 2c: 复制 hooks/ 到 9 个目标...${_RESET}"
