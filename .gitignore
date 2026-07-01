@@ -7,6 +7,10 @@ node_modules/
 # 历史遗留空目录（test-page 内容已迁移；Windows 文件锁无法直接 rmdir）
 test-page/
 
+# 本地开发资料（不属于主代码库；2026-07-01 决策 2：保留但不入库）
+docs/loopengineering-design/
+docs/superpowers/
+
 # IDE 配置
 .idea/
 .worktrees/
