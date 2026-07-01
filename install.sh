@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ════════════════════════════════════════════════════════════
-# LoopEngine 一键安装 v1.2.4 — 跨平台调度器（macOS/Windows/Linux）
+# LoopEngine 一键安装 v1.2.6 — 跨平台调度器（macOS/Windows/Linux）
 # ════════════════════════════════════════════════════════════
 # 一行安装:
 #   curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
@@ -22,6 +22,14 @@
 #   scripts/install/macos.sh     ← macOS 特定（pip3 + ~/Library/Python/3.*/bin）
 #   scripts/install/windows.sh   ← Windows 特定（Git Bash + %APPDATA%）
 #   scripts/install/linux.sh     ← Linux 特定（pip3 + ~/.local/bin）
+#
+# v1.2.6 修复（2026-07-01 路径平铺）：
+#   • 6 个 Skills 工具 (Claude/Codex/Cursor/Pi/Copilot/ZCode 用户级) 改为平铺:
+#     旧: ~/.claude/skills/loopengine/skills/orch/  (3 层嵌套)
+#     新: ~/.claude/skills/orch/                    (1 层平铺, 符合 Skills 全局加载)
+#   • ZCode CLI cache 加 ${COMMON_VERSION} 子目录: 旧缺版本号导致 ZCode 找不到
+#   • 新增 ZCode enabledPlugins + known_marketplaces 注册 (v1.2.5 漏了关键一步)
+#   • 3 个 plugin 工具 (Gemini/内置包/ZCode CLI 缓存) 保留 plugin 命名空间
 #
 # v1.2.4 重构（2026-07-01 跨平台架构）：
 #   • install.sh 610 → 100 行（精简为调度器）
@@ -57,7 +65,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         -h|--help)
             cat <<'HELP'
-LoopEngine 一键安装 v1.2.4（跨平台：macOS / Windows Git Bash / Linux）
+LoopEngine 一键安装 v1.2.6（跨平台：macOS / Windows Git Bash / Linux）
 
 用法:
   bash install.sh              # 智能模式（首次装 / 升级 / 同版本 5秒等待）

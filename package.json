@@ -1,6 +1,6 @@
 {
   "name": "loopengine",
-  "version": "1.2.4",
+  "version": "1.2.6",
   "description": "LoopEngine — 循环工程全家桶：loop 闭环编码 + go 全自动编排 + orch 多技能编排（33 技能，单职责化为多技能编排器），一站式开发引擎",
   "type": "module",
   "main": ".opencode/plugins/loopengine.js",

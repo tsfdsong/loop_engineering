@@ -28,7 +28,7 @@ _RESET="\033[0m"
 
 # ── 全局变量 ──────────────────────────────────────────────
 COMMON_REPO="https://github.com/tsfdsong/loop_engineering"
-COMMON_VERSION="1.2.4"
+COMMON_VERSION="1.2.6"
 COMMON_WORK=""           # clone 出来的代码根
 COMMON_SCRIPT_DIR=""     # 引用 scripts/*.py 的根（Step 1 后赋值）
 COMMON_RENDERED_DIR=""   # 渲染后的 manifest 目录
@@ -148,98 +148,184 @@ common_render_plugins() {
 # ── deploy_to_9_tools ─────────────────────────────────────
 # Step 2b-2e：部署 skills / hooks / manifest / AGENTS.md / README.md 到 9 工具
 # 调用：common_deploy_to_9_tools
+#
+# v1.2.6 修复路径策略:
+#   - 平铺目标（6 工具）: Skills 直接作为 root_dir 的子目录
+#     例: ~/.claude/skills/orch/, ~/.cursor/skills/orch/
+#     适用: Claude Code Skills / Codex Skills / Cursor Skills / Pi / Copilot
+#     原因: 这些工具的 Skills 全局加载机制 = 平铺 root/skills/<name>/SKILL.md
+#   - Plugin 目标（3 工具）: root_dir 作为 plugin 命名空间，技能装到 skills/ 子目录
+#     例: ~/.gemini/extensions/loopengine/skills/orch/
+#     适用: Gemini CLI / ZCode 内置包 / ZCode CLI 缓存
+#     原因: 这些工具从 plugin manifest 加载技能，必须保留 plugin 命名空间
+#   - ZCode CLI 缓存路径 = ~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/<version>/
+#     v1.2.6 新增 <version> 子目录（其他 plugin 如 ios-simulator 都有 0.1.0/ 子目录）
 common_deploy_to_9_tools() {
     local skills_dir="$COMMON_WORK/skills"
     local hooks_dir="$COMMON_WORK/hooks"
     local agents_md="$COMMON_WORK/AGENTS.md"
     local readme_md="$COMMON_WORK/README.md"
 
-    # 9 工具的"约定根目录"（v1.2.3 9 项，含 Windows 内置包）
-    local tool_root_dirs=(
-        "ZCode|$HOME/.zcode/skills/loopengine"
-        "Claude Code|$HOME/.claude/skills/loopengine"
-        "Codex|$HOME/.codex/skills/loopengine"
-        "Gemini CLI|$HOME/.gemini/extensions/loopengine"
-        "GitHub Copilot|$HOME/.copilot/skills/loopengine"
-        "Pi|$HOME/.pi/skills/loopengine"
-        "Cursor|$HOME/.cursor/skills/loopengine"
-        "ZCode 内置包|$HOME/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin"
-        "ZCode CLI 缓存|$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine"
+    # 平铺目标（6 项 · 技能直接作为 root_dir 子目录）
+    # 格式: "label|root_dir"
+    local flat_targets=(
+        "Claude Code|$HOME/.claude/skills"
+        "Codex|$HOME/.codex/skills"
+        "GitHub Copilot|$HOME/.copilot/skills"
+        "Pi|$HOME/.pi/skills"
+        "Cursor|$HOME/.cursor/skills"
+        "ZCode 用户级|$HOME/.zcode/skills"
     )
 
-    echo -e "  ${_BOLD}Step 2b-pre: 清理 9 个目标 plugin 顶层散落的旧平铺技能目录...${_RESET}"
-    # v1.2.5 修复: 旧 install.sh 把技能平铺到 plugin 顶层,本次修复改为 skills/ 子目录后,
-    # 顶层遗留的 33 个旧技能目录会导致 ZCode 桌面版重复识别(同时看到顶层 orch/ 和 skills/orch/)
-    # 保留元目录与元文件: hooks/ skills/ .*-plugin/ AGENTS.md README.md package.json marketplace.json gemini-extension.json
-    for entry in "${tool_root_dirs[@]}"; do
-        IFS='|' read -r label root_dir <<< "$entry"
-        if [ -d "$root_dir" ]; then
-            # 顶层非元目录/元文件 一律 rm -rf
-            find "$root_dir" -mindepth 1 -maxdepth 1 \
-                ! -name 'hooks' \
-                ! -name 'skills' \
-                ! -name '.zcode-plugin' \
-                ! -name '.claude-plugin' \
-                ! -name '.codex-plugin' \
-                ! -name '.cursor-plugin' \
-                ! -name '.copilot-plugin' \
-                ! -name '.pi-plugin' \
-                ! -name 'AGENTS.md' \
-                ! -name 'README.md' \
-                ! -name 'package.json' \
-                ! -name 'marketplace.json' \
-                ! -name 'gemini-extension.json' \
-                -exec rm -rf {} + 2>/dev/null
-            echo -e "  ${_GREEN}✅${_RESET}  [$label] 顶层清理完成: $root_dir"
+    # Plugin 命名空间目标（3 项 · root_dir 下嵌套 skills/）
+    # v1.2.6: ZCode CLI 缓存加 ${COMMON_VERSION} 子目录
+    local plugin_targets=(
+        "Gemini CLI|$HOME/.gemini/extensions/loopengine"
+        "ZCode 内置包|$HOME/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin"
+        "ZCode CLI 缓存|$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/${COMMON_VERSION}"
+    )
+
+    # 兼容旧 root_dir 列表（自检用）
+    local tool_root_dirs=("${flat_targets[@]}" "${plugin_targets[@]}")
+
+    echo -e "  ${_BOLD}Step 2b-pre: 清理 9 个目标残留的旧版本 v1.2.5 plugin 命名空间...${_RESET}"
+    # v1.2.6 修复: v1.2.5 把技能装到 ~/.claude/skills/loopengine/skills/<name>/ (3 层嵌套),
+    # 现在改成平铺 ~/.claude/skills/<name>/ (1 层), 必须先清理旧 loopengine 命名空间,
+    # 否则两个版本同时存在导致 ZCode 桌面版重复识别技能
+    local legacy_root_dirs=(
+        "$HOME/.zcode/skills/loopengine"
+        "$HOME/.claude/skills/loopengine"
+        "$HOME/.codex/skills/loopengine"
+        "$HOME/.copilot/skills/loopengine"
+        "$HOME/.pi/skills/loopengine"
+        "$HOME/.cursor/skills/loopengine"
+        "$HOME/.gemini/extensions/loopengine"
+        "$HOME/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin"
+        "$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine"
+    )
+    for legacy in "${legacy_root_dirs[@]}"; do
+        if [ -d "$legacy" ]; then
+            # 整目录删除（v1.2.5 整目录都没有用户自定义内容，可安全删除）
+            rm -rf "$legacy" 2>/dev/null && \
+                echo -e "  ${_GREEN}✅${_RESET}  清理旧路径: $legacy"
         fi
     done
 
-    echo -e "  ${_BOLD}Step 2b: 复制 skills/ 到 9 个目标的 skills/ 子目录...${_RESET}"
-    for entry in "${tool_root_dirs[@]}"; do
+    echo -e "  ${_BOLD}Step 2b-1: 复制 skills/ 到 6 个平铺目标（技能作为 root_dir 子目录）...${_RESET}"
+    for entry in "${flat_targets[@]}"; do
         IFS='|' read -r label root_dir <<< "$entry"
-        # v1.2.5 修复：9 工具统一使用 skills/ 子目录
-        # (ZCode/Codex/Cursor manifest 已声明 "skills": "skills" 或 "./skills/", 此次修复让其匹配实际部署)
+        # v1.2.6: 平铺模式 — 直接 cp skills/* 到 root_dir/
+        common_copy_tree "$label skills" "$skills_dir" "$root_dir"
+    done
+
+    echo -e "  ${_BOLD}Step 2b-2: 复制 skills/ 到 3 个 plugin 目标的 skills/ 子目录...${_RESET}"
+    for entry in "${plugin_targets[@]}"; do
+        IFS='|' read -r label root_dir <<< "$entry"
+        # v1.2.6: Plugin 模式 — 保留 skills/ 子目录嵌套
         common_copy_tree "$label skills" "$skills_dir" "$root_dir/skills"
     done
 
-    echo -e "  ${_BOLD}Step 2c: 复制 hooks/ 到 9 个目标...${_RESET}"
-    for entry in "${tool_root_dirs[@]}"; do
+    echo -e "  ${_BOLD}Step 2c: 复制 hooks/ 到 3 个 plugin 目标（平铺目标不需要 hooks 目录）...${_RESET}"
+    # v1.2.6: hooks 仅 plugin 模式需要（hook 系统依赖 plugin manifest）
+    # 平铺目标（Claude/Cursor/Codex/Pi/Copilot）走各工具原生 hooks 机制，不需要这里部署
+    for entry in "${plugin_targets[@]}"; do
         IFS='|' read -r label root_dir <<< "$entry"
         common_copy_tree "$label hooks" "$hooks_dir" "$root_dir/hooks"
     done
 
-    echo -e "  ${_BOLD}Step 2d: 部署 7 个 plugin manifest...${_RESET}"
-    for entry in "${tool_root_dirs[@]}"; do
+    echo -e "  ${_BOLD}Step 2d: 部署 plugin manifest 到 3 个 plugin 目标（平铺目标不需要）...${_RESET}"
+    # v1.2.6: 平铺目标不需要 plugin manifest（Skills 全局加载不需要 manifest）
+    # 仅 Gemini/内置包/ZCode CLI 缓存需要 manifest
+    for entry in "${plugin_targets[@]}"; do
         IFS='|' read -r label root_dir <<< "$entry"
         case "$label" in
-            "ZCode"|"ZCode 内置包"|"ZCode CLI 缓存")
-                common_copy_file "$label plugin.json" "$COMMON_RENDERED_DIR/zcode-plugin/plugin.json" "$root_dir/.zcode-plugin/plugin.json"
-                ;;
-            "Claude Code")
-                common_copy_file "$label plugin.json" "$COMMON_RENDERED_DIR/claude-plugin/plugin.json" "$root_dir/.claude-plugin/plugin.json"
-                common_copy_file "$label marketplace.json" "$COMMON_RENDERED_DIR/claude-plugin/marketplace.json" "$root_dir/.claude-plugin/marketplace.json"
-                ;;
-            "Codex")
-                common_copy_file "$label plugin.json" "$COMMON_RENDERED_DIR/codex-plugin/plugin.json" "$root_dir/.codex-plugin/plugin.json"
-                ;;
-            "Cursor")
-                common_copy_file "$label plugin.json" "$COMMON_RENDERED_DIR/cursor-plugin/plugin.json" "$root_dir/.cursor-plugin/plugin.json"
-                ;;
             "Gemini CLI")
                 common_copy_file "$label gemini-extension.json" "$COMMON_RENDERED_DIR/gemini-extension.json" "$root_dir/gemini-extension.json"
                 ;;
-            "GitHub Copilot"|"Pi")
-                : # 不通过 manifest 部署
+            "ZCode 内置包"|"ZCode CLI 缓存")
+                common_copy_file "$label plugin.json" "$COMMON_RENDERED_DIR/zcode-plugin/plugin.json" "$root_dir/.zcode-plugin/plugin.json"
                 ;;
         esac
     done
 
-    echo -e "  ${_BOLD}Step 2e: 复制项目根文档 (AGENTS.md / README.md)...${_RESET}"
-    for entry in "${tool_root_dirs[@]}"; do
+    echo -e "  ${_BOLD}Step 2d-extra: 部署 Claude Code marketplace.json（独立 schema）...${_RESET}"
+    # v1.2.6: Claude marketplace.json 写到 ~/.claude/plugins/marketplaces.json
+    common_copy_file "Claude marketplace" "$COMMON_RENDERED_DIR/claude-plugin/marketplace.json" "$HOME/.claude/plugins/marketplaces.json"
+
+    echo -e "  ${_BOLD}Step 2d-extra: 注册 ZCode plugin 到 enabledPlugins + known_marketplaces...${_RESET}"
+    # v1.2.6 修复: v1.2.5 只复制了 plugin 到 cache, 没有注册到 enabledPlugins,
+    # 导致 ZCode 桌面版/CLI 找不到 loopengine (enabledPlugins 列表里没它).
+    # 必须把 loopengine@zcode-plugins-official 加到 ~/.zcode/cli/config.json 的 plugins.enabledPlugins
+    common_register_zcode_plugin
+
+    echo -e "  ${_BOLD}Step 2e: 复制项目根文档 (AGENTS.md / README.md) 到 3 个 plugin 目标...${_RESET}"
+    # v1.2.6: AGENTS.md / README.md 仅 plugin 目标需要（plugin 模式的元数据）
+    # 平铺目标不需要（用户级红线注入 Step 5 已覆盖）
+    for entry in "${plugin_targets[@]}"; do
         IFS='|' read -r label root_dir <<< "$entry"
         common_copy_file "$label AGENTS.md" "$agents_md" "$root_dir/AGENTS.md"
         common_copy_file "$label README.md" "$readme_md" "$root_dir/README.md"
     done
+}
+
+# ── register_zcode_plugin ──────────────────────────────────
+# v1.2.6 新增: 把 loopengine 注册到 ZCode 的 enabledPlugins + known_marketplaces
+# 不注册的话 ZCode 桌面版/CLI 找不到 cache 里的 plugin
+# 调用：common_register_zcode_plugin
+common_register_zcode_plugin() {
+    local cfg="$HOME/.zcode/cli/config.json"
+    local mp="$HOME/.zcode/cli/plugins/known_marketplaces.json"
+
+    # 1) 写 ~/.zcode/cli/config.json (idempotent)
+    if [ -f "$cfg" ]; then
+        # 用 python 保证 JSON 安全（idempotent：已存在不重复加）
+        if python "$COMMON_SCRIPT_DIR/scripts/register_zcode_plugin.py" "$cfg" "loopengine" "zcode-plugins-official" 2>/dev/null; then
+            echo -e "  ${_GREEN}✅${_RESET}  [ZCode enabledPlugins] 注册 loopengine@zcode-plugins-official → $cfg"
+        else
+            echo -e "  ${_YELLOW}⚠${_RESET}  [ZCode enabledPlugins] 注册失败（已存在或 JSON 错误），跳过"
+        fi
+    else
+        # 首次安装 — 创建最小 config
+        mkdir -p "$(dirname "$cfg")"
+        cat > "$cfg" <<EOF
+{
+  "plugins": {
+    "enabledPlugins": {
+      "loopengine@zcode-plugins-official": true
+    }
+  }
+}
+EOF
+        echo -e "  ${_GREEN}✅${_RESET}  [ZCode enabledPlugins] 首次创建 $cfg"
+    fi
+
+    # 2) 写 ~/.zcode/cli/plugins/known_marketplaces.json (idempotent)
+    if [ -f "$mp" ]; then
+        if python "$COMMON_SCRIPT_DIR/scripts/register_zcode_marketplace.py" "$mp" "zcode-plugins-official" 2>/dev/null; then
+            echo -e "  ${_GREEN}✅${_RESET}  [ZCode known_marketplaces] 注册 zcode-plugins-official → $mp"
+        else
+            echo -e "  ${_YELLOW}⚠${_RESET}  [ZCode known_marketplaces] 注册失败（已存在或 JSON 错误），跳过"
+        fi
+    else
+        # 首次安装 — 创建最小 marketplace
+        mkdir -p "$(dirname "$mp")"
+        cat > "$mp" <<EOF
+{
+  "version": 1,
+  "marketplaces": [
+    {
+      "id": "zcode-plugins-official",
+      "source": {"source": "local", "path": "$HOME/.zcode/cli/plugins/cache/zcode-plugins-official"},
+      "name": "zcode-plugins-official",
+      "description": "ZCode official plugins (loopengine etc.)",
+      "addedAt": "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)",
+      "pluginCount": 0
+    }
+  ]
+}
+EOF
+        echo -e "  ${_GREEN}✅${_RESET}  [ZCode known_marketplaces] 首次创建 $mp"
+    fi
 }
 
 # ── copy_tree / copy_file ─────────────────────────────────
@@ -395,20 +481,23 @@ common_deployment_check() {
     echo -e "${_BOLD}🔬 Step 6: 部署自检...${_RESET}"
 
     # 检查 9 工具 skills 目录至少 8 个部署成功
+    # v1.2.6: 平铺目标直接检查 <root>/orch/, plugin 目标检查 <root>/skills/orch/
     local skill_ok=0
-    local tool_root_dirs=(
-        "$HOME/.zcode/skills/loopengine"
-        "$HOME/.claude/skills/loopengine"
-        "$HOME/.codex/skills/loopengine"
-        "$HOME/.gemini/extensions/loopengine"
-        "$HOME/.copilot/skills/loopengine"
-        "$HOME/.pi/skills/loopengine"
-        "$HOME/.cursor/skills/loopengine"
-        "$HOME/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin"
-        "$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine"
+    local flat_checks=(
+        "$HOME/.zcode/skills/orch"
+        "$HOME/.claude/skills/orch"
+        "$HOME/.codex/skills/orch"
+        "$HOME/.copilot/skills/orch"
+        "$HOME/.pi/skills/orch"
+        "$HOME/.cursor/skills/orch"
     )
-    for d in "${tool_root_dirs[@]}"; do
-        if [ -d "$d/orch" ] || [ -d "$d/loop" ]; then
+    local plugin_checks=(
+        "$HOME/.gemini/extensions/loopengine/skills/orch"
+        "$HOME/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin/skills/orch"
+        "$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/${COMMON_VERSION}/skills/orch"
+    )
+    for d in "${flat_checks[@]}" "${plugin_checks[@]}"; do
+        if [ -d "$d" ]; then
             skill_ok=$((skill_ok + 1))
         fi
     done

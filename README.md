@@ -3,7 +3,7 @@
 > **loop** 闭环编码 + **go** 全自动编排 + **orch** 多技能编排（v1.0 单职责化），一站式 AI 编程引擎插件。
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.2.2-blue)](package.json)
+[![Version](https://img.shields.io/badge/version-1.2.6-blue)](package.json)
 [![orch](https://img.shields.io/badge/orch-v1.0.0-blue)](skills/orch/SKILL.md)
 
 ---
