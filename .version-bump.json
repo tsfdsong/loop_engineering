@@ -1,13 +1,7 @@
 {
-  "files": [
-    { "path": "package.json", "field": "version" },
-    { "path": ".claude-plugin/plugin.json", "field": "version" },
-    { "path": ".cursor-plugin/plugin.json", "field": "version" },
-    { "path": ".codex-plugin/plugin.json", "field": "version" },
-    { "path": ".kimi-plugin/plugin.json", "field": "version" },
-    { "path": ".claude-plugin/marketplace.json", "field": "plugins.0.version" },
-    { "path": "gemini-extension.json", "field": "version" }
-  ],
+  "_comment": "LoopEngine 版本号管理（v1.1.0 简化：单一真源 = .plugin-template.json 的 version 字段）。改版本号只需改本字段，6 个工具的 plugin.json / gemini-extension.json / marketplace.json 全部由 scripts/render_plugins.py 自动同步。",
+  "single_source": ".plugin-template.json",
+  "field": "version",
   "audit": {
     "exclude": [
       "CHANGELOG.md",
@@ -15,7 +9,8 @@
       "node_modules",
       ".git",
       ".version-bump.json",
-      "scripts/bump-version.sh"
+      "scripts/bump-version.sh",
+      "docs/legacy/"
     ]
   }
 }

@@ -361,69 +361,8 @@ bash <(curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/update.s
 
 ---
 
-## 历史（v1.0.x 旧文档，已废弃 · 仅做迁移参考用）
+## 历史
 
-> ⚠️ **v2.0 重构后不再依赖** ZCode 内部 `marketplace.json` / `.zcode-plugin/plugin.json` 注册链。下面记录的是历史踩过的坑，仅作迁移参考。
-
-### 旧版 ZCode 桌面版手动安装（PowerShell）
-
-<details>
-<summary>展开</summary>
-
-```powershell
-# 1. 克隆项目到内置包目录
-git clone https://github.com/tsfdsong/loop_engineering.git "$env:LOCALAPPDATA\Programs\ZCode\resources\glm\packages\loopengine-plugin"
-
-# 2. 复制到 CLI 缓存
-mkdir -p "$env:USERPROFILE\.zcode\cli\plugins\cache\zcode-plugins-official\loopengine\1.0.1"
-xcopy "$env:LOCALAPPDATA\Programs\ZCode\resources\glm\packages\loopengine-plugin\*" "$env:USERPROFILE\.zcode\cli\plugins\cache\zcode-plugins-official\loopengine\1.0.1\" /E /I /Y
-
-# 3. 在 marketplace.json 中注册
-# 4. 在 config.json 中启用
-# 5. 创建 data 目录
-# 6. 重启 ZCode 桌面版
-```
-
-详见旧文档 `docs/zcode-install-guide.md`。
-
-</details>
-
-### 旧版 ZCode 桌面版 MCP 重启丢失红线（2026-06-28 发现 → 2026-06-30 修正根因）
-
-<details>
-<summary>展开</summary>
-
-**症状**：安装/更新后 MCP 三件套正常加载，但**重启 ZCode 后消失**（用户在桌面 UI 手动配三次才成功）。
-
-**2026-06-28 旧根因（部分错）**：
-1. ZCode 启动时自动重写 marketplace.json，只保留"内置包目录能找到的插件"
-2. ZCode 优先从 CLI 缓存 `plugin.json` 加载 MCP（不是项目源）
-3. CLI 缓存的 `plugin.json` 默认没有 `mcpServers` 字段
-
-**2026-06-30 实测推翻 [F]**：通过 `grep -rli jcodemunch ~/.zcode ~/AppData/Roaming/ZCode` 全局搜索确认：
-
-| # | 事实 | 修正 |
-|---|------|------|
-| 1 | ZCode 桌面版 MCP 真正入口是 **`~/.zcode/cli/config.json`** 的 `mcp.servers` 字段 | ✅ 推翻 "从 plugin.json 读" 旧结论 |
-| 2 | 项目根 `.mcp.json` 桌面版不读，只对工作区级 CLI 生效 | ✅ 新发现 |
-| 3 | `~/.zcode/cli/config.json` 顶层还有 `provider`（模型配置），install.sh 必须 merge 不覆盖 | ✅ 新发现 |
-| 4 | Windows 命令必须带 `.exe` / `.cmd` 扩展名，Node spawn 不补 | ✅ 新发现（v1.0 没踩过） |
-
-**v1.1 治本**：`install.sh` Step 4 + `scripts/zcode-mcp-ensure.sh` Step 3 自动探测 3 个 exe 路径 → merge 写入 `~/.zcode/cli/config.json` 的 `mcp.servers`（保留用户 `provider` 等顶层字段）。
-
-**调试**：
-
-```bash
-# 1) 看桌面版 config.json 的 mcp.servers（v1.1 真正入口）
-cat ~/.zcode/cli/config.json | python -c "import json,sys; d=json.load(sys.stdin); print(json.dumps(d.get('mcp',{}).get('servers',{}), indent=2, ensure_ascii=False))"
-
-# 2) 看三个 exe 是否能跑（带正确扩展名）
-"C:/Users/<user>/AppData/Roaming/Python/Python314/Scripts/jcodemunch-mcp.exe" --version
-"C:/Users/<user>/AppData/Roaming/npm/repomix.cmd" --version
-"C:/Users/<user>/AppData/Roaming/Python/Python314/Scripts/headroom.exe" --version
-
-# 3) 必要时跑自愈（merge 写 config.json）
-bash scripts/zcode-mcp-ensure.sh
-```
-
-</details>
+> v1.0.x 历史踩坑已归档到 [docs/legacy/](./docs/legacy/)。
+>
+> **v1.1.0 起**（2026-07-01）：install.sh 一次 curl 安装 + 7 工具全量同步（skills/hooks/AGENTS/plugin manifest/5 红线） + update.sh 自愈入口 + 6 plugin manifest 模板+overlay + 废弃 zcode-mcp-ensure.sh。详见 `git log --oneline --grep v1.1`。
