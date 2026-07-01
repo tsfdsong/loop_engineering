@@ -1,36 +1,4 @@
 {
-  "name": "loopengine",
-  "description": "LoopEngine for Claude Code: loop闭环编码 + go全自动编排 + orch 多技能编排（33 技能，单职责化为多技能编排器）",
-  "version": "1.0.2",
-  "author": {
-    "name": "tsfdsong"
-  },
-  "homepage": "https://github.com/tsfdsong/loopengine",
-  "repository": "https://github.com/tsfdsong/loopengine",
-  "license": "MIT",
-  "keywords": [
-    "skills",
-    "loop-engineering",
-    "orchestration",
-    "tdd",
-    "debugging",
-    "collaboration",
-    "best-practices",
-    "workflows",
-    "skill-routing"
-  ],
-  "mcpServers": {
-    "jcodemunch": {
-      "command": "jcodemunch-mcp",
-      "args": ["serve"]
-    },
-    "repomix": {
-      "command": "repomix",
-      "args": ["--mcp"]
-    },
-    "headroom": {
-      "command": "headroom",
-      "args": ["mcp", "serve"]
-    }
-  }
+  "_comment": "Claude Code 工具特异字段 overlay。共有字段见 ../.plugin-template.json。本文件只放 Claude Code 独有字段。",
+  "hooks": "./hooks/hooks.json"
 }

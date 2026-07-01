@@ -1,0 +1,52 @@
+{
+  "_comment": "LoopEngine plugin.json 共有字段模板（6 个工具共享）。由 scripts/render_plugins.py 读取并与各工具 overlay 合并后输出到目标位置。修改 version/description/keywords 等请改本文件，6 个 overlay 只放工具特异字段（hooks/skills/sessionStart/contextFileName 等）。",
+  "name": "loopengine",
+  "version": "1.0.2",
+  "description": "LoopEngine — 循环工程全家桶：loop 闭环编码 + go 全自动编排 + orch 多技能编排（33 技能，单职责化为多技能编排器），一站式开发引擎",
+  "author": {
+    "name": "tsfdsong",
+    "url": "https://github.com/tsfdsong"
+  },
+  "homepage": "https://github.com/tsfdsong/loop_engineering",
+  "repository": "https://github.com/tsfdsong/loop_engineering",
+  "license": "MIT",
+  "keywords": [
+    "loop-engineering",
+    "orchestration",
+    "skills",
+    "planning",
+    "tdd",
+    "debugging",
+    "code-review",
+    "workflow",
+    "skill-routing",
+    "closed-loop"
+  ],
+  "mcpServers": {
+    "jcodemunch": {
+      "command": "jcodemunch-mcp",
+      "args": ["serve"]
+    },
+    "repomix": {
+      "command": "repomix",
+      "args": ["--mcp"]
+    },
+    "headroom": {
+      "command": "headroom",
+      "args": ["mcp", "serve"]
+    }
+  },
+  "interface": {
+    "displayName": "LoopEngine",
+    "shortDescription": "Loop闭环编码 + go全自动编排 + 33技能智能调度",
+    "longDescription": "LoopEngine 是开发引擎全家桶：/loop 闭环编码自动完成需求→计划→门禁→自愈→交付全流程；/go 全自动多工具编排；orch 多技能编排器处理 2+ 技能的复合任务，按 5 类任务链（调研+决策 / 分析+建议 / 诊断+修复 / 设计+实现 / 并行调研）调度。涵盖编码、架构、重构、测试、调试、API、安全、数据库、CI/CD等全领域。",
+    "developerName": "tsfdsong",
+    "category": "Coding",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/tsfdsong/loopengine"
+  }
+}

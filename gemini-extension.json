@@ -1,6 +1,4 @@
 {
-  "name": "loopengine",
-  "description": "LoopEngine: loop 闭环编码 + go 全自动编排 + orch 多技能编排（33 技能，单职责化为多技能编排器）",
-  "version": "1.0.2",
+  "_comment": "Gemini CLI 扩展 manifest overlay。Gemini 工具约定 contextFileName 指向 GEMINI.md。共有字段见 ../.plugin-template.json。",
   "contextFileName": "GEMINI.md"
 }
