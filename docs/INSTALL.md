@@ -1,6 +1,6 @@
 # LoopEngine 安装指南
 
-> v1.1.0（2026-07-01）— install.sh 全量同步 7 工具（skills/hooks/AGENTS/plugin manifest/5 红线）。
+> v1.2.0（2026-07-01）— install.sh 一体化（首次安装 + 版本更新合一）。
 > 历史指南见 [docs/legacy/](./legacy/)。
 
 ## 一行安装
@@ -13,13 +13,27 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 
 ## 更新
 
+**v1.2.0 起，更新 = 重新跑 install.sh**（智能模式自动判断）：
+
 ```bash
-bash <(curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/update.sh)
+curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
 ```
 
-`update.sh` v1.1.0 重构为"自愈入口"：拉最新 main → 比对版本 → 转发到 install.sh。`--dry-run` 模式只检查不安装。
+智能模式行为：
+- **未装** → 首次安装
+- **已装同版** → 5 秒等待（防误触，`--force` 跳过）
+- **已装旧版** → 升级（直接执行，无需等待）
 
-## 它做了什么（v1.1.0 全面同步）
+### 参数
+
+| 参数 | 作用 |
+|------|------|
+| `bash install.sh` | 智能模式（默认） |
+| `bash install.sh --force` | 跳过 5 秒等待，强制重装 |
+| `bash install.sh --dry-run` | 只检查版本不实际安装 |
+| `bash install.sh -h` | 显示帮助 |
+
+## 它做了什么（v1.1.0 全面同步 · v1.2.0 一体化）
 
 | 步骤 | 行为 |
 |------|------|
@@ -75,7 +89,7 @@ bash <(curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/update.s
 **保证**：
 - **幂等性**：重复执行不重复插入（sentinel markers 检测）
 - **用户保留**：你的其他自定义内容不会被覆盖
-- **自动同步**：`update.sh` 重跑时规则自动更新
+- **自动同步**：重跑 `install.sh`（智能模式）时规则自动更新
 
 ## 验证
 
