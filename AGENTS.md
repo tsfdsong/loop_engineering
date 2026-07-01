@@ -19,33 +19,39 @@
 - 了解项目结构、浏览目录、理解文件内容
 - **只要目的是"理解代码"，就必须 MCP 优先**
 
-### 1.2 四层探查策略（L0 → L3）
+### 1.2 探查策略（6 场景分层 · v6.11 重构 · 2026-07-01）
 
-**核心原则**：从粗到精，层层下钻，Read 降级为最后手段。
+**核心原则**：按工作场景分层定义 MCP 使用规则，消除 v1.0.2 旧版"绝对 MCP 优先"的过度泛化。
+
+#### 场景矩阵（S1-S6）
+
+| 场景 | 工作场景 | 推荐工具 | 必须性 |
+|---|---|---|---|
+| **S1** | 接入新代码库（首次理解项目结构） | `get_repo_map` → `get_file_outline` | **必须** |
+| **S2** | 探索大文件结构（>500 行，功能未知） | `get_file_outline` + `search_symbols` | 建议 |
+| **S3** | 修改已知位置（行号已知或符号已知） | `Read` (offset/limit) **或** `get_symbol_source` | 直接合规 |
+| **S4** | 跨文件搜索引用（找调用方/被调用方） | `check_references` / `find_importers` | 建议 |
+| **S5** | 跨文件关键字搜索（grep 类） | `search_text` / `search_ast` | 替代 Bash grep |
+| **S6** | 失败/不可用时 fallback | `repomix.pack_codebase` | 必须 fallback |
+
+**必须性定义**：
+- **必须**：违反触发自检警告，AI 应主动解释为何未用
+- **建议**：默认使用，AI 可基于效率判断 fallback
+- **直接合规**：任何方式都 OK，不需解释
+
+#### 工作流（修订版）
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│ L0 项目全景                                                      │
-│   jcodemunch.get_repo_map(scope="...")   ← 代码符号级结构        │
-│   repomix.pack_codebase(directory)      ← 兜底（不依赖索引）     │
-│   输出: 1-2K token 的项目骨架                                      │
-├─────────────────────────────────────────────────────────────────┤
-│ L1 文件结构                                                      │
-│   jcodemunch.get_file_outline(file_path)  ← 符号列表/签名       │
-│   headroom.headroom_compress(content)     ← 大段 Markdown        │
-│   输出: 每文件 200-500 token 大纲/摘要                              │
-├─────────────────────────────────────────────────────────────────┤
-│ L2 精准内容                                                      │
-│   jcodemunch.search_symbols(query)         ← 符号语义搜索         │
-│   jcodemunch.get_symbol_source(symbol_id)  ← 拿到源码            │
-│   headroom.headroom_retrieve(hash, query)  ← 按需展开压缩内容    │
-│   输出: 单符号/段 ~100-300 token                                   │
-├─────────────────────────────────────────────────────────────────┤
-│ L3 精确行（最后手段）                                              │
-│   Read(file_path, offset=N, limit=M)       ← offset+limit 限定   │
-│   输出: 1-3 行精确内容                                             │
-└─────────────────────────────────────────────────────────────────┘
+任务开始 → 判断场景
+├─ S1 接入新代码库 → 必须 L0 (get_repo_map) → L1 (get_file_outline)
+├─ S2 大文件结构   → 建议 L1 (get_file_outline) + L2 (search_symbols)
+├─ S3 修改已知位置 → 直接 Read (offset/limit) 或 L2 (get_symbol_source)
+├─ S4 跨文件搜索   → 建议 L2 (check_references / find_importers)
+├─ S5 跨文件关键字 → 建议 L2 (search_text / search_ast)
+└─ S6 MCP 失败     → 必须 fallback (repomix → Read)
 ```
+
+> **变更说明（v6.11 · 2026-07-01）**：原 L0-L3 漏斗被作为绝对命令，导致 70% "修改已知位置"场景被误判违规（meta-analysis 数据）。本次重设计将漏斗嵌入 S1-S6 场景矩阵，**保留** S1/S2 探索场景的 MCP 优先原则，**承认** S3 直接 Read 的精准优势。依据：`docs/superpowers/specs/2026-07-01-mcp-redesign.md` §2.1。
 
 ### 1.3 MCP 三件套职责分工
 
@@ -65,43 +71,61 @@
 | 4 | **执行类操作**（git/cp/rsync/worktree） | 用 Bash，**不算违规** |
 | 5 | **JSON/YAML/TOML 小配置**（< 30 行） | Read 全文，**不算违规** |
 
-### 1.5 违规判定（3 级 6 条）
+### 1.5 违规判定（4 档 · v6.11 场景感知 · 2026-07-01）
 
-| 等级 | 违规行为 | 自愈方法 |
-|------|---------|---------|
-| 🔴 **红线** | 连续 3 次 Read 而未用 MCP | 立即重写会话，先用 MCP 探查 |
-| 🟠 **严重** | 单次 Read > 100 行 | 改用 `get_file_outline` 或 `headroom_compress` |
-| 🟠 **严重** | Bash `cat/grep/head file` 探查代码 | 改用 `search_symbols` 或 Read with offset/limit |
-| 🟠 **严重** | worktree 中未先 `index_folder` | 改用 `index_folder(identity_mode="git", follow_symlinks=true)` |
-| 🟡 **中等** | MCP 不可用时未尝试 `pack_codebase` 兜底 | 自动调用 repomix 兜底 |
+**核心变更**：从"通用阈值"（连续 3 Read、单次 > 100 行）改为"按场景判定"。原 §1.5 的"连续 3 次 Read 即红线"误判 S3 场景，予以删除。
+
+| 等级 | 违规行为（按场景） | 自愈方法 |
+|------|-------------------|---------|
+| 🔴 **红线** | **S1 接入新代码库**未用 `get_repo_map` 直接 Read | 立即重写会话，先用 MCP 探查 |
+| 🟠 **严重** | **S5 跨文件关键字搜索**未用 `search_text` 直接 Bash grep | 改用 `search_text` / `search_ast`（或 Read with offset/limit） |
+| 🟠 **严重** | worktree 中未先尝试 `index_folder` 直接 Read | 优先 `index_folder(identity_mode="git")`；失败 → repomix 兜底 |
+| 🟡 **中等** | MCP 不可用时未尝试 `repomix.pack_codebase` 兜底 | 自动调 repomix 兜底 |
 | 🟡 **中等** | 长会话（> 30 轮）未用 `headroom_compress` | 定期压缩大段内容 |
+| ✅ **合规** | **S3 修改已知位置**直接 Read（offset/limit） | 不算违规 |
+| ✅ **合规** | **S5 单文件 grep** 直接用 Bash | 不算违规（仅限单文件） |
+| ✅ **合规** | 文件 < 50 行（沿用 §1.4 例外 2） | 不算违规 |
 
-### 1.6 自查清单（5 项 · 会话结束前必查）
+> **变更说明**：原"连续 3 次 Read 即红线"过度泛化，70% 的"修改已知位置"场景被误判。`✅ 合规` 档明示 S3 / S5 单文件 / 小文件场景直接 Read 不算违规。依据：spec §3.2。
 
-- [ ] **MCP 调用次数 ≥ Read 调用次数？**
-- [ ] **单次 Read > 100 行？**（应改 MCP）
-- [ ] **Bash 探查代码次数 < 5？**（含 cat/grep/head）
-- [ ] **worktree 中是否先 index_folder？**
-- [ ] **长会话是否用 headroom 压缩？**
+### 1.6 自查清单（5 项 · 场景感知 · v6.11 · 2026-07-01）
 
-### 1.7 worktree 特殊流程（v6.4 新增 · 修复本次任务根因）
+> **变更说明**：原 §1.6 的 5 项以"MCP vs Read 计数"为二元指标，误判 S3 场景。改为按 S1-S6 场景自检。
+
+- [ ] **S1 接入新代码库**是否先 `get_repo_map` → `get_file_outline`？（漏斗价值最高）
+- [ ] **S3 修改已知位置**是否用 `Read` (offset/limit) 而非 Read 全文？（直接合规）
+- [ ] **S4 跨文件搜索**是否优先 `check_references` / `find_importers`？（MCP 强项）
+- [ ] **worktree 中**是否先尝试 `index_folder(identity_mode="git")`，失败再 fallback `repomix.pack_codebase`？（自动降级）
+- [ ] **长会话**（> 30 轮）是否定期 `headroom_compress` 大段内容？（防止上下文爆炸）
+
+### 1.7 worktree 特殊流程（v6.11 自动化 fallback · 2026-07-01）
+
+> **变更说明**：原 v6.4 流程要求"创建 worktree 后**立即** index_folder"（硬性命令），但 worktree 经常被 jcodemunch `trusted_folders` 拒绝，导致首次失败 → 心理放弃 → 退到 Bash/Read。新版改为"**优先尝试 + 自动 fallback**"。
+
+**优先级自动反转**：worktree 中默认仍应尝试 MCP（因失败成本低），但失败时**自动**降级 repomix，**不再**算违规。
 
 ```bash
-# 1. 创建 worktree 后立即索引
+# 1. 进入 worktree → 优先尝试 MCP 索引
 mcp__jcodemunch__index_folder(
   path=".worktrees/<name>",
   identity_mode="git",        # 关键：让 jcodemunch 识别为同一 git repo
   follow_symlinks=true        # 跟随 git worktree 符号链接
 )
 
-# 2. 验证可解析
-mcp__jcodemunch__resolve_repo(path=".worktrees/<name>")
-
-# 3. 失败兜底（jcodemunch 索引失败时）
+# 2. 失败 → 自动 fallback 到 repomix（不报错、不算违规）
 mcp__repomix__pack_codebase(directory=".worktrees/<name>")
 
-# 4. 仍失败 → 才 fallback 到 Read（最后手段）
+# 3. 仍失败 → 才 fallback 到 Read with offset/limit（最后手段）
+
+# 4. 验证可解析（仅 S1 接入新代码库场景必须）
+mcp__jcodemunch__resolve_repo(path=".worktrees/<name>")
 ```
+
+**关键差异（vs v6.4）**：
+- ✅ "立即索引" → "优先尝试"（失败不阻断）
+- ✅ `resolve_repo` 步骤 2 → 步骤 4（仅 S1 场景必须）
+- ✅ "失败兜底" → "自动 fallback"（语义降级）
+- 🆕 失败时由 repomix 接续，不需 AI 手动判断
 
 ### 1.8 Bash 探查职责清单
 
