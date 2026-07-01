@@ -1,6 +1,6 @@
 # LoopEngine 安装指南
 
-> v1.2.0（2026-07-01）— install.sh 一体化（首次安装 + 版本更新合一）。
+> v1.2.2（2026-07-01）— install.sh 一体化 + Cursor 完整兼容（7 红线 + 8 工具）。
 > 历史指南见 [docs/legacy/](./legacy/)。
 
 ## 一行安装
@@ -33,33 +33,33 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 | `bash install.sh --dry-run` | 只检查版本不实际安装 |
 | `bash install.sh -h` | 显示帮助 |
 
-## 它做了什么（v1.1.0 全面同步 · v1.2.0 一体化）
+## 它做了什么（v1.1.0 全面同步 · v1.2.0 一体化 · v1.2.2 Cursor 兼容）
 
 | 步骤 | 行为 |
 |------|------|
 | 0️⃣ 版本自检 | 读 `~/.loopengine/.installed_version`，已装同版本则 5 秒等待 |
 | 1️⃣ 拉源码 | `git clone --depth 1` 到 `/tmp/loopengine-install-$$/`，自动清理 |
-| 2️⃣ 部署（5 子步） | **2a** 渲染 6 plugin manifest（去 _comment，version 同步）<br>**2b** 复制 `skills/` 到 8 个目标<br>**2c** 复制 `hooks/` 到 8 个目标<br>**2d** 部署 6 个 `plugin.json` / `marketplace.json` / `gemini-extension.json`<br>**2e** 复制 `AGENTS.md` + `README.md` 到 8 个目标 |
+| 2️⃣ 部署（5 子步） | **2a** 渲染 7 plugin manifest（去 _comment，version 同步；v1.2.2 加 Cursor）<br>**2b** 复制 `skills/` 到 9 个目标（v1.2.2 加 Cursor）<br>**2c** 复制 `hooks/` 到 9 个目标<br>**2d** 部署 7 个 `plugin.json` / `marketplace.json` / `gemini-extension.json`<br>**2e** 复制 `AGENTS.md` + `README.md` 到 9 个目标 |
 | 3️⃣ MCP 三件套 | `pip install --user jcodemunch-mcp headroom` + `npm i -g repomix`（已装会跳过） |
 | 4️⃣ ZCode 桌面版 MCP | 自动写入 `~/.zcode/cli/config.json` 的 `mcp.servers`（**v1.0 根因**：桌面版真正入口） |
-| 5️⃣ 5 条红线 | 把 AGENTS.md 的 5 条 🔴 红线章节注入 7 个工具的**用户级**规则文件（sentinel markers，幂等） |
+| 5️⃣ 7 条红线 | 把 AGENTS.md 的 7 条 🔴 红线章节注入 7 个工具的**用户级**规则文件（sentinel markers，幂等；v1.2.2 扩展自 5 条） |
 | 6️⃣ 自检 | 验证关键路径 + manifest 数 + 写入 `~/.loopengine/.installed_version` |
 
-### 同步目标一览（v1.0 → v1.1 扩展 6.7 倍）
+### 同步目标一览（v1.0 → v1.2 扩展 8.5 倍）
 
-| 类别 | v1.0.2 路径数 | v1.1.0 路径数 | 增量 |
+| 类别 | v1.0.2 路径数 | v1.2.2 路径数 | 增量 |
 |------|:---:|:---:|------|
-| skills/ | 8 | 8 | — |
-| hooks/ | 0 | 8 | **+8** |
-| AGENTS.md | 0 | 8 | **+8** |
-| README.md | 0 | 8 | **+8** |
-| plugin manifest | 0 | 6 | **+6** |
+| skills/ | 8 | 9 | **+1**（v1.2.2 加 Cursor） |
+| hooks/ | 0 | 9 | **+9** |
+| AGENTS.md | 0 | 9 | **+9** |
+| README.md | 0 | 9 | **+9** |
+| plugin manifest | 0 | 7 | **+7**（v1.2.2 加 Cursor plugin.json） |
 | ZCode 桌面版 MCP | 1 | 1 | — |
-| 5 条红线注入 | 7 | 7 | — |
+| 7 条红线注入 | 7 | 7 | —（注入目标数不变；每文件 5 → 7 条规则块） |
 | 版本号文件 | 0 | 1 | **+1** |
-| **合计** | **16** | **47** | **+31** |
+| **合计** | **16** | **52** | **+36** |
 
-## 7 工具部署目标
+## 8 工具部署目标（v1.2.2 加 Cursor）
 
 | AI 工具 | 约定路径 |
 |---------|---------|
@@ -69,14 +69,16 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 | Gemini CLI | `~/.gemini/extensions/loopengine/skills/` |
 | GitHub Copilot | `~/.copilot/skills/loopengine/` |
 | Pi | `~/.pi/skills/loopengine/` |
+| **Cursor（v1.2.2 新增）** | `~/.cursor/skills/loopengine/`（skills + hooks + plugin.json + AGENTS.md + README.md） |
 | ZCode 内置包（可选） | `~/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin/` |
 | ZCode CLI 缓存（可选） | `~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/` |
 
 > 🟢 ZCode 用户级 fallback 是关键 — 即使其他 ZCode 内部插件路径不动，技能也能加载。
+> 🟢 **Cursor 完整集成**（v1.2.2）：skills/hooks/plugin.json 部署到 `~/.cursor/skills/loopengine/`，红线注入路径仍为 `~/.cursor/rules/loopengine-interaction.mdc`（互补不冲突）。
 
 ## 全局红线注入（Step 5）
 
-`install.sh` 自动把 AGENTS.md 中的 5 条 🔴 红线章节注入到 7 个 AI 工具的**用户级**规则文件：
+`install.sh` 自动把 AGENTS.md 中的 7 条 🔴 红线章节（v1.2.2 起含进度汇报 + Subagent 边界）注入到 7 个 AI 工具的**用户级**规则文件：
 
 - `~/.zcode/AGENTS.md`
 - `~/.claude/CLAUDE.md`

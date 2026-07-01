@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ════════════════════════════════════════════════════════════
-# LoopEngine 一键安装 v1.2.1 — 首次安装 + 版本更新合一
+# LoopEngine 一键安装 v1.2.2 — 首次安装 + 版本更新合一
 # ════════════════════════════════════════════════════════════
 # 一行安装:
 #   curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
@@ -21,7 +21,17 @@
 #   • 一次拉源码 → 渲染 plugin manifest → 部署 7 工具 + MCP 三件套 + 7 红线
 #   • 装完就能用，不依赖 AI 工具的"重启"行为
 #   • 幂等：重复执行不破坏（sentinel markers + 模板渲染）
-#   • 单点真源：v1.2.1 起 install.sh = install + update
+#   • 单点真源：v1.2.2 起 install.sh = install + update
+#
+# v1.2.2 修复（2026-07-01 Cursor 兼容 + 7 红线同步）：
+#   • extract_rule_block 加 ``` 围栏状态跟踪 — 修复 SUMMARY-RULES 在 4.3 模板
+#     `## 📌 核心摘要` 处被误截断的 bug（同时修章节 6 PROGRESS-RULES 的 6.4
+#     模板内 `## 📊 进度汇报 (N/M)` 同类问题）
+#   • MANAGED_RULES 5 → 7 条（新增进度汇报红线 + Subagent 边界红线，
+#     与 AGENTS.md v1.0.2+ 的 7 条红线章节一致）
+#   • TOOL_ROOT_DIRS 加 Cursor 项（~/.cursor/skills/loopengine/）
+#   • Step 2d case 加 Cursor 分支（部署已渲染的 cursor-plugin/plugin.json）
+#   • VERSION 1.2.1 → 1.2.2
 #
 # v1.2.1 修复（2026-07-01 同步 v1.2.1 git tag）：
 #   • VERSION 1.2.0 → 1.2.1（与 git tag v1.2.1 同步）
@@ -39,13 +49,13 @@
 #   • Step 2a render_plugins.py 渲染 6 个 manifest
 #   • Step 3  数组化（消除 3 个重复 if）
 #   • Step 4  ZCode 桌面版 MCP
-#   • Step 5  5 条红线 sentinel markers
+#   • Step 5  5 条红线 sentinel markers（v1.2.2 升级到 7 条）
 #   • Step 6  部署自检
 # ════════════════════════════════════════════════════════════
 
 set -euo pipefail
 
-VERSION="1.2.1"
+VERSION="1.2.2"
 REPO="https://github.com/tsfdsong/loop_engineering"
 BOLD="\033[1m"
 GREEN="\033[32m"
@@ -70,7 +80,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         -h|--help)
             cat <<'HELP'
-LoopEngine 一键安装 v1.2.1（首次安装 + 版本更新合一）
+LoopEngine 一键安装 v1.2.2（首次安装 + 版本更新合一）
 
 用法:
   bash install.sh              # 智能模式（首次装 / 升级 / 同版本 5秒等待）
@@ -199,8 +209,8 @@ if [ "$DRY_RUN" = true ]; then
     exit 0
 fi
 
-# ── Step 2: 部署（5 个子步骤 · v1.1.0 扩展）─────────────
-# 8 个目标工具的"约定根目录" + 单一映射（P2 重构：3 列同值 → 单列）
+# ── Step 2: 部署（5 个子步骤 · v1.1.0 扩展 · v1.2.2 Cursor 集成）─────
+# 9 个目标工具的"约定根目录" + 单一映射（P2 重构：3 列同值 → 单列）
 # 格式：label|root_dir（skills/hooks/plugin 全部部署到 root_dir）
 TOOL_ROOT_DIRS=(
     "ZCode|$HOME/.zcode/skills/loopengine"
@@ -209,6 +219,7 @@ TOOL_ROOT_DIRS=(
     "Gemini CLI|$HOME/.gemini/extensions/loopengine"
     "GitHub Copilot|$HOME/.copilot/skills/loopengine"
     "Pi|$HOME/.pi/skills/loopengine"
+    "Cursor|$HOME/.cursor/skills/loopengine"
     "ZCode 内置包|$HOME/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin"
     "ZCode CLI 缓存|$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine"
 )
@@ -289,6 +300,10 @@ for entry in "${TOOL_ROOT_DIRS[@]}"; do
             ;;
         "Codex")
             copy_file "$label plugin.json" "$RENDERED_DIR/codex-plugin/plugin.json" "$root_dir/.codex-plugin/plugin.json"
+            ;;
+        "Cursor")
+            # v1.2.2 新增：Cursor plugin manifest（render_plugins.py 已渲染到 out_dir/cursor-plugin/）
+            copy_file "$label plugin.json" "$RENDERED_DIR/cursor-plugin/plugin.json" "$root_dir/.cursor-plugin/plugin.json"
             ;;
         "Gemini CLI")
             copy_file "$label gemini-extension.json" "$RENDERED_DIR/gemini-extension.json" "$root_dir/gemini-extension.json"
@@ -409,19 +424,23 @@ echo ""
 echo -e "${BOLD}⚙️  Step 4: 配置 ZCode 桌面版 MCP (~/.zcode/cli/config.json)...${RESET}"
 write_zcode_desktop_config
 
-# ── Step 5: 注入全局红线规则（5 条 · v6.9） ──────────────
-# 把 AGENTS.md 中的 5 条 🔴 红线章节注入到所有 AI 工具的**用户级**规则文件：
+# ── Step 5: 注入全局红线规则（7 条 · v6.10 · v1.2.2 升级） ──────────
+# 把 AGENTS.md 中的 7 条 🔴 红线章节注入到所有 AI 工具的**用户级**规则文件：
 #   1. 用户交互红线       → LOOPENGINE-MANAGED INTERACTION-RULES
 #   2. MCP 红线规则       → LOOPENGINE-MANAGED MCP-RULES
 #   3. 事实优先硬规则     → LOOPENGINE-MANAGED EVIDENCE-RULES
 #   4. 摘要输出红线       → LOOPENGINE-MANAGED SUMMARY-RULES
 #   5. 完成前验证红线     → LOOPENGINE-MANAGED VERIFICATION-RULES
+#   6. 进度汇报红线       → LOOPENGINE-MANAGED PROGRESS-RULES       (v1.2.2 新增)
+#   7. Subagent 边界红线  → LOOPENGINE-MANAGED SUBAGENT-RULES      (v1.2.2 新增)
 MANAGED_RULES=(
     "用户交互红线:INTERACTION-RULES"
     "MCP 红线规则:MCP-RULES"
     "事实优先硬规则:EVIDENCE-RULES"
     "摘要输出红线:SUMMARY-RULES"
     "完成前验证红线:VERIFICATION-RULES"
+    "进度汇报红线:PROGRESS-RULES"
+    "Subagent 边界红线:SUBAGENT-RULES"
 )
 
 MANAGED_TARGETS=(
@@ -445,7 +464,19 @@ extract_rule_block() {
         return 1
     fi
     local next_section_line
-    next_section_line=$(awk -v start="$begin_line" 'NR > start && /^## / { print NR; exit }' "$src")
+    # v1.2.2 修复：用 ``` 围栏跟踪状态，跳过代码块内的 ## 标题
+    # 否则 SUMMARY-RULES 会在 4.3 模板 `## 📌 核心摘要` 处被误截断（丢失 4.3-4.5）；
+    # 章节 6 PROGRESS-RULES 的 6.4 模板内 `## 📊 进度汇报 (N/M)` 同理。
+    # 实现要点：
+    #   - 切换 ``` 行用 `/^```/` 匹配（围栏行通常独占一行）
+    #   - `in_code` 状态翻转：`!in_code && /^## /` 才算章节边界
+    #   - `BEGIN{RS=""}` 不适用 — 我们仍按行处理，只是过滤围栏内行
+    next_section_line=$(awk -v start="$begin_line" '
+        NR > start {
+            if (/^```/) { in_code = !in_code; next }
+            if (!in_code && /^## /) { print NR; exit }
+        }
+    ' "$src")
     local end_line
     if [ -n "$next_section_line" ]; then
         end_line=$((next_section_line - 1))
