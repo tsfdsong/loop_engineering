@@ -46,7 +46,7 @@
 # v1.1.0 历史修复（保留）：
 #   • Step 0  初始版本自检
 #   • Step 2  同步范围扩大：skills/ + hooks/ + AGENTS.md + README.md + 6 个 plugin manifest
-#   • Step 2a render_plugins.py 渲染 6 个 manifest
+#   • Step 2a render_plugins.py 渲染 7 个 manifest
 #   • Step 3  数组化（消除 3 个重复 if）
 #   • Step 4  ZCode 桌面版 MCP
 #   • Step 5  5 条红线 sentinel markers（v1.2.2 升级到 7 条）
@@ -263,7 +263,7 @@ echo ""
 echo -e "${BOLD}📦 Step 2: 部署到 AI 工具约定目录 (5 子步)...${RESET}"
 
 # Step 2a: 渲染 plugin manifest（v1.1.0 新增）
-echo -e "  ${BOLD}Step 2a: 渲染 6 个 plugin manifest...${RESET}"
+echo -e "  ${BOLD}Step 2a: 渲染 7 个 plugin manifest...${RESET}"
 RENDERED_DIR="$WORK/.rendered-manifests"
 if python "$SCRIPT_DIR/scripts/render_plugins.py" "$WORK" "$RENDERED_DIR"; then
     echo -e "  ${GREEN}✅${RESET}  manifest 渲染完成: $RENDERED_DIR"
@@ -272,22 +272,22 @@ else
     exit 1
 fi
 
-# Step 2b: 复制 skills/ 到 8 工具的 root_dir
-echo -e "  ${BOLD}Step 2b: 复制 skills/ 到 8 个目标...${RESET}"
+# Step 2b: 复制 skills/ 到 9 工具的 root_dir
+echo -e "  ${BOLD}Step 2b: 复制 skills/ 到 9 个目标...${RESET}"
 for entry in "${TOOL_ROOT_DIRS[@]}"; do
     IFS='|' read -r label root_dir <<< "$entry"
     copy_tree "$label skills" "$SKILLS_DIR" "$root_dir"
 done
 
-# Step 2c: 复制 hooks/ 到 8 工具的 root_dir/hooks
-echo -e "  ${BOLD}Step 2c: 复制 hooks/ 到 8 个目标...${RESET}"
+# Step 2c: 复制 hooks/ 到 9 工具的 root_dir/hooks
+echo -e "  ${BOLD}Step 2c: 复制 hooks/ 到 9 个目标...${RESET}"
 for entry in "${TOOL_ROOT_DIRS[@]}"; do
     IFS='|' read -r label root_dir <<< "$entry"
     copy_tree "$label hooks" "$WORK/hooks" "$root_dir/hooks"
 done
 
-# Step 2d: 部署 6 plugin manifest 到 8 工具的 root_dir/.xxx-plugin
-echo -e "  ${BOLD}Step 2d: 部署 6 个 plugin manifest...${RESET}"
+# Step 2d: 部署 7 plugin manifest 到 9 工具的 root_dir/.xxx-plugin
+echo -e "  ${BOLD}Step 2d: 部署 7 个 plugin manifest...${RESET}"
 for entry in "${TOOL_ROOT_DIRS[@]}"; do
     IFS='|' read -r label root_dir <<< "$entry"
     case "$label" in
@@ -449,7 +449,7 @@ MANAGED_TARGETS=(
     "Gemini CLI|$HOME/.gemini/GEMINI.md"
     "Codex|$HOME/.codex/AGENTS.md"
     "Cursor|$HOME/.cursor/rules/loopengine-interaction.mdc"
-    "Copilot CLI|$HOME/.copilot/AGENTS.md"
+    "GitHub Copilot|$HOME/.copilot/AGENTS.md"
     "Pi|$HOME/.pi/AGENTS.md"
 )
 
@@ -472,8 +472,11 @@ extract_rule_block() {
     #   - `in_code` 状态翻转：`!in_code && /^## /` 才算章节边界
     #   - `BEGIN{RS=""}` 不适用 — 我们仍按行处理，只是过滤围栏内行
     next_section_line=$(awk -v start="$begin_line" '
+        BEGIN { in_code = 0 }
         NR > start {
-            if (/^```/) { in_code = !in_code; next }
+            # v1.2.2 防御性升级：识别缩进 fence（4 空格 / tab）+ 可选语言标识符
+            # 例如 `    ```bash `、` ```markdown ` 都正确识别为围栏切换
+            if (/^[ \t]*```[ \t]*(<[^>]*>)?[ \t]*$/) { in_code = !in_code; next }
             if (!in_code && /^## /) { print NR; exit }
         }
     ' "$src")
@@ -557,29 +560,28 @@ check_path() {
         CHECK_FAIL=$((CHECK_FAIL + 1))
     fi
 }
-# 至少 1 个 skills 目录应包含 SKILL.md
-SKILL_OK=false
+# 至少 8 个 skills 目录应包含 SKILL.md（v1.2.2 加严；9 工具允许 1 个失败）
+SKILL_OK_COUNT=0
 for entry in "${TOOL_ROOT_DIRS[@]}"; do
     IFS='|' read -r label root_dir <<< "$entry"
     if [ -d "$root_dir/orch" ] || [ -d "$root_dir/loop" ]; then
-        SKILL_OK=true
-        break
+        SKILL_OK_COUNT=$((SKILL_OK_COUNT + 1))
     fi
 done
-if $SKILL_OK; then
-    echo -e "  ${GREEN}✅${RESET} 至少 1 个工具的 skills 目录已部署"
+if [ "$SKILL_OK_COUNT" -ge 8 ]; then
+    echo -e "  ${GREEN}✅${RESET} 至少 8 个工具的 skills 目录已部署（实际 $SKILL_OK_COUNT/9）"
     CHECK_PASS=$((CHECK_PASS + 1))
 else
-    echo -e "  ${RED}❌${RESET} 所有工具的 skills 目录都未正确部署"
+    echo -e "  ${RED}❌${RESET} skills 目录部署不足：$SKILL_OK_COUNT/9 (< 8)"
     CHECK_FAIL=$((CHECK_FAIL + 1))
 fi
-# manifest 渲染目录应至少含 5 个 JSON
+# manifest 渲染目录应至少含 7 个 JSON（v1.2.2 加严：5 plugin.json + 1 gemini-extension + 1 marketplace）
 RENDERED_COUNT=$(find "$RENDERED_DIR" -name "*.json" 2>/dev/null | wc -l)
-if [ "$RENDERED_COUNT" -ge 5 ]; then
-    echo -e "  ${GREEN}✅${RESET} 渲染 manifest 数: $RENDERED_COUNT (>=5)"
+if [ "$RENDERED_COUNT" -ge 7 ]; then
+    echo -e "  ${GREEN}✅${RESET} 渲染 manifest 数: $RENDERED_COUNT (>=7)"
     CHECK_PASS=$((CHECK_PASS + 1))
 else
-    echo -e "  ${RED}❌${RESET} 渲染 manifest 数: $RENDERED_COUNT (<5)"
+    echo -e "  ${RED}❌${RESET} 渲染 manifest 数: $RENDERED_COUNT (<7)"
     CHECK_FAIL=$((CHECK_FAIL + 1))
 fi
 # 写入版本号文件

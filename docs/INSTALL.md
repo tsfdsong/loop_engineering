@@ -1,6 +1,6 @@
 # LoopEngine 安装指南
 
-> v1.2.2（2026-07-01）— install.sh 一体化 + Cursor 完整兼容（7 红线 + 8 工具）。
+> v1.2.2（2026-07-01）— install.sh 一体化 + Cursor 完整兼容（7 红线 + 9 工具）。
 > 历史指南见 [docs/legacy/](./legacy/)。
 
 ## 一行安装
@@ -59,7 +59,7 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 | 版本号文件 | 0 | 1 | **+1** |
 | **合计** | **16** | **52** | **+36** |
 
-## 8 工具部署目标（v1.2.2 加 Cursor）
+## 9 工具部署目标（v1.2.2 加 Cursor）
 
 | AI 工具 | 约定路径 |
 |---------|---------|
@@ -122,5 +122,5 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 - **不依赖** ZCode 内部 `marketplace.json` / `.zcode-plugin/plugin.json` 注册（v2.0 重构后）
 - **不重启** AI 工具即可生效（直接 cp 到约定目录）
 - **不重复造轮子**：每个工具的"内部机制"对我们是黑盒；只关心"约定目录"
-- **覆盖 7 大 AI 工具**（ZCode + Claude Code + Codex + Gemini + Copilot + Pi + ZCode 桌面版/内置包/CLI 缓存）
+- **覆盖 9 大 AI 工具**（ZCode + Claude Code + Codex + Gemini + Cursor + Copilot + Pi + ZCode 桌面版/内置包/CLI 缓存）
 - **单一真源**：plugin manifest 改版本号 = 改 `.plugin-template.json` 的 `version` 字段（6 个 overlay 自动同步）
