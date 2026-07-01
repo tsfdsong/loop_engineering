@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ════════════════════════════════════════════════════════════
-# LoopEngine 一键安装 v1.2.0 — 首次安装 + 版本更新合一
+# LoopEngine 一键安装 v1.2.1 — 首次安装 + 版本更新合一
 # ════════════════════════════════════════════════════════════
 # 一行安装:
 #   curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
@@ -18,10 +18,15 @@
 #
 # 设计哲学:
 #   • 不依赖 ZCode 内部插件市场 / marketplace.json / plugin.json 注册
-#   • 一次拉源码 → 渲染 plugin manifest → 部署 7 工具 + MCP 三件套 + 5 红线
+#   • 一次拉源码 → 渲染 plugin manifest → 部署 7 工具 + MCP 三件套 + 7 红线
 #   • 装完就能用，不依赖 AI 工具的"重启"行为
 #   • 幂等：重复执行不破坏（sentinel markers + 模板渲染）
-#   • 单点真源：v1.2.0 起 install.sh = install + update
+#   • 单点真源：v1.2.1 起 install.sh = install + update
+#
+# v1.2.1 修复（2026-07-01 同步 v1.2.1 git tag）：
+#   • VERSION 1.2.0 → 1.2.1（与 git tag v1.2.1 同步）
+#   • 头注释 5 红线 → 7 红线（与 AGENTS.md 实际注入的红线数一致）
+#   • plugin manifest version 1.0.2 → 1.2.1（与 install.sh VERSION 同步）
 #
 # v1.2.0 修复（2026-07-01 智能模式合一）：
 #   • 新增参数：--dry-run / --force / --help
@@ -40,7 +45,7 @@
 
 set -euo pipefail
 
-VERSION="1.2.0"
+VERSION="1.2.1"
 REPO="https://github.com/tsfdsong/loop_engineering"
 BOLD="\033[1m"
 GREEN="\033[32m"
@@ -65,7 +70,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         -h|--help)
             cat <<'HELP'
-LoopEngine 一键安装 v1.2.0（首次安装 + 版本更新合一）
+LoopEngine 一键安装 v1.2.1（首次安装 + 版本更新合一）
 
 用法:
   bash install.sh              # 智能模式（首次装 / 升级 / 同版本 5秒等待）
@@ -95,7 +100,7 @@ SCRIPT_DIR=""  # Step 1 后赋值（$WORK）
 echo ""
 echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════╗${RESET}"
 echo -e "${BOLD}${CYAN}║  LoopEngine v${VERSION} — 一键安装/更新合一        ║${RESET}"
-echo -e "${BOLD}${CYAN}║  把技能/AGENTS.md/hooks/MCP/5 红线全量同步      ║${RESET}"
+echo -e "${BOLD}${CYAN}║  把技能/AGENTS.md/hooks/MCP/7 红线全量同步      ║${RESET}"
 echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════╝${RESET}"
 if [ "$DRY_RUN" = true ]; then
     echo -e "  ${CYAN}ℹ${RESET}  ${BOLD}--dry-run${RESET} 模式：只检查不安装"
@@ -502,7 +507,7 @@ install_managed_rules() {
 }
 
 echo ""
-echo -e "${BOLD}🌐 Step 5: 注入全局红线规则 (7 工具 × 5 红线)...${RESET}"
+echo -e "${BOLD}🌐 Step 5: 注入全局红线规则 (7 工具 × 7 红线)...${RESET}"
 install_managed_rules
 
 # ── Step 6: 部署自检（v1.1.0 新增） ─────────────────────

@@ -9,7 +9,7 @@
     {
       "name": "loopengine",
       "description": "LoopEngine: loop闭环编码 + go全自动编排 + orch 多技能编排（33 技能，单职责化为多技能编排器）",
-      "version": "1.0.2",
+      "version": "1.2.1",
       "source": "./",
       "author": {
         "name": "tsfdsong"
