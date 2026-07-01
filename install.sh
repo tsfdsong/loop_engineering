@@ -29,9 +29,10 @@ VERSION="1.1.0"
 REPO="https://github.com/tsfdsong/loop_engineering"
 BOLD="\033[1m"; GREEN="\033[32m"; YELLOW="\033[33m"; CYAN="\033[36m"; RED="\033[31m"; RESET="\033[0m"
 TARGETS=()
-
-# SCRIPT_DIR = 安装脚本所在目录（指向 $WORK 的副本根；用于引用 scripts/*.py）
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+# SCRIPT_DIR = $WORK（clone 出来的代码根），用于引用 scripts/*.py。
+# 关键：不能用 BASH_SOURCE — curl | bash 时 BASH_SOURCE 为空；本地 install.sh
+# 也不指向 clone 出来的代码副本。统一用 $WORK 更可靠。
+SCRIPT_DIR=""  # Step 1 后赋值（$WORK）
 
 echo ""
 echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════╗${RESET}"
@@ -65,6 +66,7 @@ if ! git clone --depth 1 --quiet "$REPO" "$WORK" 2>/dev/null; then
     exit 1
 fi
 SKILLS_DIR="$WORK/skills"
+SCRIPT_DIR="$WORK"  # 引用 scripts/*.py 的根
 SKILL_COUNT=$(find "$SKILLS_DIR" -name SKILL.md 2>/dev/null | wc -l)
 echo -e "  ${GREEN}✅${RESET} 已克隆到 $WORK · ${SKILL_COUNT} 个技能"
 
