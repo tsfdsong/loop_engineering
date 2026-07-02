@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SessionStart hook for loopengine plugin (Claude Code / Cursor / Copilot)
-# Bootstrap: injects orch (multi-skill orchestrator) at session start
+# Bootstrap: injects orch v2 (natural-language-first multi-skill orchestrator) at session start
 # 公共逻辑见 hooks/_lib.sh
 
 set -euo pipefail
