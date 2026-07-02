@@ -21,6 +21,7 @@ class TestOrchV2Assets(unittest.TestCase):
             "skills/orch/references/families/design_build.yaml",
             "skills/orch/references/families/research_compare.yaml",
             "skills/orch/references/families/web_qa.yaml",
+            "skills/orch/references/families/parallel_investigation.yaml",
             "skills/orch/references/golden-traces/review-full-plan.json",
             "skills/orch/references/golden-traces/web-qa-report.json",
         ]
@@ -37,6 +38,7 @@ class TestOrchV2Assets(unittest.TestCase):
         self.assertEqual(data["confidence_bands"]["confirm_min"], 0.70)
         self.assertIn("review", data["scenario_family"])
         self.assertIn("web_qa", data["scenario_family"])
+        self.assertIn("parallel_investigation", data["scenario_family"])
 
     def test_skill_md_drops_type_language(self):
         text = (ROOT / "skills/orch/SKILL.md").read_text(encoding="utf-8")

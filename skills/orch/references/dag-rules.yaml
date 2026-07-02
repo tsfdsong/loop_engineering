@@ -34,3 +34,9 @@ web_qa:
   append:
     report: [synthesize_findings]
     plan: [synthesize_findings, plan_execution]
+
+parallel_investigation:
+  bootstrap: [parallel_probe]
+  append:
+    report: [synthesize_findings]
+    plan: [synthesize_findings, plan_execution]
