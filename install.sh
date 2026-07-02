@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ════════════════════════════════════════════════════════════
-# LoopEngine 一键安装 v1.2.4 — 跨平台调度器（macOS/Windows/Linux）
+# LoopEngine 一键安装 v1.3.0 — 跨平台自动感知调度器（macOS/Windows/Linux）
 # ════════════════════════════════════════════════════════════
 # 一行安装:
 #   curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
@@ -11,26 +11,36 @@
 #   - 已装旧版 → 升级
 #   - 拉源码每次都做（git clone --depth 1），所以 install.sh 天然具备"更新"能力
 #
+# 自动感知（v1.3.0）：
+#   - OS：uname -s 自动检测（Darwin→macos / Linux→linux / MINGW|MSYS|CYGWIN→windows）
+#   - AI Agent：common_detect_installed_agents 扫描本机 ~/.zcode ~/.claude ~/.cursor ...
+#     默认只给已检测到的 Agent 部署；--all 强制全量；--only=zcode,cursor 显式指定
+#
 # 参数:
-#   --dry-run   只检查版本不实际安装（拉源码 + 比对 + 输出计划）
-#   --force     跳过 5 秒等待，强制重装（同版本也执行）
-#   -h, --help  显示帮助
+#   --dry-run           只检查版本不实际安装（拉源码 + 比对 + 输出计划）
+#   --force             跳过 5 秒等待，强制重装（同版本也执行）
+#   --all               绕过 detect，强制全部 9+ 工具全量部署
+#   --only=<list>       指定 agent id 列表（空格或逗号分隔），覆盖 detect
+#   -h, --help          显示帮助
 #
-# 架构（v1.2.4 跨平台分层）：
-#   install.sh              ← 顶层调度器（本文件 · 100 行）
-#   scripts/install/_common.sh   ← 平台无关共享逻辑
-#   scripts/install/macos.sh     ← macOS 特定（pip3 + ~/Library/Python/3.*/bin）
-#   scripts/install/windows.sh   ← Windows 特定（Git Bash + %APPDATA%）
-#   scripts/install/linux.sh     ← Linux 特定（pip3 + ~/.local/bin）
+# 架构（v1.2.4+ 跨平台分层 + v1.3.0 自动感知）：
+#   install.sh                      ← 顶层调度器（本文件 · ~120 行）
+#   scripts/install/_common.sh      ← 平台无关共享逻辑（含 detect + 平台分支 tool_root_dirs）
+#   scripts/install/macos.sh        ← macOS 特定（pip3 + ~/Library/Python/3.*/bin）
+#   scripts/install/windows.sh      ← Windows 特定（Git Bash + %APPDATA% + path → forward slash）
+#   scripts/install/linux.sh        ← Linux 特定（pip3 + ~/.local/bin）
+#   scripts/merge_cursor_config.py  ← Cursor MCP 合并写入（v1.3.0 新增）
 #
-# v1.2.4 重构（2026-07-01 跨平台架构）：
-#   • install.sh 610 → 100 行（精简为调度器）
-#   • 提取 _common.sh / macos.sh / windows.sh / linux.sh 4 个子脚本
-#   • 自动 uname -s 检测 → 平台分发
-#   • LOCAL_SRC_DIR 保留（开发模式本地 scripts/ 覆盖 clone 副本）
+# v1.3.0 重构（2026-07-02 自动感知 + Cursor 适配 + Win 路径 bug 修复）：
+#   • OS + AI Agent 平台全自动感知（默认按本机已装的 Agent 部署）
+#   • 新增 --all / --only 参数覆盖 detect
+#   • tool_root_dirs 重构成 common_tool_root_dirs_for_platform（修复 macOS/Linux
+#     创建虚假 $HOME/AppData/... 目录的事实 bug）
+#   • Cursor 平台 win/macos/linux 写 ~/.cursor/mcp.json（保留用户 drawio 等 server）
+#   • 自检 self-check 阈值自适应（按平台分支后的实际目标数 80%）
 #
+# v1.2.4 重构（2026-07-01 跨平台架构）：见下方历史段
 # v1.2.3 修复（2026-07-01 macOS 跨平台兼容）：见 docs/lessons-learned.md L#001
-#
 # v1.2.0 修复（2026-07-01 智能模式合一）：新增 --dry-run / --force / --help
 # v1.1.0 历史修复（保留）：5 条红线 sentinel markers / 数组化等
 # ════════════════════════════════════════════════════════════
@@ -45,6 +55,8 @@ source "$SCRIPT_DIR/scripts/install/_common.sh"
 # ── 参数解析 ──────────────────────────────────────────────
 COMMON_DRY_RUN=false
 COMMON_FORCE=false
+COMMON_ALL=false
+COMMON_ONLY=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --dry-run)
@@ -55,15 +67,32 @@ while [[ $# -gt 0 ]]; do
             COMMON_FORCE=true
             shift
             ;;
+        --all)
+            COMMON_ALL=true
+            shift
+            ;;
+        --only=*)
+            COMMON_ONLY="${1#*=}"
+            # 支持空格或逗号分隔，转空格统一
+            COMMON_ONLY=$(echo "$COMMON_ONLY" | tr ',' ' ' | xargs)
+            shift
+            ;;
         -h|--help)
             cat <<'HELP'
-LoopEngine 一键安装 v1.2.4（跨平台：macOS / Windows Git Bash / Linux）
+LoopEngine 一键安装 v1.3.0（跨平台：macOS / Windows Git Bash / Linux）
 
 用法:
-  bash install.sh              # 智能模式（首次装 / 升级 / 同版本 5秒等待）
-  bash install.sh --force      # 强制重装（跳过 5 秒等待）
-  bash install.sh --dry-run    # 只检查不安装
-  bash install.sh -h           # 显示此帮助
+  bash install.sh                 # 智能模式 + 自动感知本机 AI Agent
+  bash install.sh --all            # 强制全量（11 工具，不走 detect）
+  bash install.sh --only=zcode,cursor   # 只给指定 agent 部署（逗号或空格分隔）
+  bash install.sh --force          # 强制重装（跳过 5 秒等待）
+  bash install.sh --dry-run        # 只检查不安装
+  bash install.sh -h               # 显示此帮助
+
+自动感知（v1.3.0）：
+  • OS：uname -s 自动识别 Darwin/Linux/MINGW|MSYS|CYGWIN
+  • AI Agent：扫描 ~/.zcode ~/.claude ~/.codex ~/.gemini ~/.copilot ~/.pi ~/.cursor
+    ~/.kimi ~/.config/opencode 等特征路径，只给已检测到的工具部署
 
 推荐一行安装:
   curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
@@ -129,6 +158,41 @@ PLATFORM=$(detect_platform) || {
 }
 
 echo -e "${_BOLD}🖥  检测到平台：${PLATFORM}${_RESET}"
+
+# ── Step 0.5: AI Agent 自动感知 (v1.3.0) ──────────────────
+# 把 PLATFORM 注入 COMMON_PLATFORM，让 _common.sh 的子函数能取到
+COMMON_PLATFORM="$PLATFORM"
+export COMMON_PLATFORM
+
+echo ""
+echo -e "${_BOLD}🔍 Step 0.5: AI Agent 自动感知（v1.3.0）...${_RESET}"
+DETECTED_AGENTS=$(common_detect_installed_agents 2>/dev/null || true)
+DETECTED_COUNT=$(printf '%s' "$DETECTED_AGENTS" | grep -c . || true)
+
+# 决定最终要部署的 agent id 列表（--all > --only > detected）
+if [ "$COMMON_ALL" = true ]; then
+    AGENT_LIST="$COMMON_ALL_AGENT_IDS"
+    echo -e "  ${_CYAN}ℹ${_RESET}  --all 模式：强制全量部署 ($COMMON_ALL_AGENT_IDS)"
+elif [ -n "$COMMON_ONLY" ]; then
+    AGENT_LIST="$COMMON_ONLY"
+    echo -e "  ${_CYAN}ℹ${_RESET}  --only 模式：指定部署 ($AGENT_LIST)"
+elif [ "$DETECTED_COUNT" -eq 0 ]; then
+    echo -e "  ${_RED}❌${_RESET}  未检测到任何 AI Agent — 至少安装其中一个"
+    echo -e "  ${_CYAN}•${_RESET} 推荐：用 ${_BOLD}bash install.sh --all${_RESET} 强制全量部署"
+    exit 1
+else
+    AGENT_LIST="$DETECTED_AGENTS"
+    echo -e "  ${_GREEN}✅${_RESET} 自动感知到 ${_BOLD}${DETECTED_COUNT}${_RESET} 个 AI Agent："
+    while IFS= read -r agent; do
+        [[ -z "$agent" ]] && continue
+        echo -e "       ${_CYAN}•${_RESET} $agent"
+    done <<< "$DETECTED_AGENTS"
+fi
+
+# 注入共享变量（_common.sh + 4 平台子脚本通过 env 读取）
+COMMON_AGENT_LIST="$AGENT_LIST"
+export COMMON_AGENT_LIST
+echo ""
 
 # ── Step 0: 版本自检 ──────────────────────────────────────
 echo ""

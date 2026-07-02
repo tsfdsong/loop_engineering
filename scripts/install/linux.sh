@@ -112,6 +112,7 @@ write_zcode_desktop_config_linux() {
 
 # ── linux_main ────────────────────────────────────────────
 # 平台入口：被 install.sh 调用
+# v1.3.0 新增 Step 5.5（Cursor MCP 合并），仅 detect 到 cursor 时执行
 linux_main() {
     echo ""
     echo -e "${_BOLD}🔌 Step 3: 安装 MCP 三件套（Linux）...${_RESET}"
@@ -124,4 +125,13 @@ linux_main() {
     echo ""
     echo -e "${_BOLD}🌐 Step 5: 注入全局红线规则...${_RESET}"
     common_inject_red_lines
+
+    # v1.3.0：Cursor MCP 合并写入 ~/.cursor/mcp.json（仅 detect 到 cursor 时执行）
+    if [[ " ${COMMON_AGENT_LIST:-} " == *" cursor "* ]]; then
+        echo ""
+        echo -e "${_BOLD}🎯 Step 5.5: 配置 Cursor MCP (Linux · ~/.cursor/mcp.json)...${_RESET}"
+        common_deploy_cursor_mcp
+    else
+        echo -e "  ${_CYAN}ℹ${_RESET}  跳过 Cursor MCP（detect 结果不含 cursor）"
+    fi
 }
