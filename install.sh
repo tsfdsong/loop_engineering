@@ -39,10 +39,17 @@
 #   • Cursor 平台 win/macos/linux 写 ~/.cursor/mcp.json（保留用户 drawio 等 server）
 #   • 自检 self-check 阈值自适应（按平台分支后的实际目标数 80%）
 #
-# v1.2.4 重构（2026-07-01 跨平台架构）：见下方历史段
-# v1.2.3 修复（2026-07-01 macOS 跨平台兼容）：见 docs/lessons-learned.md L#001
-# v1.2.0 修复（2026-07-01 智能模式合一）：新增 --dry-run / --force / --help
-# v1.1.0 历史修复（保留）：5 条红线 sentinel markers / 数组化等
+# v1.3.1 精简（2026-07-02 三平台合一 + merge_mcp_config 合并 + 关联数组 + 5 sub-function）：
+#   • scripts/install/{windows,macos,linux}.sh 从 ~145 → ~18 行（-87%）
+#   • merge_zcode_config.py + merge_cursor_config.py 合并为 merge_mcp_config.py
+#     （--schema=zcode|cursor 参数；atomic write 6 行在脚本内保留，不抽 _atomic_io.py）
+#   • AGENT 标签双份真源 → COMMON_LABEL_TO_ID 关联数组
+#   • common_deploy_to_9_tools 100 行拆 5 sub-function + _for_each_target 通用 iterator
+#   • windows/macos|linux tool_root_dirs 共享 7 行 BASE_TARGETS
+#   • Kimi/OpenCode 从 install.sh 自动感知范围移除（走各自平台原生命令）
+#   • docs/skill-hub-install-reference.md + docs/RELEASE-NOTES-v1.2.0.md 删（外部/过期）
+#
+# 历史（v1.0.x–v1.2.x）：见 git log / docs/legacy/README.md
 # ════════════════════════════════════════════════════════════
 
 set -euo pipefail
