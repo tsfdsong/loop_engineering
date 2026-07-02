@@ -7,7 +7,9 @@ node_modules/
 # 历史遗留空目录（test-page 内容已迁移；Windows 文件锁无法直接 rmdir）
 test-page/
 
-# 本地开发资料（不属于主代码库；2026-07-01 决策 2：保留但不入库）
+# 设计文档已外部化（2026-07-02）：spec/plan 在独立仓库 loop_engineering_specs
+# 本地缓存路径 ~/.loopengine/specs/ 由 install.sh clone 管理，不在主仓
+# 保留 7 天过渡期（2026-07-02 → 2026-07-09），届时手动删除
 docs/loopengineering-design/
 docs/superpowers/
 

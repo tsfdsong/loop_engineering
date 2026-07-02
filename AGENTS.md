@@ -1,5 +1,7 @@
 # LoopEngine — 循环工程全家桶
 
+> **设计文档已外部化（2026-07-02）**：spec / plan / ADR 存于独立仓库 [`loop_engineering_specs`](https://github.com/tsfdsong/loop_engineering_specs)，主仓仅保留代码 + 测试 + 安装脚本。详见 [`docs/spec-repo-link.md`](docs/spec-repo-link.md)。
+>
 > **v1.0.2+ · 7 条全局红线（5 + 2）· 单点真源 · install.sh install_managed_rules() 自动同步**
 > **本项目红线版本演进**：v1.0.x（5 条）→ v1.0.2+（7 条，新增进度汇报 + Subagent 边界）
 > **用户交互红线 2026-07-01 强化**：从 4 条升级为 5 条（新增"决策点必须用 AskUserQuestion 触发"+ §6 自查清单）

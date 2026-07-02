@@ -65,6 +65,10 @@ COMMON_DRY_RUN=false
 COMMON_FORCE=false
 COMMON_ALL=false
 COMMON_ONLY=""
+# 设计文档外部仓库（v1.3.2 · 2026-07-02）：默认 clone，可 --skip-specs 跳过
+SPECS_MODE="auto"   # auto | skip | with
+SPECS_SOURCE="https://github.com/tsfdsong/loop_engineering_specs.git"
+SPECS_TARGET_DIR="${HOME}/.loopengine/specs"
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --dry-run)
@@ -85,22 +89,42 @@ while [[ $# -gt 0 ]]; do
             COMMON_ONLY=$(echo "$COMMON_ONLY" | tr ',' ' ' | xargs)
             shift
             ;;
+        --skip-specs)
+            SPECS_MODE="skip"
+            shift
+            ;;
+        --with-specs)
+            SPECS_MODE="with"
+            shift
+            ;;
+        --specs-source=*)
+            SPECS_SOURCE="${1#*=}"
+            SPECS_MODE="with"
+            shift
+            ;;
         -h|--help)
             cat <<'HELP'
-LoopEngine 一键安装 v1.3.1（跨平台：macOS / Windows Git Bash / Linux）
+LoopEngine 一键安装 v1.3.2（跨平台：macOS / Windows Git Bash / Linux）
 
 用法:
-  bash install.sh                 # 智能模式 + 自动感知本机 AI Agent
-  bash install.sh --all            # 强制全量（11 工具，不走 detect）
-  bash install.sh --only=zcode,cursor   # 只给指定 agent 部署（逗号或空格分隔）
-  bash install.sh --force          # 强制重装（跳过 5 秒等待）
-  bash install.sh --dry-run        # 只检查不安装
-  bash install.sh -h               # 显示此帮助
+  bash install.sh                          # 智能模式 + 自动感知本机 AI Agent + 默认 clone specs
+  bash install.sh --all                     # 强制全量（11 工具，不走 detect）
+  bash install.sh --only=zcode,cursor       # 只给指定 agent 部署（逗号或空格分隔）
+  bash install.sh --force                   # 强制重装（跳过 5 秒等待）
+  bash install.sh --dry-run                 # 只检查不安装
+  bash install.sh --skip-specs              # 跳过设计文档 clone（specs 仓库）
+  bash install.sh --with-specs              # 显式 clone specs（默认行为）
+  bash install.sh --specs-source=<url|path> # 自定义 specs 来源（默认 loop_engineering_specs 仓）
+  bash install.sh -h                        # 显示此帮助
 
 自动感知（v1.3.0）：
   • OS：uname -s 自动识别 Darwin/Linux/MINGW|MSYS|CYGWIN
   • AI Agent：扫描 ~/.zcode ~/.claude ~/.codex ~/.gemini ~/.copilot ~/.pi ~/.cursor
     ~/.kimi ~/.config/opencode 等特征路径，只给已检测到的工具部署
+
+设计文档外部化（v1.3.2）：
+  • 默认自动 clone https://github.com/tsfdsong/loop_engineering_specs 到 ~/.loopengine/specs/
+  • 失败仅警告不阻塞主安装流程
 
 推荐一行安装:
   curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
@@ -210,6 +234,58 @@ common_smart_check_version "$INSTALLED_VERSION" "$COMMON_VERSION"
 
 # ── Step 1: 拉源码 ────────────────────────────────────────
 common_clone_repo || exit 1
+
+# ── Step 1.5: 设计文档外部仓 clone（v1.3.2 · 2026-07-02）────────────
+# 默认 clone loop_engineering_specs 到 ~/.loopengine/specs/
+# SPECS_MODE: auto (default) → 尝试 clone；skip → 跳过；with → 强制 clone
+install_specs() {
+    if [ "$SPECS_MODE" = "skip" ]; then
+        echo -e "  ${_CYAN}ℹ${_RESET}  --skip-specs 模式：跳过设计文档 clone"
+        return 0
+    fi
+
+    echo ""
+    echo -e "${_BOLD}📚 Step 1.5: 设计文档 clone → ${SPECS_TARGET_DIR}${_RESET}"
+
+    # dry-run 模式：只显示计划
+    if [ "$COMMON_DRY_RUN" = true ]; then
+        echo -e "  ${_CYAN}ℹ${_RESET}  --dry-run 模式：仅显示 clone 计划"
+        echo -e "       ${_CYAN}•${_RESET} source: ${SPECS_SOURCE}"
+        echo -e "       ${_CYAN}•${_RESET} target: ${SPECS_TARGET_DIR}"
+        if [ -d "$SPECS_TARGET_DIR/.git" ]; then
+            echo -e "       ${_CYAN}•${_RESET} action: git pull (已存在)"
+        elif [ -d "$SPECS_TARGET_DIR" ]; then
+            echo -e "       ${_CYAN}•${_RESET} action: 检测到非 git 目录，跳过（请手动删除后重试）"
+        else
+            echo -e "       ${_CYAN}•${_RESET} action: git clone --depth 1"
+        fi
+        return 0
+    fi
+
+    # 真实 clone / pull
+    if [ -d "$SPECS_TARGET_DIR/.git" ]; then
+        echo -e "  ${_CYAN}ℹ${_RESET}  已存在 git 仓，尝试 git pull 更新"
+        if (cd "$SPECS_TARGET_DIR" && git pull --ff-only 2>&1); then
+            echo -e "  ${_GREEN}✅${_RESET} specs 已更新"
+        else
+            echo -e "  ${_YELLOW}⚠${_RESET}  git pull 失败（继续，不阻塞）"
+        fi
+    elif [ -d "$SPECS_TARGET_DIR" ]; then
+        echo -e "  ${_YELLOW}⚠${_RESET}  ${SPECS_TARGET_DIR} 已存在但不是 git 仓，跳过 clone"
+        echo -e "       ${_CYAN}•${_RESET} 手动删除该目录后重试，或用 --skip-specs 跳过"
+    else
+        echo -e "  ${_CYAN}ℹ${_RESET}  clone ${SPECS_SOURCE} → ${SPECS_TARGET_DIR}"
+        if git clone --depth 1 "$SPECS_SOURCE" "$SPECS_TARGET_DIR" 2>&1; then
+            echo -e "  ${_GREEN}✅${_RESET} specs 已 clone 到 ${SPECS_TARGET_DIR}"
+        else
+            echo -e "  ${_YELLOW}⚠${_RESET}  clone 失败（继续，不阻塞主流程）"
+            echo -e "       ${_CYAN}•${_RESET} 可手动: git clone ${SPECS_SOURCE} ${SPECS_TARGET_DIR}"
+            echo -e "       ${_CYAN}•${_RESET} 或下次用 --skip-specs 跳过"
+        fi
+    fi
+}
+
+install_specs
 
 # ── dry-run 早退出 ────────────────────────────────────────
 if [ "$COMMON_DRY_RUN" = true ]; then

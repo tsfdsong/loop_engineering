@@ -16,7 +16,18 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 GOLDEN_DIR = ROOT / "skills" / "orch" / "references" / "golden-traces"
 HANDOFF_SCHEMA = ROOT / "skills" / "orch" / "references" / "handoff-orch-schema.json"
-SPEC_FILE = ROOT / "docs" / "superpowers" / "specs" / "2026-07-02-orch-v2-c-lite-design.md"
+
+# Spec resolution (v1.3.2 · 2026-07-02):
+#   1. External repo (~/.loopengine/specs/) — preferred after externalization
+#   2. Local cache (docs/superpowers/specs/) — 7-day transition cache (gitignored)
+#   3. Skip — neither found (LOOPENGINE_REQUIRE_SPECS=1 fails instead of skipping)
+import os as _os
+from pathlib import Path as _Path
+_SPEC_FILENAME = "2026-07-02-orch-v2-c-lite-design.md"
+_EXTERNAL_SPEC = _Path(_os.environ.get("LOOPENGINE_SPECS_DIR", str(_Path.home() / ".loopengine" / "specs"))) / "specs" / _SPEC_FILENAME
+_LOCAL_SPEC = ROOT / "docs" / "superpowers" / "specs" / _SPEC_FILENAME
+SPEC_FILE = _EXTERNAL_SPEC if _EXTERNAL_SPEC.exists() else _LOCAL_SPEC
+_REQUIRE_SPECS = _os.environ.get("LOOPENGINE_REQUIRE_SPECS", "0") == "1"
 
 
 def _load(name):
@@ -149,6 +160,13 @@ class TestOrchGoldenTraceCoverage(unittest.TestCase):
     def test_spec_decision_8_acknowledges_parallel_investigation_exception(self):
         """User decision B (2026-07-02): parallel_investigation is allowed fan-out
         alongside web_qa as a documented exception in spec §3 decision 8."""
+        if not SPEC_FILE.exists():
+            if _REQUIRE_SPECS:
+                self.fail(f"spec required but not found: {_EXTERNAL_SPEC} or {_LOCAL_SPEC}")
+            self.skipTest(
+                f"spec not available at external ({_EXTERNAL_SPEC}) or local ({_LOCAL_SPEC}) cache; "
+                "set LOOPENGINE_REQUIRE_SPECS=1 to fail instead of skip"
+            )
         text = SPEC_FILE.read_text(encoding="utf-8")
         # Decision 8 table row should mention parallel_investigation now
         self.assertIn("parallel_investigation", text)
