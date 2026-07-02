@@ -16,6 +16,6 @@ if not exist "%SKILL_FILE%" (
 )
 
 REM 简化为顶层 additionalContext（兼容各平台）
-echo {"additionalContext": "orch v1.0.0 installed (multi-skill orchestrator). See skills/orch/SKILL.md. For single-skill tasks, native description matching handles it. For multi-skill tasks, user must explicitly type /orch."}
+echo {"additionalContext": "orch v2 installed. It is a natural-language-first, family-first, rule-first multi-skill orchestrator. Use native description matching for single-skill tasks; use orch when the goal clearly spans multiple complementary skills."}
 
 exit /b 0

@@ -30,14 +30,14 @@ escape_for_json() {
 
 # 构造 session context
 SESSION_CONTEXT="<EXTREMELY_IMPORTANT>
-You have orch (multi-skill orchestrator, v1.0.0) installed.
+You have orch v2 installed: a natural-language-first, family-first, rule-first multi-skill orchestrator.
 
 Below is the full content of your orch skill. Read it carefully.
 
 ${SKILL_CONTENT}
 
-For single-skill tasks: native description matching handles it — do not call /orch.
-For multi-skill tasks: user must explicitly type /orch — see above for the 5 task chains.
+For single-skill tasks: native description matching handles it.
+For multi-skill goals: orch should infer the family and actions automatically; /orch remains only as an explicit force-orchestrate entry.
 </EXTREMELY_IMPORTANT>"
 
 ESCAPED_CONTEXT=$(escape_for_json "$SESSION_CONTEXT")

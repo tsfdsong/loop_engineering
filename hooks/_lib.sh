@@ -55,7 +55,7 @@ build_session_context() {
     local orch_content="$1"
     local orch_escaped
     orch_escaped=$(escape_for_json "$orch_content")
-    printf '<EXTREMELY_IMPORTANT>\nYou have LoopEngine — the full-stack development engine with 33 skills.\n\n**Below is the full content of your '\''loopengine:orch'\'' skill — your multi-skill orchestrator. For all other skills, use the '\''Skill'\'' tool:**\n\n%s\n</EXTREMELY_IMPORTANT>' "$orch_escaped"
+    printf '<EXTREMELY_IMPORTANT>\nYou have LoopEngine — the full-stack development engine with 33 skills.\n\norch v2 is a natural-language-first, family-first, rule-first multi-skill orchestrator.\nUse native description matching for single-skill tasks. Use orch behavior when the user goal clearly requires multiple complementary skills.\n\n**Below is the full content of your '\''loopengine:orch'\'' skill — your multi-skill orchestrator. For all other skills, use the '\''Skill'\'' tool:**\n\n%s\n</EXTREMELY_IMPORTANT>' "$orch_escaped"
 }
 
 # 输出 SessionStart JSON（按 env var 路由 schema）

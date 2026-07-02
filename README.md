@@ -118,28 +118,26 @@ jcodemunch-mcp index_folder .
 ```
 自动：递归拆解任务 → 并发调度 ZCode → 闭环执行每个子任务 → 汇总 → 交付。复杂工程一键完成。
 
-### `orch` — 多技能编排器（显式 `/orch` 触发）
+### `orch` — 多技能编排器（自然语言优先）
 
-**单技能任务（80%）**：原生 description 匹配自动处理，无需 `/orch`。
-**多技能任务（20%）**：用户显式 `/orch <type> <query>` 触发，按 5 类任务链编排。
+**单技能任务（80%）**：原生 description 匹配自动处理，无需 `/orch`。  
+**多技能任务（20%）**：系统先自动判断是否需要 orch；`/orch` 仅保留为显式强制入口。
 
-| 你说 | 该用 |
-|------|------|
-| "这个类太大了" | 单技能 → `refactoring`（不打 `/orch`） |
-| "报错了帮我看看" | 单技能 → `systematic-debugging`（不打 `/orch`） |
-| "对比 A 和 B 选型" | 多技能 → `/orch 1 ...`（显式触发） |
-| "帮我审查并改进" | 多技能 → `/orch 2 ...`（显式触发） |
-| "设计并实现 X 功能" | 多技能 → `/orch 4 ...`（显式触发） |
+| 你说 | 系统行为 |
+|------|---------|
+| "这个类太大了" | 单技能 → `refactoring` |
+| "报错了帮我看看" | 单技能 → `systematic-debugging` |
+| "帮我全面审查这个项目并给计划" | 自动识别 `review` family，多技能串行编排 |
+| "帮我自动化测试这个网站" | 自动识别 `web_qa` family，并行测试矩阵 |
+| "帮我排查并修复这个错误" | 自动识别 `debug_fix` family，修复节点委托 `loop` |
 
-#### 📋 5 类复合任务
+#### v2.0 核心特征
 
-| type | 名称 | 技能链 |
-|:---:|------|--------|
-| **1** | 调研 + 决策 | `brainstorming` → `evidence-first` → `writing-plans` |
-| **2** | 分析 + 建议 | `system-review` → `brainstorming` |
-| **3** | 诊断 + 修复 | `systematic-debugging` → `refactoring` → `verification-before-completion` |
-| **4** | 设计 + 实现 | `brainstorming` → `writing-plans` → `executing-plans` |
-| **5** | 并行调研 | `dispatching-parallel-agents` / `subagent-driven-development` |
+- **自然语言优先**：用户直接说目标，不学编号
+- **family-first**：先识别场景家族，再抽取动作
+- **rule-first**：规则表决定 DAG，不让 LLM 自由画图
+- **side-effect-first**：只读节点直调技能；写入节点委托 `loop` / `go`
+- **单 family v1**：第一版不自动跨 family 混编
 
 **v1.0 单职责化**：orch 仅做编排，不维护关键词表 / 冲突裁决 / P0 纪律 / 复杂度评分——这些由 AGENTS.md 或原生 description 匹配承担。详细规范见 [`skills/orch/SKILL.md`](skills/orch/SKILL.md)。
 
