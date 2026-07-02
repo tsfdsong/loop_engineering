@@ -5,6 +5,13 @@ global:
   confidence_bands:
     auto_execute_min: 0.85
     confirm_min: 0.70
+  # v2.1 组合白名单：允许高频共现的 family 组合（替代"single family v1"硬约束）
+  # 未列入的组合 → 触发 multi_family=clarify
+  allowed_combinations:
+    - [refactor, test]          # 重构后补测试（最常见）
+    - [review, refactor]        # 审查后重构
+    - [debug_fix, test]         # 修复后加回归测试
+    - [design_build, test]      # 新功能带测试
 
 review:
   order: [system_review, code_review, code_quality_simplify]
@@ -40,3 +47,28 @@ parallel_investigation:
   append:
     report: [synthesize_findings]
     plan: [synthesize_findings, plan_execution]
+
+refactor:
+  order: [assess_refactor_scope, refactor_apply, verify_behavior_preserved]
+  append:
+    report: [synthesize_findings]
+
+test:
+  order: [assess_test_gaps, write_tests, run_and_verify]
+  append:
+    report: [synthesize_findings]
+
+# 组合 family 规则：按白名单顺序串接（前置 family 输出作为后置输入）
+combination_rules:
+  refactor_then_test:
+    sequence: [refactor, test]
+    bridge: handoff.refactored_modules   # refactor 输出模块清单 → test 在其中补测
+  review_then_refactor:
+    sequence: [review, refactor]
+    bridge: handoff.review_findings
+  debug_fix_then_test:
+    sequence: [debug_fix, test]
+    bridge: handoff.fixed_modules
+  design_build_then_test:
+    sequence: [design_build, test]
+    bridge: handoff.built_modules

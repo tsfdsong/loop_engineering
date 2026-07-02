@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://loopengine.local/schemas/runtime-capabilities-v1.json",
+  "title": "go Runtime Capabilities v1",
+  "description": "Capability matrix reported by a WorkerAdapter at startup. Scheduler reads capabilities; packet shape is unchanged.",
+  "type": "object",
+  "required": [
+    "profile",
+    "supports_subagent",
+    "supports_foreground_parallel",
+    "supports_background_parallel",
+    "supports_worktree_cwd_binding",
+    "supports_structured_handoff",
+    "max_parallel_workers"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "profile": {
+      "type": "string",
+      "enum": ["cursor", "zcode"]
+    },
+    "supports_subagent": {
+      "type": "boolean"
+    },
+    "supports_foreground_parallel": {
+      "type": "boolean",
+      "description": "Multiple subagents can run concurrently; parent waits for all."
+    },
+    "supports_background_parallel": {
+      "type": "boolean",
+      "description": "Subagents can run async while parent continues. ZCode: false in v1."
+    },
+    "supports_worktree_cwd_binding": {
+      "type": "boolean",
+      "description": "Adapter can honor workspace.root as the sole write target."
+    },
+    "supports_structured_handoff": {
+      "type": "boolean",
+      "description": "Adapter can emit handoff JSON matching handoff-protocol.md."
+    },
+    "max_parallel_workers": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16,
+      "default": 4
+    }
+  }
+}

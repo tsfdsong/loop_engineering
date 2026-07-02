@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://loopengine.local/schemas/worker-result-v1.json",
+  "title": "go Worker Result v1",
+  "description": "Platform-agnostic output contract from go sub-task execution.",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "task_id",
+    "status",
+    "runtime_meta"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DONE",
+        "DONE_WITH_CONCERNS",
+        "NEEDS_CONTEXT",
+        "BLOCKED",
+        "FAILED"
+      ]
+    },
+    "commit_sha": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{7,40}$"
+    },
+    "handoff": {
+      "type": "object",
+      "description": "See skills/go/references/handoff-protocol.md for field semantics.",
+      "properties": {
+        "files_changed": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "new_interfaces": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "artifacts": { "type": "string" },
+        "git_commit": { "type": "string" },
+        "next_task_hint": { "type": "string" }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tests_run": { "type": "boolean" },
+        "tests_passed": { "type": "boolean" },
+        "unexpected_files": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "runtime_meta": {
+      "type": "object",
+      "required": ["profile", "degraded"],
+      "additionalProperties": false,
+      "properties": {
+        "profile": {
+          "type": "string",
+          "enum": ["cursor", "zcode"]
+        },
+        "execution_mode": {
+          "type": "string",
+          "enum": [
+            "foreground_parallel",
+            "background_parallel",
+            "sequential"
+          ]
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "degraded": {
+          "type": "boolean",
+          "default": false
+        },
+        "degraded_reason": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "error": {
+      "type": "string",
+      "description": "Human-readable error when status is FAILED or BLOCKED."
+    },
+    "concerns": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Populated when status is DONE_WITH_CONCERNS."
+    }
+  }
+}

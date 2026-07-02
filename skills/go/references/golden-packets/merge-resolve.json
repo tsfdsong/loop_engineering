@@ -1,0 +1,28 @@
+{
+  "contract_version": "1.0",
+  "task_id": "MERGE1",
+  "task_type": "merge_resolve",
+  "goal": "Resolve merge conflicts",
+  "prompt": "Resolve git merge conflicts in the listed files. Remove conflict markers and integrate both sides. Run git add only, do not commit.",
+  "workspace": {
+    "root": "/tmp/go-feature-demo",
+    "branch": "go-feature-demo",
+    "base_branch": "main",
+    "allowed_paths": ["app/models/points.py"]
+  },
+  "context": {
+    "handoffs": [],
+    "skills": [],
+    "acceptance_criteria": []
+  },
+  "constraints": {
+    "must_commit": false,
+    "timeout_sec": 300,
+    "max_retries": 1
+  },
+  "runtime": {
+    "profile": "cursor",
+    "subagent_role": "general-purpose",
+    "model_hint": "capable"
+  }
+}
