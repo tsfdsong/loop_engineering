@@ -1,27 +1,31 @@
-# 编排层工具配置 v4.0 — ZCode 纯血版
-# 所有子任务统一走 ZCode --prompt + Worktree 隔离
-# model/provider 从 ~/.zcode/v2/config.json 动态读取,不在此硬编码
+# go v5.0 — Worker Contract runtime routing
+# worktree 隔离由 go 编排器掌控；sub-agent 通过统一 WorkerTaskPacket 执行
 
-# ─── ZCode CLI 调用配置 ───
-zcode_cli:
-  path: "${HOME}/AppData/Local/Programs/ZCode/resources/glm/zcode.cjs"
-  exec_template: "node {path} --prompt \"{task}\" --cwd {project} --mode yolo"
-  default_mode: "yolo"
-  # model 从 ~/.zcode/v2/config.json 动态读取 (zcode_runner._load_model_main)
+runtimes:
+  cursor:
+    adapter: subagent
+    default_subagent_role: general-purpose
+  zcode:
+    adapter: subagent
+    default_subagent_role: general-purpose
+    cli_fallback_path: "${ZCODE_CLI_PATH}"
 
-# ─── Worktree 配置 ───
 worktree:
-  base_dir: ".go/worktrees"       # worktree 根目录(相对于项目根)
-  branch_prefix: "go-"            # worktree 分支名前缀
-  max_concurrent: 4               # 最大并发数
-  auto_cleanup: true              # 完成后自动清理 worktree
+  base_dir: ".go/worktrees"
+  branch_prefix: "go-"
+  max_concurrent: 4
+  auto_cleanup: true
 
-# ─── 重试配置 (v4.0 替代旧降级链路) ───
 retry:
-  max_retries: 2                  # 最大重试次数
-  delays: [2, 8]                  # 指数退避间隔(秒)
+  max_retries: 2
+  delays: [2, 8]
   triggers:
     - "429"
     - "quota_exceeded"
     - "insufficient_quota"
     - "rate_limit"
+
+model_hints:
+  fast: "use fastest available model"
+  standard: "inherit default"
+  capable: "use most capable model"

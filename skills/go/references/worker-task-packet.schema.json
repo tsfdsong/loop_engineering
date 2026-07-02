@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://loopengine.local/schemas/worker-task-packet-v1.json",
+  "title": "go Worker Task Packet v1",
+  "description": "Platform-agnostic input contract for go sub-task execution. Cursor and ZCode adapters MUST accept the same packet shape.",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "task_id",
+    "task_type",
+    "goal",
+    "prompt",
+    "workspace",
+    "constraints",
+    "runtime"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "task_type": {
+      "type": "string",
+      "enum": ["implement", "merge_resolve", "review"]
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 1
+    },
+    "prompt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workspace": {
+      "type": "object",
+      "required": ["root", "branch", "base_branch", "allowed_paths"],
+      "additionalProperties": false,
+      "properties": {
+        "root": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Absolute path to the git worktree directory created by go."
+        },
+        "branch": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Worktree branch name, e.g. go-t2."
+        },
+        "base_branch": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Feature branch to merge into."
+        },
+        "allowed_paths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Regression guard paths relative to workspace.root. Empty = no restriction."
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "handoffs": {
+          "type": "array",
+          "items": { "type": "object" },
+          "default": []
+        },
+        "skills": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": { "type": "object" },
+          "default": []
+        },
+        "project_root": {
+          "type": "string",
+          "description": "Absolute path to git project root (for Cursor file dispatch bridge)."
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "required": ["must_commit", "timeout_sec"],
+      "additionalProperties": false,
+      "properties": {
+        "must_commit": {
+          "type": "boolean",
+          "default": true
+        },
+        "commit_message_template": {
+          "type": "string",
+          "default": "go-{task_id}: {name}"
+        },
+        "timeout_sec": {
+          "type": "integer",
+          "minimum": 30,
+          "maximum": 3600,
+          "default": 600
+        },
+        "max_retries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "default": 2
+        }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "required": ["profile"],
+      "additionalProperties": false,
+      "properties": {
+        "profile": {
+          "type": "string",
+          "enum": ["cursor", "zcode"]
+        },
+        "subagent_role": {
+          "type": "string",
+          "description": "e.g. general-purpose, Explore, or custom @role name."
+        },
+        "model_hint": {
+          "type": "string",
+          "enum": ["fast", "standard", "capable"]
+        }
+      }
+    }
+  }
+}

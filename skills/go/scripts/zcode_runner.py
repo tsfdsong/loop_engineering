@@ -390,220 +390,32 @@ def _detect_degradation(output):
 
 
 # ═══════════════════════════════════════════════════════════
-# 并发 Worktree 执行
+# 并发 Worktree 执行 (v5.0 → task_scheduler + Worker Contract)
 # ═══════════════════════════════════════════════════════════
 
-def execute_task_in_worktree(project_dir, task, tier="L2"):
-    """
-    在隔离的 git worktree 中执行单个子任务。
-
-    流程:
-    1. 创建 worktree
-    2. 调用 ZCode (带重试)
-    3. 强制 commit + 回归保护
-    4. 返回结果 (合并由上层统一处理)
-    """
-    ensure_zcode_config()
-
-    # 收集前置任务 handoff
-    handoff_summaries = []
-    for dep_id in task.get("depends_on", []):
-        try:
-            dep = state_manager.get_task(project_dir, dep_id)
-            if dep.get("handoff"):
-                hs = dep["handoff"]
-                hs["task_id"] = dep_id
-                handoff_summaries.append(hs)
-        except KeyError:
-            pass
-
-    prompt = build_prompt(task, str(project_dir), handoff_summaries)
-
-    # 标记任务开始
-    head_before = git_ops.get_head(project_dir)
-    state_manager.update_task(project_dir, task["id"],
-                              status=state_manager.TASK_IN_PROGRESS,
-                              git_head_before=head_before,
-                              model=task.get("model"))
-
-    # 创建 worktree
-    try:
-        worktree_dir = git_ops.create_worktree(project_dir, task["id"])
-    except RuntimeError as e:
-        return {"status": "failed", "error": f"创建 worktree 失败: {e}"}
-
-    try:
-        # 调用 ZCode (带重试 + per-task model)
-        result = call_zcode_with_retry(
-            prompt, worktree_dir, mode="yolo",
-            model=task.get("model")
-        )
-
-        if not result["success"]:
-            state_manager.update_task(project_dir, task["id"],
-                                      status=state_manager.TASK_FAILED,
-                                      error=result.get("stderr", "未知错误")[:200])
-            return {"status": "failed", "error": result.get("stderr", "未知错误")[:200]}
-
-        # 强制 commit
-        commit_sha = git_ops.force_commit(
-            worktree_dir,
-            f"go-{task['id']}: {task.get('name', task['id'])[:50]}"
-        )
-
-        # 回归保护
-        if task.get("files"):
-            actual_changes = git_ops.capture_change_snapshot(worktree_dir)
-            verification = git_ops.verify_expected_changes(task["files"], actual_changes)
-            if not verification["passed"]:
-                state_manager.update_task(project_dir, task["id"],
-                                          status=state_manager.TASK_FAILED)
-                return {
-                    "status": "failed",
-                    "error": f"非预期文件被修改: {verification['unexpected']}",
-                }
-
-        # 解析 handoff
-        handoff = _parse_handoff(result["stdout"])
-        state_manager.update_task(project_dir, task["id"],
-                                  status=state_manager.TASK_COMPLETED,
-                                  handoff=handoff,
-                                  commit_sha=commit_sha)
-
-        return {"status": "completed", "handoff": handoff, "commit_sha": commit_sha}
-
-    except Exception as e:
-        state_manager.update_task(project_dir, task["id"],
-                                  status=state_manager.TASK_FAILED,
-                                  error=str(e)[:200])
-        return {"status": "failed", "error": str(e)[:200]}
+def execute_packet_in_worktree(*args, **kwargs):
+    from task_scheduler import execute_packet_in_worktree as _fn
+    return _fn(*args, **kwargs)
 
 
-def execute_tasks_concurrent(project_dir, tasks, tier="L2", max_workers=4):
-    """
-    并发执行无依赖的子任务。
-
-    流程:
-    1. 拓扑排序,找就绪任务
-    2. 无依赖任务并发执行 (ThreadPoolExecutor)
-    3. 有依赖任务等前置完成后执行
-    4. 全部完成后顺序合并 (不在循环中跑测试,修复 BUG #5)
-    """
-    ensure_zcode_config()
-
-    completed_ids = set()
-    failed = []
-    all_results = {}
-
-    while True:
-        # 找就绪任务
-        ready = [
-            t for t in tasks
-            if t.get("status") == state_manager.TASK_PENDING
-            and all(dep in completed_ids for dep in t.get("depends_on", []))
-        ]
-
-        if not ready:
-            pending = [t for t in tasks if t.get("status") == state_manager.TASK_PENDING]
-            if pending:
-                print(f"⚠️ 依赖无法满足: {[t['id'] for t in pending]}")
-                failed.extend(t["id"] for t in pending)
-                break
-            break
-
-        if len(ready) == 1:
-            # 单任务直接执行
-            task = ready[0]
-            print(f"  ▶️ {task['id']}: {task.get('name', '')[:40]}")
-            result = execute_task_in_worktree(project_dir, task, tier)
-            all_results[task["id"]] = result
-            if result.get("status") == "completed":
-                completed_ids.add(task["id"])
-            else:
-                failed.append(task["id"])
-        else:
-            # 多任务并发执行
-            worker_count = min(len(ready), max_workers)
-            print(f"  🚀 并发执行 {len(ready)} 个任务 ({worker_count} workers)")
-
-            with concurrent.futures.ThreadPoolExecutor(max_workers=worker_count) as executor:
-                futures = {
-                    executor.submit(execute_task_in_worktree, project_dir, t, tier): t["id"]
-                    for t in ready
-                }
-                for future in concurrent.futures.as_completed(futures):
-                    task_id = futures[future]
-                    try:
-                        result = future.result(timeout=600)
-                        all_results[task_id] = result
-                        if result.get("status") == "completed":
-                            completed_ids.add(task_id)
-                            print(f"  ✅ {task_id} 完成")
-                        else:
-                            failed.append(task_id)
-                            print(f"  ❌ {task_id} 失败: {result.get('error', '')[:60]}")
-                    except Exception as e:
-                        failed.append(task_id)
-                        print(f"  ❌ {task_id} 异常: {str(e)[:60]}")
-
-    # 顺序合并所有完成的任务 (不在循环中跑测试)
-    for task in tasks:
-        if task["id"] in completed_ids:
-            merge_result = _merge_worktree(project_dir, task["id"])
-            if not merge_result["ok"]:
-                if task["id"] not in failed:
-                    failed.append(task["id"])
-
-    all_done = len(completed_ids) + len(failed) == len(tasks)
-    return {
-        "all_completed": all_done and not failed,
-        "failed_tasks": failed,
-        "completed_count": len(completed_ids),
-        "results": all_results,
-    }
+def execute_task_in_worktree(*args, **kwargs):
+    from task_scheduler import execute_task_in_worktree as _fn
+    return _fn(*args, **kwargs)
 
 
-def _merge_worktree(project_dir, task_id):
-    """
-    合并单个 worktree 到 feature 分支。
-    冲突时自动解决。
-    """
-    merge_result = git_ops.merge_worktree_to_feature(project_dir, task_id)
-
-    if merge_result["conflict"]:
-        conflict_files = merge_result["conflict_files"]
-        resolved = _auto_resolve_conflicts(project_dir, conflict_files)
-        if not resolved:
-            print(f"  ⚠️ {task_id} 合并冲突未解决,需人工处理")
-            return {"ok": False}
-
-    return {"ok": True}
+def execute_tasks_concurrent(*args, **kwargs):
+    from task_scheduler import execute_tasks_concurrent as _fn
+    return _fn(*args, **kwargs)
 
 
-def _auto_resolve_conflicts(project_dir, conflict_files):
-    """调用 ZCode Agent 自动解决 git merge 冲突。"""
-    if not conflict_files:
-        return True
+def detect_runtime_profile():
+    from task_scheduler import detect_runtime_profile as _fn
+    return _fn()
 
-    files_info = []
-    for f in conflict_files:
-        filepath = Path(project_dir) / f
-        if filepath.exists():
-            content = filepath.read_text(encoding="utf-8", errors="ignore")
-            files_info.append(f"### {f}\n```\n{content[:3000]}\n```")
 
-    prompt = (
-        f"当前在 git merge 中,以下文件有冲突:\n\n"
-        + "\n\n".join(files_info)
-        + "\n\n请解决所有冲突:\n"
-        "1. 移除冲突标记\n"
-        "2. 整合双方改动\n"
-        "3. git add 标记已解决 (不要 commit)"
-    )
-
-    call_zcode(prompt, project_dir, mode="yolo", timeout=300)
-    remaining = git_ops.resolve_conflicts_with_agent(project_dir)
-    return len(remaining) == 0
+def assigned_runtime_for_task(*args, **kwargs):
+    from task_scheduler import assigned_runtime_for_task as _fn
+    return _fn(*args, **kwargs)
 
 
 def _parse_handoff(stdout):

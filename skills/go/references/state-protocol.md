@@ -74,7 +74,10 @@
 | `base_branch` | string | 从哪个分支切出(回滚用) |
 | `tier` | enum | `L1` / `L2` / `L3` 执行级别 |
 | `status` | enum | `planning` / `in_progress` / `completed` / `failed` / `paused` |
-| `tasks[].assigned_tool` | enum | `zcode` / `deepseek` (已移除 cursor/trae) |
+| `tasks[].assigned_tool` | enum | **v4 遗留** `zcode` / `deepseek` — v5 用 `assigned_runtime` |
+| `tasks[].assigned_runtime` | object | **v5** `{profile, adapter, capabilities_snapshot}` |
+| `tasks[].assigned_runtime.profile` | enum | `cursor` / `zcode` |
+| `tasks[].assigned_runtime.adapter` | enum | `subagent` (v5 默认) |
 | `tasks[].depends_on` | array | 依赖的子任务ID列表(空=无依赖,可并发) |
 | `tasks[].skills` | array | 子任务推荐的技能名列表 |
 | `tasks[].files` | array | 子任务预期操作的文件列表(回归保护用) |

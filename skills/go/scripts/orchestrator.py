@@ -17,6 +17,7 @@ import complexity_evaluator
 import state_manager
 import git_ops
 import zcode_runner
+import task_scheduler
 
 
 def orchestrate(feature, project_dir, acceptance_criteria=None, explicit_flag=None):
@@ -64,8 +65,12 @@ def orchestrate(feature, project_dir, acceptance_criteria=None, explicit_flag=No
     no_dep = sum(1 for t in tasks if not t.get("depends_on"))
     print(f"📋 拆分为 {len(tasks)} 个子任务, {no_dep} 个可并发")
 
-    # Step ④⑤: Worktree 并发执行
-    result = zcode_runner.execute_tasks_concurrent(project_dir, tasks, tier)
+    # Step ④⑤: Worktree 并发执行 (Worker Contract v5)
+    runtime_profile = task_scheduler.detect_runtime_profile()
+    print(f"🔧 Runtime profile: {runtime_profile}")
+    result = task_scheduler.execute_tasks_concurrent(
+        project_dir, tasks, tier, runtime_profile=runtime_profile,
+    )
 
     if result["all_completed"]:
         # Step ⑦.5: G10 系统审查 (每个特性分支 1 次)
@@ -101,9 +106,11 @@ def _split_tasks_with_zcode(feature, project_dir, tier):
     Step ③: 让 ZCode 分析需求,拆分为可并发的子任务。
     """
     if tier == "L1":
+        rt = task_scheduler.assigned_runtime_for_task(profile=task_scheduler.detect_runtime_profile())
         return [{
             "id": "T1", "name": feature,
-            "assigned_tool": "zcode", "depends_on": [],
+            "assigned_runtime": rt,
+            "depends_on": [],
             "prompt": feature, "skills": [], "files": [],
             "status": state_manager.TASK_PENDING,
         }]
@@ -117,8 +124,9 @@ def _split_tasks_with_zcode(feature, project_dir, tier):
         print(f"  ⚠️ ZCode 拆分失败,使用回退拆分")
         return _fallback_split(feature, tier)
 
+    profile = task_scheduler.detect_runtime_profile()
     for task in tasks:
-        task.setdefault("assigned_tool", "zcode")
+        task.setdefault("assigned_runtime", task_scheduler.assigned_runtime_for_task(task, profile))
         task.setdefault("status", state_manager.TASK_PENDING)
         task.setdefault("skills", [])
         task.setdefault("files", [])
@@ -249,10 +257,11 @@ def _parse_tasks_json(stdout):
 def _fallback_split(feature, tier):
     """ZCode 拆分失败时的骨架回退"""
     count = 2 if tier == "L2" else 3
+    profile = task_scheduler.detect_runtime_profile()
     return [{
         "id": f"T{i+1}",
         "name": f"子任务 {i+1}",
-        "assigned_tool": "zcode",
+        "assigned_runtime": task_scheduler.assigned_runtime_for_task(profile=profile),
         "depends_on": [] if i == 0 else [f"T{i}"],
         "prompt": f"子任务 {i+1}: {feature}",
         "skills": [], "files": [],
@@ -284,7 +293,10 @@ def _resume_orchestration(project_dir):
             return {"status": "failed", "error": "feature 分支已被删除"}
 
     tasks = state["tasks"]
-    result = zcode_runner.execute_tasks_concurrent(project_dir, tasks, tier)
+    runtime_profile = task_scheduler.detect_runtime_profile()
+    result = task_scheduler.execute_tasks_concurrent(
+        project_dir, tasks, tier, runtime_profile=runtime_profile,
+    )
 
     if result["all_completed"]:
         tests_ok = git_ops.run_tests(project_dir)
