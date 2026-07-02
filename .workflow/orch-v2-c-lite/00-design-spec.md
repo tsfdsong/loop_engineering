@@ -360,6 +360,10 @@ skills/orch/
 │   ├── intent-schema.json
 │   ├── capability-registry.yaml
 │   ├── dag-rules.yaml
+│   ├── executor-contracts/
+│   │   ├── direct-skill.json
+│   │   ├── loop.json
+│   │   └── go.json
 │   ├── families/
 │   │   ├── review.yaml
 │   │   ├── web_qa.yaml

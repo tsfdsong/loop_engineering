@@ -13,6 +13,9 @@ class TestOrchV2Assets(unittest.TestCase):
             "skills/orch/references/intent-schema.json",
             "skills/orch/references/capability-registry.yaml",
             "skills/orch/references/dag-rules.yaml",
+            "skills/orch/references/executor-contracts/direct-skill.json",
+            "skills/orch/references/executor-contracts/loop.json",
+            "skills/orch/references/executor-contracts/go.json",
             "skills/orch/references/families/review.yaml",
             "skills/orch/references/families/debug_fix.yaml",
             "skills/orch/references/families/design_build.yaml",
@@ -68,6 +71,21 @@ class TestOrchV2Assets(unittest.TestCase):
             trace["expected_dag"][:3],
             ["system-review", "code-reviewer", "clean-code"],
         )
+
+    def test_executor_contracts_have_required_fields(self):
+        contract_dir = ROOT / "skills/orch/references/executor-contracts"
+        direct_skill = json.loads(
+            (contract_dir / "direct-skill.json").read_text(encoding="utf-8")
+        )
+        loop = json.loads((contract_dir / "loop.json").read_text(encoding="utf-8"))
+        go = json.loads((contract_dir / "go.json").read_text(encoding="utf-8"))
+
+        self.assertIn("skill", direct_skill["required_fields"])
+        self.assertIn("task_summary", loop["required_fields"])
+        self.assertIn("plan_path", go["required_fields"])
+        self.assertEqual(direct_skill["executor"], "direct_skill")
+        self.assertEqual(loop["executor"], "loop")
+        self.assertEqual(go["executor"], "go")
 
 
 if __name__ == "__main__":
