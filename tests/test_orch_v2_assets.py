@@ -111,6 +111,50 @@ class TestOrchV2Assets(unittest.TestCase):
         text = (ROOT / "hooks/session-start").read_text(encoding="utf-8")
         self.assertIn("load_orch_runtime_bundle", text)
 
+    def test_session_start_codex_uses_runtime_bundle(self):
+        """Regression for system-review finding C1: Codex must not use the
+        degraded load_orch_content path; it must share the runtime bundle."""
+        text = (ROOT / "hooks/session-start-codex").read_text(encoding="utf-8")
+        self.assertIn("load_orch_runtime_bundle", text)
+        self.assertNotIn("load_orch_content", text)
+
+    def test_runtime_bundle_includes_families_and_golden_traces(self):
+        """Regression for system-review finding C2: bootstrap must inject
+        family rules + golden-traces + handoff schema, not just the core 7."""
+        text = (ROOT / "hooks/_lib.sh").read_text(encoding="utf-8")
+        self.assertIn("families", text)
+        self.assertIn("golden-traces", text)
+        self.assertIn("handoff-orch-schema.json", text)
+
+    def test_skill_md_lists_handoff_schema_in_refs(self):
+        """Regression for system-review finding H3: SKILL.md must reference
+        the new handoff-orch-schema.json in its 参考真源 section."""
+        text = (ROOT / "skills/orch/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("handoff-orch-schema.json", text)
+
+    def test_web_qa_family_includes_plan_execution(self):
+        """Regression for system-review finding H1: web_qa family actions
+        must include plan_execution to align with dag-rules append.plan."""
+        import yaml as _yaml
+        data = _yaml.safe_load(
+            (ROOT / "skills/orch/references/families/web_qa.yaml").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertIn("plan_execution", data["actions"])
+
+    def test_handoff_schema_phase_enum_excludes_executor_types(self):
+        """Regression for system-review finding H2: phase enum identifies
+        a skill phase, not an executor type."""
+        data = json.loads(
+            (
+                ROOT / "skills/orch/references/handoff-orch-schema.json"
+            ).read_text(encoding="utf-8")
+        )
+        phase_enum = set(data["properties"]["phase"]["enum"])
+        leaked = phase_enum & {"go", "loop", "loop-fix"}
+        self.assertFalse(leaked, f"executor types leaked into phase enum: {leaked}")
+
     def test_user_docs_stop_teaching_type_numbers(self):
         for rel in ["README.md", "skills/using-loopengine/SKILL.md"]:
             text = (ROOT / rel).read_text(encoding="utf-8")

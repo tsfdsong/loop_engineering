@@ -21,7 +21,6 @@
         "brainstorming",
         "writing-plans",
         "systematic-debugging",
-        "loop-fix",
         "verification-before-completion",
         "evidence-first",
         "agent-browser",
@@ -29,9 +28,7 @@
         "web-visual-diff",
         "web-audit-a11y",
         "web-perf-budget",
-        "dispatching-parallel-agents",
-        "loop",
-        "go"
+        "dispatching-parallel-agents"
       ],
       "description": "Skill/phase that produced this handoff. Must be a registered orch action executor."
     },

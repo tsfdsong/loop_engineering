@@ -130,5 +130,6 @@ orch 只负责 **“意图 → 执行图”**，不重复：
 - `skills/orch/references/intent-schema.json`
 - `skills/orch/references/capability-registry.yaml`
 - `skills/orch/references/dag-rules.yaml`
+- `skills/orch/references/handoff-orch-schema.json`
 - `skills/orch/references/families/*.yaml`
 - `skills/orch/references/golden-traces/*.json`

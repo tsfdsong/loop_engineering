@@ -50,10 +50,23 @@ load_orch_runtime_bundle() {
         "${refs_root}/intent-schema.json"
         "${refs_root}/capability-registry.yaml"
         "${refs_root}/dag-rules.yaml"
+        "${refs_root}/handoff-orch-schema.json"
         "${refs_root}/executor-contracts/direct-skill.json"
         "${refs_root}/executor-contracts/loop.json"
         "${refs_root}/executor-contracts/go.json"
     )
+    # families/*.yaml — family-specific DAG rules (6 files)
+    for fam_file in "${refs_root}/families"/*.yaml; do
+        if [ -f "$fam_file" ]; then
+            files+=("$fam_file")
+        fi
+    done
+    # golden-traces/*.json — acceptance criteria examples (5 files)
+    for trace_file in "${refs_root}/golden-traces"/*.json; do
+        if [ -f "$trace_file" ]; then
+            files+=("$trace_file")
+        fi
+    done
 
     for path in "${files[@]}"; do
         if [ -f "$path" ]; then
