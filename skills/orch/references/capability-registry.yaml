@@ -66,7 +66,7 @@ plan_execution:
   executor_kind: direct_skill
   skill: writing-plans
   side_effects: none
-  compatible_families: [review, research_compare, design_build, web_qa]
+  compatible_families: [review, research_compare, design_build, web_qa, parallel_investigation]
 
 execute_plan:
   capability: plan_execution
@@ -116,3 +116,10 @@ synthesize_findings:
   skill: brainstorming
   side_effects: none
   compatible_families: [review, research_compare, web_qa]
+
+parallel_probe:
+  capability: parallel_investigation_probe
+  executor_kind: direct_skill
+  skill: dispatching-parallel-agents
+  side_effects: none
+  compatible_families: [parallel_investigation]

@@ -8,14 +8,29 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
-# 读取 orch/SKILL.md 全文
-ORCH_MD="${PLUGIN_ROOT}/skills/orch/SKILL.md"
-if [ ! -f "$ORCH_MD" ]; then
-  echo "ERROR: orch/SKILL.md not found at $ORCH_MD" >&2
-  exit 1
-fi
+# 读取 orch runtime bundle（skill + 关键 reference）
+load_bundle() {
+  local refs_root="${PLUGIN_ROOT}/skills/orch/references"
+  local files=(
+    "${PLUGIN_ROOT}/skills/orch/SKILL.md"
+    "${refs_root}/intent-schema.json"
+    "${refs_root}/capability-registry.yaml"
+    "${refs_root}/dag-rules.yaml"
+    "${refs_root}/executor-contracts/direct-skill.json"
+    "${refs_root}/executor-contracts/loop.json"
+    "${refs_root}/executor-contracts/go.json"
+  )
 
-SKILL_CONTENT=$(cat "$ORCH_MD")
+  for path in "${files[@]}"; do
+    if [ -f "$path" ]; then
+      printf '\n### %s ###\n' "${path#${PLUGIN_ROOT}/}"
+      cat "$path"
+      printf '\n'
+    fi
+  done
+}
+
+SKILL_CONTENT=$(load_bundle)
 
 # JSON 转义（5 个特殊字符）
 escape_for_json() {
@@ -32,7 +47,7 @@ escape_for_json() {
 SESSION_CONTEXT="<EXTREMELY_IMPORTANT>
 You have orch v2 installed: a natural-language-first, family-first, rule-first multi-skill orchestrator.
 
-Below is the full content of your orch skill. Read it carefully.
+Below is the orch runtime bundle (skill + orchestration references). Read it carefully.
 
 ${SKILL_CONTENT}
 

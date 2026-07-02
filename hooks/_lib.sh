@@ -37,6 +37,33 @@ load_orch_content() {
     cat "${plugin_root}/skills/orch/SKILL.md" 2>&1 || echo "Error reading orch skill"
 }
 
+load_orch_runtime_bundle() {
+    local plugin_root="${1:-}"
+    if [ -z "$plugin_root" ]; then
+        echo "Error: plugin_root is empty" >&2
+        return 1
+    fi
+
+    local refs_root="${plugin_root}/skills/orch/references"
+    local files=(
+        "${plugin_root}/skills/orch/SKILL.md"
+        "${refs_root}/intent-schema.json"
+        "${refs_root}/capability-registry.yaml"
+        "${refs_root}/dag-rules.yaml"
+        "${refs_root}/executor-contracts/direct-skill.json"
+        "${refs_root}/executor-contracts/loop.json"
+        "${refs_root}/executor-contracts/go.json"
+    )
+
+    for path in "${files[@]}"; do
+        if [ -f "$path" ]; then
+            printf '\n### %s ###\n' "${path#${plugin_root}/}"
+            cat "$path"
+            printf '\n'
+        fi
+    done
+}
+
 # Escape string for JSON embedding using bash parameter substitution.
 # Each ${s//old/new} is a single C-level pass - orders of magnitude
 # faster than the character-by-character loop this replaces.
@@ -55,7 +82,7 @@ build_session_context() {
     local orch_content="$1"
     local orch_escaped
     orch_escaped=$(escape_for_json "$orch_content")
-    printf '<EXTREMELY_IMPORTANT>\nYou have LoopEngine — the full-stack development engine with 33 skills.\n\norch v2 is a natural-language-first, family-first, rule-first multi-skill orchestrator.\nUse native description matching for single-skill tasks. Use orch behavior when the user goal clearly requires multiple complementary skills.\n\n**Below is the full content of your '\''loopengine:orch'\'' skill — your multi-skill orchestrator. For all other skills, use the '\''Skill'\'' tool:**\n\n%s\n</EXTREMELY_IMPORTANT>' "$orch_escaped"
+    printf '<EXTREMELY_IMPORTANT>\nYou have LoopEngine — the full-stack development engine with 33 skills.\n\norch v2 is a natural-language-first, family-first, rule-first multi-skill orchestrator.\nUse native description matching for single-skill tasks. Use orch behavior when the user goal clearly requires multiple complementary skills.\n\n**Below is the runtime orch bundle (skill + orchestration references). For all other skills, use the '\''Skill'\'' tool:**\n\n%s\n</EXTREMELY_IMPORTANT>' "$orch_escaped"
 }
 
 # 输出 SessionStart JSON（按 env var 路由 schema）

@@ -8,6 +8,6 @@ set -euo pipefail
 # shellcheck source=_lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
 
-orch_content=$(load_orch_content "$PLUGIN_ROOT")
+orch_content=$(load_orch_runtime_bundle "$PLUGIN_ROOT")
 session_context=$(build_session_context "$orch_content")
 emit_session_start_json "$session_context"
