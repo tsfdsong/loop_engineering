@@ -2,14 +2,9 @@
 # ════════════════════════════════════════════════════════════
 # scripts/install/_common.sh — LoopEngine 安装共享逻辑
 # ════════════════════════════════════════════════════════════
-# 平台无关的安装步骤（git clone / 9 工具部署 / 7 红线 / 自检）
+# 平台无关的安装步骤（detect / clone / render / deploy / inject / check）
 # 由 install.sh + scripts/install/{macos,windows,linux}.sh 通过 source 加载
-#
-# v1.2.4 新增（2026-07-01 跨平台架构）：
-#   • 从 v1.2.3 install.sh 提取平台无关逻辑
-#   • 暴露函数：clone_repo / deploy_to_9_tools / inject_red_lines /
-#     deployment_check / smart_check_version / write_version_file
-#   • SENTINEL 防重入
+# 3 平台脚本只保留 platform-specific 检测 + 单行 *_main 调用
 # ════════════════════════════════════════════════════════════
 
 # SENTINEL 防重入
@@ -28,12 +23,54 @@ _RESET="\033[0m"
 
 # ── 全局变量 ──────────────────────────────────────────────
 COMMON_REPO="https://github.com/tsfdsong/loop_engineering"
-COMMON_VERSION="1.2.6"
+COMMON_VERSION="1.3.1"
 COMMON_WORK=""           # clone 出来的代码根
 COMMON_SCRIPT_DIR=""     # 引用 scripts/*.py 的根（Step 1 后赋值）
 COMMON_RENDERED_DIR=""   # 渲染后的 manifest 目录
 COMMON_TARGETS=()        # 已部署路径数组（调度器汇总用）
 COMMON_INSTALLED_VERSION_FILE="$HOME/.loopengine/.installed_version"
+
+# ── AI Agent 标签映射 (v1.3.0) ────────────────────────────
+# detect_installed_agents 输出内部 ID，install.sh 用此 map 把 ID
+# 转成 tool_root_dirs_for_platform 的"label"做部署过滤
+# 单一真源：tool root label ↔ 内部 agent id（v1.3.1 用关联数组，去除 filter 重复 case）
+declare -A COMMON_LABEL_TO_ID
+COMMON_LABEL_TO_ID["ZCode"]="zcode"
+COMMON_LABEL_TO_ID["Claude Code"]="claude-code"
+COMMON_LABEL_TO_ID["Codex"]="codex"
+COMMON_LABEL_TO_ID["Gemini CLI"]="gemini-cli"
+COMMON_LABEL_TO_ID["GitHub Copilot"]="github-copilot"
+COMMON_LABEL_TO_ID["Pi"]="pi"
+COMMON_LABEL_TO_ID["Cursor"]="cursor"
+COMMON_LABEL_TO_ID["ZCode 内置包"]="zcode-bundled"
+COMMON_LABEL_TO_ID["ZCode CLI 缓存"]="zcode-cli-cache"
+
+# ── 全量 agent ID 列表（--all 时使用）────────────────────
+COMMON_ALL_AGENT_IDS="zcode claude-code codex gemini-cli github-copilot pi cursor zcode-bundled zcode-cli-cache"
+
+# ── MCP 可执行文件 fallback 路径表（v1.3.1 三平台合一）──
+# 模板 {APPDATA} / {HOME} 在 common_detect_mcp_exe 里替换
+# Windows 查 .exe/.cmd；其他平台查裸名
+COMMON_MCP_FALLBACK_PATHS_WINDOWS=(
+    "{APPDATA}/Python/Python39/Scripts"
+    "{APPDATA}/Python/Python310/Scripts"
+    "{APPDATA}/Python/Python311/Scripts"
+    "{APPDATA}/Python/Python312/Scripts"
+    "{APPDATA}/Python/Python313/Scripts"
+    "{APPDATA}/Python/Python314/Scripts"
+    "{APPDATA}/npm"
+)
+COMMON_MCP_FALLBACK_PATHS_MACOS=(
+    "{HOME}/Library/Python/3.9/bin"
+    "{HOME}/Library/Python/3.10/bin"
+    "{HOME}/Library/Python/3.11/bin"
+    "{HOME}/Library/Python/3.12/bin"
+    "{HOME}/Library/Python/3.13/bin"
+    "{HOME}/Library/Python/3.14/bin"
+)
+COMMON_MCP_FALLBACK_PATHS_LINUX=(
+    "{HOME}/.local/bin"
+)
 
 # ── smart_check_version ───────────────────────────────────
 # 输出 + 等待（智能模式）
@@ -75,6 +112,107 @@ common_describe_install_state() {
     fi
 }
 
+# ── detect_installed_agents (v1.3.0) ───────────────────────
+# 自动检测本机已安装的 AI Agent
+# 输出（stdout）：每行一个 agent 内部 ID（zcode / claude-code / codex / ...）
+# 退出码：检测到的数量（即使为 0 也算成功）
+# 特征路径参考：
+#   - skill-hub agents.py:174-179 detect_installed_agents()
+#   - 本机实测：~/.zcode / ~/.claude / ~/.cursor 都存在
+common_detect_installed_agents() {
+    local found=()
+    local xdg="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+    # zcode: ~/.zcode/ 任意子目录存在即视为已装
+    [ -d "$HOME/.zcode" ] && found+=("zcode")
+
+    # claude-code: $CLAUDE_CONFIG_DIR 或 ~/.claude/
+    if [ -n "${CLAUDE_CONFIG_DIR:-}" ] && [ -d "${CLAUDE_CONFIG_DIR}" ]; then
+        found+=("claude-code")
+    elif [ -d "$HOME/.claude" ]; then
+        found+=("claude-code")
+    fi
+
+    # codex: $CODEX_HOME 或 ~/.codex/
+    if [ -n "${CODEX_HOME:-}" ] && [ -d "${CODEX_HOME}" ]; then
+        found+=("codex")
+    elif [ -d "$HOME/.codex" ]; then
+        found+=("codex")
+    fi
+
+    # gemini-cli: ~/.gemini/
+    [ -d "$HOME/.gemini" ] && found+=("gemini-cli")
+
+    # github-copilot: ~/.copilot/
+    [ -d "$HOME/.copilot" ] && found+=("github-copilot")
+
+    # pi: ~/.pi/
+    [ -d "$HOME/.pi" ] && found+=("pi")
+
+    # cursor: ~/.cursor/
+    [ -d "$HOME/.cursor" ] && found+=("cursor")
+
+    # 输出
+    printf '%s\n' "${found[@]}"
+    return ${#found[@]}
+}
+
+# ── filter_tool_root_dirs (v1.3.0) ────────────────────────
+# 按 agent ID 列表过滤 tool_root_dirs 输出
+# 入参：stdin 是 tool_root_dirs_for_platform 输出；$1 是 agent ID 列表（空格分隔）
+# 输出（stdout）：过滤后的 tool root 行
+# v1.3.1 改用 COMMON_LABEL_TO_ID 关联数组（顶部单一真源），去除重复 case
+common_filter_tool_root_dirs() {
+    local want_ids="$1"
+    while IFS= read -r entry; do
+        [[ -z "$entry" ]] && continue
+        local label="${entry%%|*}"
+        local label_id="${COMMON_LABEL_TO_ID[$label]:-}"
+        # 未在表内 label 一律放行（如未来扩展）；否则只在 want_ids 里放行
+        if [ -z "$label_id" ] || [[ " $want_ids " == *" $label_id "* ]]; then
+            echo "$entry"
+        fi
+    done
+}
+
+# ── tool_root_dirs_for_platform (v1.3.0 重构) ─────────────
+# 修复事实 bug (v1.2.4 行为)：macOS/Linux 上原来 9 路径会创建虚假的
+# $HOME/AppData/Local/Programs/ZCode/ 目录（AppData 是 Windows 专属）。
+# 改为按平台选两套独立数组：windows 9 路径（含 zcode-bundled AppData），
+# macos|linux 8 路径（不含 zcode-bundled）。
+# 注意：zcode-cli-cache 在所有平台都合法（$HOME/.zcode/cli/... 跨平台通用）。
+#
+# 调用：common_tool_root_dirs_for_platform <platform>
+# v1.3.1：抽 8 行 BASE_TARGETS 共享数组，windows 追加 1 行 AppData
+common_tool_root_dirs_for_platform() {
+    local pf="${1:-}"
+    # 跨平台共享 8 行基础目标（zcode-bundled 仅 Windows 追加）
+    local base=(
+        "ZCode|$HOME/.zcode/skills/loopengine"
+        "Claude Code|$HOME/.claude/skills/loopengine"
+        "Codex|$HOME/.codex/skills/loopengine"
+        "Gemini CLI|$HOME/.gemini/extensions/loopengine"
+        "GitHub Copilot|$HOME/.copilot/skills/loopengine"
+        "Pi|$HOME/.pi/skills/loopengine"
+        "Cursor|$HOME/.cursor/skills/loopengine"
+    )
+    case "$pf" in
+        windows)
+            printf '%s\n' "${base[@]}" \
+                "ZCode 内置包|$HOME/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin" \
+                "ZCode CLI 缓存|$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine"
+            ;;
+        macos|linux)
+            printf '%s\n' "${base[@]}" \
+                "ZCode CLI 缓存|$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine"
+            ;;
+        *)
+            echo "  ❌ tool_root_dirs_for_platform: 未知平台 '$pf'" >&2
+            return 1
+            ;;
+    esac
+}
+
 # ── detect_pip_cmd ────────────────────────────────────────
 # 跨平台 pip 检测（macOS Homebrew Python 只有 pip3）
 # 输出：pip3 / pip（任一存在）；空字符串（都不存在）
@@ -87,6 +225,214 @@ common_detect_pip_cmd() {
         return 0
     fi
     return 1
+}
+
+# ── common_detect_mcp_exe (v1.3.1 三平台合一) ─────────────
+# 按 $COMMON_PLATFORM 走平台表找 MCP 可执行文件
+# 入参：<cmd_name> 输出：绝对路径 或 空
+# 平台表 COMMON_MCP_FALLBACK_PATHS_<PF> 在 _common.sh 顶部定义
+common_detect_mcp_exe() {
+    local cmd_name="$1"
+    local pf="${COMMON_PLATFORM:-}"
+
+    # 1) PATH 内（带平台后缀 .exe/.cmd 仅 Windows）
+    case "$pf" in
+        windows)
+            for c in "${cmd_name}.exe" "${cmd_name}.cmd" "$cmd_name"; do
+                if command -v "$c" >/dev/null 2>&1; then
+                    command -v "$c"
+                    return 0
+                fi
+            done
+            ;;
+        *)
+            if command -v "$cmd_name" >/dev/null 2>&1; then
+                command -v "$cmd_name"
+                return 0
+            fi
+            ;;
+    esac
+
+    # 2) 平台 fallback 目录（表驱动）
+    local appdata=""
+    [ "$pf" = "windows" ] && appdata="${APPDATA:-$HOME/AppData/Roaming}"
+    local paths_var="COMMON_MCP_FALLBACK_PATHS_${pf^^}"
+    eval "local paths=(\"\${${paths_var}[@]}\")" 2>/dev/null || local paths=()
+    for p in "${paths[@]}"; do
+        # 模板替换：{APPDATA} → $appdata, {HOME} → $HOME
+        p="${p//\{APPDATA\}/$appdata}"
+        p="${p//\{HOME\}/$HOME}"
+        # Windows 优先查 .exe/.cmd，其他平台查裸名
+        if [ "$pf" = "windows" ]; then
+            for ext in ".exe" ".cmd" ""; do
+                [ -f "${p}${ext}" ] && { echo "${p}${ext}"; return 0; }
+            done
+        else
+            [ -f "$p" ] && { echo "$p"; return 0; }
+        fi
+    done
+    return 1
+}
+
+# ── common_install_mcp_packages (v1.3.1 三平台合一) ───────
+# 安装 MCP 三件套：jcodemunch-mcp / headroom / repomix
+# 平台差异：Windows 用 py -m pip；macOS/Linux 用 pip3 + --break-system-packages fallback
+common_install_mcp_packages() {
+    local mcp_packages=(
+        "jcodemunch-mcp|jcodemunch-mcp|true"
+        "headroom|headroom|false"
+        "repomix|repomix|true"
+    )
+
+    # 平台 pip 命令探测
+    local pip_cmd=""
+    case "${COMMON_PLATFORM:-}" in
+        windows)
+            if command -v py >/dev/null 2>&1; then
+                pip_cmd="py -m pip"
+            elif command -v pip3 >/dev/null 2>&1; then
+                pip_cmd="pip3"
+            elif command -v pip >/dev/null 2>&1; then
+                pip_cmd="pip"
+            fi
+            ;;
+        *)
+            if ! pip_cmd=$(common_detect_pip_cmd); then
+                echo -e "  ${_YELLOW}⚠${_RESET}  未找到 pip/pip3，跳过 MCP 包安装"
+                return 0
+            fi
+            ;;
+    esac
+
+    for entry in "${mcp_packages[@]}"; do
+        IFS='|' read -r pkg cmd is_mcp <<< "$entry"
+
+        # 已装检查（Windows 多 .exe/.cmd 后缀）
+        local installed=0
+        if [ "${COMMON_PLATFORM:-}" = "windows" ]; then
+            command -v "${cmd}.exe" >/dev/null 2>&1 && installed=1
+            command -v "${cmd}.cmd" >/dev/null 2>&1 && installed=1
+        else
+            command -v "$cmd" >/dev/null 2>&1 && installed=1
+        fi
+        if [ "$installed" = "1" ]; then
+            echo -e "  ${_GREEN}✅${_RESET} ${cmd} 已装"
+            continue
+        fi
+
+        # repomix 走 npm
+        if [[ "$pkg" == *"repomix"* ]]; then
+            if command -v npm >/dev/null 2>&1; then
+                if npm install -g "$pkg" 2>/dev/null; then
+                    echo -e "  ${_GREEN}✅${_RESET} ${pkg} (npm)"
+                fi
+            else
+                echo -e "  ${_YELLOW}⚠${_RESET}  npm 未装 — 手动: npm i -g $pkg"
+            fi
+            continue
+        fi
+
+        # 其余 pip
+        if [ -z "$pip_cmd" ]; then
+            echo -e "  ${_YELLOW}⚠${_RESET}  pip 未找到，跳过 ${pkg}"
+            continue
+        fi
+        if $pip_cmd install --user "$pkg" >/dev/null 2>&1; then
+            echo -e "  ${_GREEN}✅${_RESET} ${pkg} (${pip_cmd} --user)"
+        elif $pip_cmd install --user --break-system-packages "$pkg" >/dev/null 2>&1; then
+            echo -e "  ${_GREEN}✅${_RESET} ${pkg} (${pip_cmd} --user --break-system-packages)"
+        else
+            echo -e "  ${_YELLOW}⚠${_RESET}  ${pkg} 安装失败 — 手动: ${pip_cmd} install --user $pkg"
+        fi
+
+        if [ "$is_mcp" = "false" ]; then
+            echo -e "  ${_CYAN}ℹ${_RESET}  ${cmd} 是 Python 库（非 MCP server），跳过桌面配置"
+        fi
+    done
+}
+
+# ── common_write_zcode_desktop_config (v1.3.1 三平台合一) ─
+# 写入 ~/.zcode/cli/config.json (jcodemunch + repomix)
+# Windows 多走 to_forward_slashes 转换（依赖平台脚本的该函数）
+common_write_zcode_desktop_config() {
+    local cfg="$HOME/.zcode/cli/config.json"
+    local jcode_exe repo_exe
+    jcode_exe=$(common_detect_mcp_exe jcodemunch-mcp) || jcode_exe=""
+    repo_exe=$(common_detect_mcp_exe repomix) || repo_exe=""
+
+    if [ -z "$jcode_exe" ] || [ -z "$repo_exe" ]; then
+        echo -e "  ${_YELLOW}⚠${_RESET}  jcodemunch/repomix 未全部找到，跳过桌面版配置写入"
+        return 0
+    fi
+
+    # Windows 路径转 forward slash
+    if [ "${COMMON_PLATFORM:-}" = "windows" ] && type to_forward_slashes >/dev/null 2>&1; then
+        jcode_exe=$(to_forward_slashes "$jcode_exe")
+        repo_exe=$(to_forward_slashes "$repo_exe")
+    fi
+
+    mkdir -p "$(dirname "$cfg")"
+    if python "$COMMON_SCRIPT_DIR/scripts/merge_mcp_config.py" zcode "$cfg" "$jcode_exe" "$repo_exe"; then
+        echo -e "  ${_GREEN}✅${_RESET} [ZCode 桌面版 MCP] $cfg"
+        COMMON_TARGETS+=("ZCode 桌面版 MCP:$cfg")
+    else
+        echo -e "  ${_RED}❌${_RESET} 合并 $cfg 失败，详见上方 Python 错误"
+        return 1
+    fi
+}
+
+# ── common_platform_title (v1.3.1 抽出 · 去重) ─────────────
+# platform id → 显示名 (windows/macos/linux → Windows/macOS/Linux)
+# 调用：common_platform_title <pf> → 输出显示名（未知平台 → 空）
+common_platform_title() {
+    case "${1:-}" in
+        windows) echo "Windows" ;;
+        macos)   echo "macOS" ;;
+        linux)   echo "Linux" ;;
+    esac
+}
+
+# ── common_step5_5_cursor_mcp (v1.3.1 抽出) ───────────────
+# v1.3.0 重复 3 平台 *_main 末尾，v1.3.1 抽到 _common.sh
+# 仅当 detect 到 cursor 时调用
+common_step5_5_cursor_mcp() {
+    local pf_title
+    pf_title=$(common_platform_title "${COMMON_PLATFORM:-}")
+
+    if [[ " ${COMMON_AGENT_LIST:-} " == *" cursor "* ]]; then
+        echo ""
+        echo -e "${_BOLD}🎯 Step 5.5: 配置 Cursor MCP (${pf_title} · ~/.cursor/mcp.json)...${_RESET}"
+        common_deploy_cursor_mcp
+    else
+        echo -e "  ${_CYAN}ℹ${_RESET}  跳过 Cursor MCP（detect 结果不含 cursor）"
+    fi
+}
+
+# ── common_run_platform_steps (v1.3.1 主驱动) ──────────────
+# 替代 3 平台 *_main 主体（Step 3-5.5）
+# 3 平台 *_main 现在只是 1 行调用本函数
+common_run_platform_steps() {
+    local pf="${1:-${COMMON_PLATFORM:-}}"
+    local pf_title
+    pf_title=$(common_platform_title "$pf")
+    if [ -z "$pf_title" ]; then
+        echo -e "${_RED}❌ 未知平台：${pf}${_RESET}" >&2
+        return 1
+    fi
+
+    echo ""
+    echo -e "${_BOLD}🔌 Step 3: 安装 MCP 三件套（${pf_title}）...${_RESET}"
+    common_install_mcp_packages
+
+    echo ""
+    echo -e "${_BOLD}⚙️  Step 4: 配置 ZCode 桌面版 MCP (${pf_title} · ~/.zcode/cli/config.json)...${_RESET}"
+    common_write_zcode_desktop_config
+
+    echo ""
+    echo -e "${_BOLD}🌐 Step 5: 注入全局红线规则...${_RESET}"
+    common_inject_red_lines
+
+    common_step5_5_cursor_mcp
 }
 
 # ── clone_repo ────────────────────────────────────────────
@@ -107,7 +453,7 @@ common_clone_repo() {
     # v1.2.5 扩展：除 .py 外，还覆盖 .plugin-template.json 与 .*-plugin/plugin.json
     # 否则本地修改 plugin manifest 后，install.sh 仍从远端 clone 的旧版本渲染，修复不可见
     if [ -n "${COMMON_LOCAL_SRC_DIR:-}" ] && [ -d "$COMMON_LOCAL_SRC_DIR/scripts" ]; then
-        # v1.2.5 修复: COMMON_LOCAL_SRC_DIR = 项目根（install.sh:84），不是 scripts/
+        # 修复: COMMON_LOCAL_SRC_DIR = 项目根（install.sh 与 _common.sh 同目录），不是 scripts/
         # 之前的 ../ 是 bug，去掉
         cp -f "$COMMON_LOCAL_SRC_DIR/scripts"/*.py "$COMMON_WORK/scripts/" 2>/dev/null
         # 覆盖 plugin manifest 关键 JSON
@@ -145,187 +491,126 @@ common_render_plugins() {
     fi
 }
 
-# ── deploy_to_9_tools ─────────────────────────────────────
-# Step 2b-2e：部署 skills / hooks / manifest / AGENTS.md / README.md 到 9 工具
-# 调用：common_deploy_to_9_tools
-#
-# v1.2.6 修复路径策略:
-#   - 平铺目标（6 工具）: Skills 直接作为 root_dir 的子目录
-#     例: ~/.claude/skills/orch/, ~/.cursor/skills/orch/
-#     适用: Claude Code Skills / Codex Skills / Cursor Skills / Pi / Copilot
-#     原因: 这些工具的 Skills 全局加载机制 = 平铺 root/skills/<name>/SKILL.md
-#   - Plugin 目标（3 工具）: root_dir 作为 plugin 命名空间，技能装到 skills/ 子目录
-#     例: ~/.gemini/extensions/loopengine/skills/orch/
-#     适用: Gemini CLI / ZCode 内置包 / ZCode CLI 缓存
-#     原因: 这些工具从 plugin manifest 加载技能，必须保留 plugin 命名空间
-#   - ZCode CLI 缓存路径 = ~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/<version>/
-#     v1.2.6 新增 <version> 子目录（其他 plugin 如 ios-simulator 都有 0.1.0/ 子目录）
+# ── deploy_to_9_tools (v1.3.1 拆 5 sub-function) ─────────
+# Step 2b-2e：部署 skills / hooks / manifest / AGENTS.md / README.md 到目标工具
+# v1.3.1 拆分为 5 sub-function 替代原 100 行单函数
 common_deploy_to_9_tools() {
     local skills_dir="$COMMON_WORK/skills"
     local hooks_dir="$COMMON_WORK/hooks"
     local agents_md="$COMMON_WORK/AGENTS.md"
     local readme_md="$COMMON_WORK/README.md"
 
-    # 平铺目标（6 项 · 技能直接作为 root_dir 子目录）
-    # 格式: "label|root_dir"
-    local flat_targets=(
-        "Claude Code|$HOME/.claude/skills"
-        "Codex|$HOME/.codex/skills"
-        "GitHub Copilot|$HOME/.copilot/skills"
-        "Pi|$HOME/.pi/skills"
-        "Cursor|$HOME/.cursor/skills"
-        "ZCode 用户级|$HOME/.zcode/skills"
-    )
-
-    # Plugin 命名空间目标（3 项 · root_dir 下嵌套 skills/）
-    # v1.2.6: ZCode CLI 缓存加 ${COMMON_VERSION} 子目录
-    local plugin_targets=(
-        "Gemini CLI|$HOME/.gemini/extensions/loopengine"
-        "ZCode 内置包|$HOME/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin"
-        "ZCode CLI 缓存|$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/${COMMON_VERSION}"
-    )
-
-    # 兼容旧 root_dir 列表（自检用）
-    local tool_root_dirs=("${flat_targets[@]}" "${plugin_targets[@]}")
-
-    echo -e "  ${_BOLD}Step 2b-pre: 清理 9 个目标残留的旧版本 v1.2.5 plugin 命名空间...${_RESET}"
-    # v1.2.6 修复: v1.2.5 把技能装到 ~/.claude/skills/loopengine/skills/<name>/ (3 层嵌套),
-    # 现在改成平铺 ~/.claude/skills/<name>/ (1 层), 必须先清理旧 loopengine 命名空间,
-    # 否则两个版本同时存在导致 ZCode 桌面版重复识别技能
-    local legacy_root_dirs=(
-        "$HOME/.zcode/skills/loopengine"
-        "$HOME/.claude/skills/loopengine"
-        "$HOME/.codex/skills/loopengine"
-        "$HOME/.copilot/skills/loopengine"
-        "$HOME/.pi/skills/loopengine"
-        "$HOME/.cursor/skills/loopengine"
-        "$HOME/.gemini/extensions/loopengine"
-        "$HOME/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin"
-        "$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine"
-    )
-    for legacy in "${legacy_root_dirs[@]}"; do
-        if [ -d "$legacy" ]; then
-            # 整目录删除（v1.2.5 整目录都没有用户自定义内容，可安全删除）
-            rm -rf "$legacy" 2>/dev/null && \
-                echo -e "  ${_GREEN}✅${_RESET}  清理旧路径: $legacy"
-        fi
-    done
-
-    echo -e "  ${_BOLD}Step 2b-1: 复制 skills/ 到 6 个平铺目标（技能作为 root_dir 子目录）...${_RESET}"
-    for entry in "${flat_targets[@]}"; do
-        IFS='|' read -r label root_dir <<< "$entry"
-        # v1.2.6: 平铺模式 — 直接 cp skills/* 到 root_dir/
-        common_copy_tree "$label skills" "$skills_dir" "$root_dir"
-    done
-
-    echo -e "  ${_BOLD}Step 2b-2: 复制 skills/ 到 3 个 plugin 目标的 skills/ 子目录...${_RESET}"
-    for entry in "${plugin_targets[@]}"; do
-        IFS='|' read -r label root_dir <<< "$entry"
-        # v1.2.6: Plugin 模式 — 保留 skills/ 子目录嵌套
-        common_copy_tree "$label skills" "$skills_dir" "$root_dir/skills"
-    done
-
-    echo -e "  ${_BOLD}Step 2c: 复制 hooks/ 到 3 个 plugin 目标（平铺目标不需要 hooks 目录）...${_RESET}"
-    # v1.2.6: hooks 仅 plugin 模式需要（hook 系统依赖 plugin manifest）
-    # 平铺目标（Claude/Cursor/Codex/Pi/Copilot）走各工具原生 hooks 机制，不需要这里部署
-    for entry in "${plugin_targets[@]}"; do
-        IFS='|' read -r label root_dir <<< "$entry"
-        common_copy_tree "$label hooks" "$hooks_dir" "$root_dir/hooks"
-    done
-
-    echo -e "  ${_BOLD}Step 2d: 部署 plugin manifest 到 3 个 plugin 目标（平铺目标不需要）...${_RESET}"
-    # v1.2.6: 平铺目标不需要 plugin manifest（Skills 全局加载不需要 manifest）
-    # 仅 Gemini/内置包/ZCode CLI 缓存需要 manifest
-    for entry in "${plugin_targets[@]}"; do
-        IFS='|' read -r label root_dir <<< "$entry"
-        case "$label" in
-            "Gemini CLI")
-                common_copy_file "$label gemini-extension.json" "$COMMON_RENDERED_DIR/gemini-extension.json" "$root_dir/gemini-extension.json"
-                ;;
-            "ZCode 内置包"|"ZCode CLI 缓存")
-                common_copy_file "$label plugin.json" "$COMMON_RENDERED_DIR/zcode-plugin/plugin.json" "$root_dir/.zcode-plugin/plugin.json"
-                ;;
-        esac
-    done
-
-    echo -e "  ${_BOLD}Step 2d-extra: 部署 Claude Code marketplace.json（独立 schema）...${_RESET}"
-    # v1.2.6: Claude marketplace.json 写到 ~/.claude/plugins/marketplaces.json
-    common_copy_file "Claude marketplace" "$COMMON_RENDERED_DIR/claude-plugin/marketplace.json" "$HOME/.claude/plugins/marketplaces.json"
-
-    echo -e "  ${_BOLD}Step 2d-extra: 注册 ZCode plugin 到 enabledPlugins + known_marketplaces...${_RESET}"
-    # v1.2.6 修复: v1.2.5 只复制了 plugin 到 cache, 没有注册到 enabledPlugins,
-    # 导致 ZCode 桌面版/CLI 找不到 loopengine (enabledPlugins 列表里没它).
-    # 必须把 loopengine@zcode-plugins-official 加到 ~/.zcode/cli/config.json 的 plugins.enabledPlugins
-    common_register_zcode_plugin
-
-    echo -e "  ${_BOLD}Step 2e: 复制项目根文档 (AGENTS.md / README.md) 到 3 个 plugin 目标...${_RESET}"
-    # v1.2.6: AGENTS.md / README.md 仅 plugin 目标需要（plugin 模式的元数据）
-    # 平铺目标不需要（用户级红线注入 Step 5 已覆盖）
-    for entry in "${plugin_targets[@]}"; do
-        IFS='|' read -r label root_dir <<< "$entry"
-        common_copy_file "$label AGENTS.md" "$agents_md" "$root_dir/AGENTS.md"
-        common_copy_file "$label README.md" "$readme_md" "$root_dir/README.md"
-    done
-}
-
-# ── register_zcode_plugin ──────────────────────────────────
-# v1.2.6 新增: 把 loopengine 注册到 ZCode 的 enabledPlugins + known_marketplaces
-# 不注册的话 ZCode 桌面版/CLI 找不到 cache 里的 plugin
-# 调用：common_register_zcode_plugin
-common_register_zcode_plugin() {
-    local cfg="$HOME/.zcode/cli/config.json"
-    local mp="$HOME/.zcode/cli/plugins/known_marketplaces.json"
-
-    # 1) 写 ~/.zcode/cli/config.json (idempotent)
-    if [ -f "$cfg" ]; then
-        # 用 python 保证 JSON 安全（idempotent：已存在不重复加）
-        if python "$COMMON_SCRIPT_DIR/scripts/register_zcode_plugin.py" "$cfg" "loopengine" "zcode-plugins-official" 2>/dev/null; then
-            echo -e "  ${_GREEN}✅${_RESET}  [ZCode enabledPlugins] 注册 loopengine@zcode-plugins-official → $cfg"
-        else
-            echo -e "  ${_YELLOW}⚠${_RESET}  [ZCode enabledPlugins] 注册失败（已存在或 JSON 错误），跳过"
-        fi
-    else
-        # 首次安装 — 创建最小 config
-        mkdir -p "$(dirname "$cfg")"
-        cat > "$cfg" <<EOF
-{
-  "plugins": {
-    "enabledPlugins": {
-      "loopengine@zcode-plugins-official": true
-    }
-  }
-}
-EOF
-        echo -e "  ${_GREEN}✅${_RESET}  [ZCode enabledPlugins] 首次创建 $cfg"
+    local pf="${COMMON_PLATFORM:-}"
+    if [ -z "$pf" ]; then
+        echo -e "  ${_RED}❌${_RESET}  COMMON_PLATFORM 未设置（应在 install.sh 检测后注入）" >&2
+        return 1
     fi
 
-    # 2) 写 ~/.zcode/cli/plugins/known_marketplaces.json (idempotent)
-    if [ -f "$mp" ]; then
-        if python "$COMMON_SCRIPT_DIR/scripts/register_zcode_marketplace.py" "$mp" "zcode-plugins-official" 2>/dev/null; then
-            echo -e "  ${_GREEN}✅${_RESET}  [ZCode known_marketplaces] 注册 zcode-plugins-official → $mp"
-        else
-            echo -e "  ${_YELLOW}⚠${_RESET}  [ZCode known_marketplaces] 注册失败（已存在或 JSON 错误），跳过"
-        fi
-    else
-        # 首次安装 — 创建最小 marketplace
-        mkdir -p "$(dirname "$mp")"
-        cat > "$mp" <<EOF
-{
-  "version": 1,
-  "marketplaces": [
-    {
-      "id": "zcode-plugins-official",
-      "source": {"source": "local", "path": "$HOME/.zcode/cli/plugins/cache/zcode-plugins-official"},
-      "name": "zcode-plugins-official",
-      "description": "ZCode official plugins (loopengine etc.)",
-      "addedAt": "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)",
-      "pluginCount": 0
-    }
-  ]
-}
-EOF
-        echo -e "  ${_GREEN}✅${_RESET}  [ZCode known_marketplaces] 首次创建 $mp"
+    local want_ids="${COMMON_AGENT_LIST:-$COMMON_ALL_AGENT_IDS}"
+    local entries
+    entries=$(common_tool_root_dirs_for_platform "$pf" | common_filter_tool_root_dirs "$want_ids")
+    if [ -z "$entries" ]; then
+        echo -e "  ${_YELLOW}⚠${_RESET}  按平台 '$pf' + agent filter 后无目标可部署"
+        return 0
     fi
+
+    echo -e "  ${_BOLD}Step 2b-pre: 清理目标 plugin 顶层散落的旧平铺技能目录...${_RESET}"
+    _for_each_target "$entries" common_cleanup_target_top_level
+
+    echo -e "  ${_BOLD}Step 2b: 复制 skills/ 到目标 skills/ 子目录...${_RESET}"
+    _for_each_target "$entries" common_copy_skills_for "$skills_dir"
+
+    echo -e "  ${_BOLD}Step 2c: 复制 hooks/ 到目标...${_RESET}"
+    _for_each_target "$entries" common_copy_hooks_for "$hooks_dir"
+
+    echo -e "  ${_BOLD}Step 2d: 部署 plugin manifest...${_RESET}"
+    _for_each_target "$entries" common_deploy_manifest_for
+
+    echo -e "  ${_BOLD}Step 2e: 复制项目根文档 (AGENTS.md / README.md)...${_RESET}"
+    _for_each_target "$entries" common_copy_root_docs_for "$agents_md" "$readme_md"
+}
+
+# 通用 iterator：每个 (label, root_dir) 调一次 $action
+# action 签名：action <label> <root_dir> [extra args]
+_for_each_target() {
+    local entries="$1"; shift
+    local action="$1"; shift
+    while IFS= read -r entry; do
+        [[ -z "$entry" ]] && continue
+        IFS='|' read -r label root_dir <<< "$entry"
+        "$action" "$label" "$root_dir" "$@"
+    done <<< "$entries"
+}
+
+# ── deploy sub-functions (v1.3.1 拆分) ────────────────────
+# 每个 sub-function 处理 1 个 Step，单一职责
+
+# Step 2b-pre: 清理 plugin 顶层非元目录（v1.2.5 修复后旧目录残留）
+common_cleanup_target_top_level() {
+    local label="$1" root_dir="$2"
+    [ -d "$root_dir" ] || return 0
+    # 保留元目录/元文件：hooks/ skills/ .*-plugin/ AGENTS.md README.md package.json marketplace.json gemini-extension.json
+    find "$root_dir" -mindepth 1 -maxdepth 1 \
+        ! -name 'hooks' \
+        ! -name 'skills' \
+        ! -name '.zcode-plugin' \
+        ! -name '.claude-plugin' \
+        ! -name '.codex-plugin' \
+        ! -name '.cursor-plugin' \
+        ! -name '.copilot-plugin' \
+        ! -name '.pi-plugin' \
+        ! -name 'AGENTS.md' \
+        ! -name 'README.md' \
+        ! -name 'package.json' \
+        ! -name 'marketplace.json' \
+        ! -name 'gemini-extension.json' \
+        -exec rm -rf {} + 2>/dev/null
+    echo -e "  ${_GREEN}✅${_RESET}  [$label] 顶层清理完成: $root_dir"
+}
+
+# Step 2b: 复制 skills/ 到目标 skills/ 子目录
+common_copy_skills_for() {
+    local label="$1" root_dir="$2" skills_dir="$3"
+    common_copy_tree "$label skills" "$skills_dir" "$root_dir/skills"
+}
+
+# Step 2c: 复制 hooks/ 到目标
+common_copy_hooks_for() {
+    local label="$1" root_dir="$2" hooks_dir="$3"
+    common_copy_tree "$label hooks" "$hooks_dir" "$root_dir/hooks"
+}
+
+# Step 2d: 部署 plugin manifest (按 label 分发)
+common_deploy_manifest_for() {
+    local label="$1" root_dir="$2"
+    case "$label" in
+        "ZCode"|"ZCode 内置包"|"ZCode CLI 缓存")
+            common_copy_file "$label plugin.json" "$COMMON_RENDERED_DIR/zcode-plugin/plugin.json" "$root_dir/.zcode-plugin/plugin.json"
+            ;;
+        "Claude Code")
+            common_copy_file "$label plugin.json" "$COMMON_RENDERED_DIR/claude-plugin/plugin.json" "$root_dir/.claude-plugin/plugin.json"
+            common_copy_file "$label marketplace.json" "$COMMON_RENDERED_DIR/claude-plugin/marketplace.json" "$root_dir/.claude-plugin/marketplace.json"
+            ;;
+        "Codex")
+            common_copy_file "$label plugin.json" "$COMMON_RENDERED_DIR/codex-plugin/plugin.json" "$root_dir/.codex-plugin/plugin.json"
+            ;;
+        "Cursor")
+            common_copy_file "$label plugin.json" "$COMMON_RENDERED_DIR/cursor-plugin/plugin.json" "$root_dir/.cursor-plugin/plugin.json"
+            ;;
+        "Gemini CLI")
+            common_copy_file "$label gemini-extension.json" "$COMMON_RENDERED_DIR/gemini-extension.json" "$root_dir/gemini-extension.json"
+            ;;
+        "GitHub Copilot"|"Pi")
+            : # 不通过 manifest 部署
+            ;;
+    esac
+}
+
+# Step 2e: 复制项目根文档 (AGENTS.md / README.md)
+common_copy_root_docs_for() {
+    local label="$1" root_dir="$2" agents_md="$3" readme_md="$4"
+    common_copy_file "$label AGENTS.md" "$agents_md" "$root_dir/AGENTS.md"
+    common_copy_file "$label README.md" "$readme_md" "$root_dir/README.md"
 }
 
 # ── copy_tree / copy_file ─────────────────────────────────
@@ -359,6 +644,45 @@ common_copy_file() {
         echo -e "  ${_GREEN}✅${_RESET} [$label] $dst"
     else
         echo -e "  ${_YELLOW}⚠${_RESET}  [$label] 复制失败: $dst"
+    fi
+}
+
+# ── deploy_cursor_mcp (v1.3.0 新增) ────────────────────────
+# Step 5.5：写入 Cursor 全局 MCP 配置 ~/.cursor/mcp.json
+# 要求：
+#   1) agent filter 列表中包含 cursor（仅当 detect 到 Cursor 才调用）
+#   2) jcodemunch-mcp + repomix + headroom 可执行文件已通过
+#      平台 detect_mcp_exe_* 检测到（PATH 内或各平台 fallback 目录）
+# schema: Cursor 用 mcpServers (无 type 字段)，与 ZCode mcp.servers+type:"stdio" 不同
+# 复用平台子脚本的 detect_mcp_exe_<platform> 函数 + windows.sh 的 to_forward_slashes
+common_deploy_cursor_mcp() {
+    # v1.3.1 简化：走 common_detect_mcp_exe + 平台表，删硬编码 case
+    local jcode_exe repo_exe hdrm_exe
+    jcode_exe=$(common_detect_mcp_exe jcodemunch-mcp) || jcode_exe=""
+    repo_exe=$(common_detect_mcp_exe repomix) || repo_exe=""
+    hdrm_exe=$(common_detect_mcp_exe headroom) || hdrm_exe=""
+
+    if [ -z "$jcode_exe" ] || [ -z "$repo_exe" ] || [ -z "$hdrm_exe" ]; then
+        echo -e "  ${_YELLOW}⚠${_RESET}  3 个 MCP 可执行文件未全部找到，跳过 ~/.cursor/mcp.json 写入"
+        echo -e "  ${_CYAN}ℹ${_RESET}  手动: 安装 jcodemunch-mcp + repomix + headroom 后重跑 bash install.sh --force"
+        return 0
+    fi
+
+    # Windows 路径转 forward slash（依赖平台脚本的 to_forward_slashes 函数）
+    if [ "${COMMON_PLATFORM:-}" = "windows" ] && type to_forward_slashes >/dev/null 2>&1; then
+        jcode_exe=$(to_forward_slashes "$jcode_exe")
+        repo_exe=$(to_forward_slashes "$repo_exe")
+        hdrm_exe=$(to_forward_slashes "$hdrm_exe")
+    fi
+
+    local cfg="$HOME/.cursor/mcp.json"
+    mkdir -p "$(dirname "$cfg")"
+    if python "$COMMON_SCRIPT_DIR/scripts/merge_mcp_config.py" cursor "$cfg" "$jcode_exe" "$repo_exe" "$hdrm_exe"; then
+        echo -e "  ${_GREEN}✅${_RESET} [Cursor MCP] $cfg"
+        COMMON_TARGETS+=("Cursor MCP:$cfg")
+    else
+        echo -e "  ${_RED}❌${_RESET} 合并 $cfg 失败，详见上方 Python 错误"
+        return 1
     fi
 }
 
@@ -480,32 +804,29 @@ common_deployment_check() {
     echo ""
     echo -e "${_BOLD}🔬 Step 6: 部署自检...${_RESET}"
 
-    # 检查 9 工具 skills 目录至少 8 个部署成功
-    # v1.2.6: 平铺目标直接检查 <root>/orch/, plugin 目标检查 <root>/skills/orch/
+    # 检查目标 skills 目录（按平台分支 + agent 过滤；v1.3.0 自适应）
     local skill_ok=0
-    local flat_checks=(
-        "$HOME/.zcode/skills/orch"
-        "$HOME/.claude/skills/orch"
-        "$HOME/.codex/skills/orch"
-        "$HOME/.copilot/skills/orch"
-        "$HOME/.pi/skills/orch"
-        "$HOME/.cursor/skills/orch"
-    )
-    local plugin_checks=(
-        "$HOME/.gemini/extensions/loopengine/skills/orch"
-        "$HOME/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin/skills/orch"
-        "$HOME/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/${COMMON_VERSION}/skills/orch"
-    )
-    for d in "${flat_checks[@]}" "${plugin_checks[@]}"; do
-        if [ -d "$d" ]; then
-            skill_ok=$((skill_ok + 1))
-        fi
-    done
-    if [ "$skill_ok" -ge 8 ]; then
-        echo -e "  ${_GREEN}✅${_RESET} 至少 8 个工具的 skills 目录已部署（实际 $skill_ok/9）"
+    local skill_total=0
+    local pf="${COMMON_PLATFORM:-}"
+    local want_ids="${COMMON_AGENT_LIST:-$COMMON_ALL_AGENT_IDS}"
+    if [ -n "$pf" ]; then
+        while IFS= read -r entry; do
+            [[ -z "$entry" ]] && continue
+            IFS='|' read -r label root_dir <<< "$entry"
+            skill_total=$((skill_total + 1))
+            if [ -d "$root_dir/skills/orch" ] || [ -d "$root_dir/skills/loop" ]; then
+                skill_ok=$((skill_ok + 1))
+            fi
+        done < <(common_tool_root_dirs_for_platform "$pf" | common_filter_tool_root_dirs "$want_ids")
+    fi
+    # v1.3.0 阈值：技能数 ≥ 实际总目标的 80%（保留对 agent filter 的容错）
+    local threshold=$(( skill_total * 80 / 100 ))
+    [ "$threshold" -lt 1 ] && threshold=1
+    if [ "$skill_ok" -ge "$threshold" ]; then
+        echo -e "  ${_GREEN}✅${_RESET} 至少 $threshold 个目标的 skills 目录已部署（实际 $skill_ok/$skill_total）"
         check_pass=$((check_pass + 1))
     else
-        echo -e "  ${_RED}❌${_RESET} skills 目录部署不足：$skill_ok/9 (< 8)"
+        echo -e "  ${_RED}❌${_RESET} skills 目录部署不足：$skill_ok/$skill_total (< $threshold)"
         check_fail=$((check_fail + 1))
     fi
 

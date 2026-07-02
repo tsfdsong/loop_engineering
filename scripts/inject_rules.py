@@ -6,7 +6,7 @@
 #   - block_dir 下每个文件 = 一个规则块（含 BEGIN/END LOOPENGINE-MANAGED marker）
 #   - 目标文件已存在则替换旧块（UPDATED），否则追加（APPENDED）
 #   - 保留用户在其他章节的自定义内容
-# 由 install.sh install_managed_rules() 调用（替代原内嵌 heredoc）。
+# 由 _common.sh::common_inject_rules_to_target() 调用（替代原内嵌 heredoc）。
 # ────────────────────────────────────────────────────────────
 
 import os

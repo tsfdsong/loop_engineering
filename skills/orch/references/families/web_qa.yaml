@@ -1,0 +1,18 @@
+family: web_qa
+goal_defaults: [report]
+actions:
+  - browser_explore
+  - browser_regression_test
+  - browser_visual_diff
+  - browser_accessibility_audit
+  - browser_perf_audit
+  - synthesize_findings
+execution:
+  mode: parallel
+  bootstrap:
+    - browser_explore
+  fan_out:
+    - browser_regression_test
+    - browser_visual_diff
+    - browser_accessibility_audit
+    - browser_perf_audit

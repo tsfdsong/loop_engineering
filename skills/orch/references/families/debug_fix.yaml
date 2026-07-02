@@ -1,0 +1,10 @@
+family: debug_fix
+goal_defaults: [fix]
+actions:
+  - debug_root_cause
+  - fix_issue
+  - verify_result
+execution:
+  mode: serial
+  executor_bridge:
+    write_nodes: loop

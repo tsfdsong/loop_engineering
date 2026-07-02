@@ -31,6 +31,19 @@ import os
 import sys
 
 
+def _status_print(message: str, *, error: bool = False) -> None:
+    """在不同终端编码下安全打印状态信息。"""
+    stream = sys.stderr if error else sys.stdout
+    try:
+        print(message, file=stream)
+    except UnicodeEncodeError:
+        sanitized = (
+            message.encode(stream.encoding or "utf-8", errors="replace")
+            .decode(stream.encoding or "utf-8", errors="replace")
+        )
+        print(sanitized, file=stream)
+
+
 def deep_merge(base: dict, overlay: dict) -> dict:
     """深合并：overlay 字段覆盖 base 字段；dict 递归合并。"""
     merged = dict(base)
@@ -60,7 +73,7 @@ def strip_meta(d: dict) -> dict:
     return out
 
 
-# ── P4 重构：抽公共 JSON I/O 公共函数 ─────────────────────────
+# ── JSON I/O 公共函数 ─────────────────────────
 def _read_json(path: str) -> dict:
     """读 JSON 文件，UTF-8 编码。"""
     with open(path, "r", encoding="utf-8") as f:
@@ -82,7 +95,7 @@ def render_plugin_json(template: dict, overlay_path: str, out_path: str, label: 
     overlay = _read_json(overlay_path)
     merged = deep_merge(template, overlay)
     _write_json(out_path, merged)
-    print(f"  ✅ {label}")
+    _status_print(f"  ✅ {label}")
     return True
 
 
@@ -95,15 +108,15 @@ def render_marketplace(template: dict, mp_path: str, out_path: str, label: str) 
         plugin["version"] = template.get("version", plugin.get("version"))
         plugin["description"] = template.get("description", plugin.get("description"))
     _write_json(out_path, mp)
-    print(f"  ✅ {label}")
+    _status_print(f"  ✅ {label}")
     return True
 
 
 def main():
     if len(sys.argv) != 3:
-        print(
+        _status_print(
             f"Usage: {sys.argv[0]} <project_root> <out_dir>",
-            file=sys.stderr,
+            error=True,
         )
         sys.exit(2)
 
@@ -112,7 +125,7 @@ def main():
     template_path = os.path.join(project_root, ".plugin-template.json")
 
     if not os.path.isfile(template_path):
-        print(f"  ❌ 模板不存在: {template_path}", file=sys.stderr)
+        _status_print(f"  ❌ 模板不存在: {template_path}", error=True)
         sys.exit(1)
 
     template = strip_meta(_read_json(template_path))
@@ -120,7 +133,7 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
     rendered = 0
 
-    # ── P5 重构：自动发现 .*-plugin/plugin.json（不再硬编码 5 个目录名）──
+    # 自动发现 .*-plugin/plugin.json（glob 模式扫描所有 .*-plugin 目录）
     overlay_paths = sorted(glob.glob(os.path.join(project_root, ".*-plugin", "plugin.json")))
     for overlay_path in overlay_paths:
         # 从 .claude-plugin/plugin.json 提取 claude-plugin（去前导点）
@@ -149,9 +162,9 @@ def main():
         rendered += 1
 
     if rendered == 0:
-        print("  ❌ 未渲染任何 manifest", file=sys.stderr)
+        _status_print("  ❌ 未渲染任何 manifest", error=True)
         sys.exit(1)
-    print(f"  ✅ 渲染 {rendered} 个 manifest")
+    _status_print(f"  ✅ 渲染 {rendered} 个 manifest")
 
 
 if __name__ == "__main__":

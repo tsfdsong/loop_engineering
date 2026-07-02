@@ -12,8 +12,8 @@ description: Use when users are new to LoopEngine or need guidance on how the lo
 ```
 ┌─────────────────────────────────────────────────┐
 │                     orch                        │
-│         🧠 多技能编排器 · 显式 /orch 触发         │
-│   单技能(80%)走原生 · 多技能(20%)走 5 类任务链     │
+│   🧠 多技能编排器 · 自然语言优先 · /orch 可强制   │
+│ 单技能走原生 · 多技能自动判定是否进入 orchestrator │
 └────────┬──────────────────────────┬─────────────┘
          │                          │
          ▼                          ▼
@@ -42,16 +42,16 @@ description: Use when users are new to LoopEngine or need guidance on how the lo
 ```
 自动：递归拆解任务 → 并发调度 ZCode → 闭环执行每个子任务 → 汇总 → 交付。你只需要描述大目标。
 
-### `/orch` — 多技能编排（显式触发）
-单技能任务（80%）由原生 description 匹配自动处理。多技能任务（20%）需显式 `/orch`：
+### `orch` — 多技能编排（自然语言优先）
+单技能任务（80%）由原生 description 匹配自动处理。多技能目标由系统自动判断是否进入 orch；`/orch` 只用于显式强制编排：
 
-| 你说 | 该用 |
+| 你说 | 系统行为 |
 |------|------|
-| "对比 A 和 B 选型" | `/orch 1 ...`（调研+决策） |
-| "帮我审查并改进" | `/orch 2 ...`（分析+建议） |
-| "报错了帮我修" | `/orch 3 ...`（诊断+修复） |
-| "设计并实现 X 功能" | `/orch 4 ...`（设计+实现） |
-| "同时调研 A/B/C" | `/orch 5 ...`（并行调研） |
+| "对比 A 和 B 选型" | 自动识别 `research_compare` family |
+| "帮我审查并改进" | 自动识别 `review` family |
+| "报错了帮我修" | 自动识别 `debug_fix` family |
+| "设计并实现 X 功能" | 自动识别 `design_build` family |
+| "测试这个 web 应用" | 自动识别 `web_qa` family |
 
 ## 技能分类速览
 

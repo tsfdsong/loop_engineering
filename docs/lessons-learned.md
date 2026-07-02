@@ -18,17 +18,17 @@
 1. **macOS 没有 `pip` 命令**：Homebrew Python 3.14 只装 `pip3`，install.sh 用 `command -v pip` 检测永远 false
 2. **PEP 668 externally-managed-environment**：macOS Homebrew Python 是受保护环境，`pip3 install --user` 也被阻止
 3. **Step 4 detect_mcp_exe 硬编码 Windows 路径**：fallback 只指向 `~/AppData/Roaming/Python/...` 和 `~/AppData/Roaming/npm/`，macOS 上根本不存在
-4. **headroom 不是 MCP server**：包元数据 `entry_points` 为空、无 `__main__.py`，但 `merge_zcode_config.py` 把 headroom 当 CLI 配成 `command + ['mcp', 'serve']`，结果写入空 command 字段的坏配置
+4. **headroom v0.x 早期版本无 MCP server 接口**（v1.2.2 当时）：包元数据 `entry_points` 为空、无 `__main__.py`，`merge_zcode_config.py` 配成空 command 字段的坏配置。**v1.3.1 修订**：headroom-ai ≥ v0.20 已提供 `headroom mcp serve` MCP server 命令，install.sh 可正常注入 `~/.cursor/mcp.json`（详见 merge_mcp_config.py cursor schema）
 
 ### 修复（4 处精准修复 + 1 处辅助）
 - **install.sh `install_pkg()`**：
   - 加 `detect_pip_cmd()` 优先 `pip3`、fallback `pip`
   - 加 `--break-system-packages` fallback（解决 PEP 668）
-- **install.sh `MCP_PACKAGES`**：加 `is_mcp_server` 第 3 列；`headroom=false`（标识非 MCP server）
+- **install.sh `MCP_PACKAGES`**：加 `is_mcp_server` 第 3 列；`headroom=false`（**v1.2.2 当时**标识非 MCP server；v1.3.1 修订：headroom-ai ≥ v0.20 已提供 `headroom mcp serve`，但 ZCode 桌面版仍只注 jcodemunch+repomix）
 - **install.sh `write_zcode_desktop_config()`**：
   - `detect_mcp_exe` 主动扫 PATH 外目录（`~/Library/Python/3.*/bin/`、`~/.local/bin/`）
-  - 删 headroom 桌面配置（包无 MCP server 接口）
-- **`scripts/merge_zcode_config.py`**：
+  - 删 headroom 桌面配置（**v1.2.2 当时**包无 MCP server 接口）
+- **`scripts/merge_zcode_config.py`**（**v1.3.1 已被 `merge_mcp_config.py zcode` 取代**）：
   - 签名 4 参数 → 3 参数（删 head_exe）
   - 加 `data['mcp']['servers'].pop('headroom', None)` 兼容清理
 - **install.sh `LOCAL_SRC_DIR` 辅助**：BASH_SOURCE 有值时用本地 `scripts/` 覆盖 `$WORK/scripts/`，便于开发测试本地修改立即生效
@@ -45,7 +45,7 @@
 |---|------|------|
 | 1 | `~/.loopengine/.installed_version` = 1.2.3 | ✅ |
 | 2 | `which jcodemunch-mcp` 或 `~/Library/Python/3.14/bin/jcodemunch-mcp --version` 正常 | ✅ |
-| 3 | `~/.zcode/cli/config.json` mcp.servers 含 `jcodemunch` + `repomix`，无 headroom | ✅ |
+| 3 | `~/.zcode/cli/config.json` mcp.servers 含 `jcodemunch` + `repomix`，无 headroom（**v1.2.2 当时**；v1.3.1 仍成立 — ZCode 桌面版 schema 保持 2 server）| ✅ |
 | 4 | 7 工具红线文件各含 14 markers（7 BEGIN + 7 END） | ✅ |
 | 5 | 9 工具 skills 目录各含 33 个 SKILL.md | ✅ |
 

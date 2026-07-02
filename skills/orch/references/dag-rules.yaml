@@ -1,0 +1,42 @@
+global:
+  multi_family: clarify
+  single_skill: exit_orch
+  executor_policy: side_effect_first
+  confidence_bands:
+    auto_execute_min: 0.85
+    confirm_min: 0.70
+
+review:
+  order: [system_review, code_review, code_quality_simplify]
+  append:
+    report: [synthesize_findings]
+    plan: [synthesize_findings, plan_execution]
+
+debug_fix:
+  order: [debug_root_cause, fix_issue, verify_result]
+
+design_build:
+  order: [design_solution, plan_execution, execute_plan]
+
+research_compare:
+  order: [research_evidence, compare_options]
+  append:
+    report: [synthesize_findings]
+    plan: [synthesize_findings, plan_execution]
+
+web_qa:
+  bootstrap: [browser_explore]
+  parallel:
+    - browser_regression_test
+    - browser_visual_diff
+    - browser_accessibility_audit
+    - browser_perf_audit
+  append:
+    report: [synthesize_findings]
+    plan: [synthesize_findings, plan_execution]
+
+parallel_investigation:
+  bootstrap: [parallel_probe]
+  append:
+    report: [synthesize_findings]
+    plan: [synthesize_findings, plan_execution]

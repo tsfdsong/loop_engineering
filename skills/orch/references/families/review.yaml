@@ -1,0 +1,14 @@
+family: review
+goal_defaults: [report, plan]
+actions:
+  - system_review
+  - code_review
+  - code_quality_simplify
+  - synthesize_findings
+  - plan_execution
+execution:
+  mode: serial
+  scope_progression:
+    - full_project
+    - hotspot_modules
+    - style_debt

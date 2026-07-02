@@ -1,0 +1,16 @@
+{
+  "input": "帮我自动化测试这个网站，重点看登录、上传、视觉回归和性能",
+  "scenario_family": "web_qa",
+  "actions": [
+    "browser_explore",
+    "browser_regression_test",
+    "browser_visual_diff",
+    "browser_perf_audit",
+    "synthesize_findings"
+  ],
+  "expected_parallel_nodes": [
+    "web-regression-e2e",
+    "web-visual-diff",
+    "web-perf-budget"
+  ]
+}

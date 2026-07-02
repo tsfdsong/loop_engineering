@@ -1,8 +1,7 @@
 # LoopEngine 安装指南
 
-> **v1.2.6（2026-07-01）**— 路径平铺修复（v1.2.5 plugin 命名空间导致 ZCode 找不到技能）
-> **v1.2.2** — install.sh 一体化 + Cursor 完整兼容（7 红线 + 9 工具）
-> 历史指南见 [docs/legacy/](./legacy/)。
+> v1.3.1（2026-07-02）— 三平台 install 脚本合一（3 平台从 ~145 → ~18 行），merge_mcp_config.py 合并 ZCode + Cursor 双 schema，AGENT 标签用关联数组去重，5 红线/工具 step 拆 5 sub-function。
+> v1.3.0 OS + AI Agent 全自动感知；v1.2.0+ 智能模式（首次装 / 升级 / 同版本 5 秒等待）。
 
 ## 一行安装
 
@@ -10,7 +9,19 @@
 curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
 ```
 
-**装完即用**。无需重启 AI 工具，无需懂任何目录约定。
+**装完即用**。无需重启 AI 工具，无需懂任何目录约定，无需手动选平台或工具。
+
+## v1.3.1 核心改进
+
+| 改动 | 说明 |
+|------|------|
+| 🆕 **三平台脚本合一** | `_common.sh::common_run_platform_steps` + `common_detect_mcp_exe` + `common_install_mcp_packages` + `common_write_zcode_desktop_config` 替代 windows/macos/linux 各自的 3 副本函数。3 平台从 ~145 → ~18 行（-87%）|
+| 🆕 **merge_mcp_config.py 合并** | 原 merge_zcode_config.py（v1.2.3）+ merge_cursor_config.py（v1.3.0）合并为单脚本 + `--schema=zcode\|cursor` 参数。`atomic_write` 6 行在脚本内保留（不抽 `_atomic_io.py`）|
+| 🆕 **AGENT 标签关联数组** | `COMMON_LABEL_TO_ID` 关联数组替代 `AGENT_LABEL_MAP + filter case` 双份真源，加新 agent 改 1 处 |
+| 🆕 **deploy 拆 5 sub-function** | `common_deploy_to_9_tools` 100 行单函数拆为 `common_cleanup_target_top_level` / `common_copy_skills_for` / `common_copy_hooks_for` / `common_deploy_manifest_for` / `common_copy_root_docs_for` + `_for_each_target` 通用 iterator |
+| 🆕 **BASE_TARGETS 共享数组** | windows / macos\|linux tool_root_dirs 共享 7 行基础目标，windows 追加 1 行 AppData |
+| 🆕 **Kimi/OpenCode 清理** | 不在 install.sh 范围，文档/代码一致：手动 `/plugins install` / 修改 `opencode.json` |
+| v1.3.0 | OS + AI Agent 自动感知（默认按本机已装工具部署）+ Cursor MCP 合并 + 修 macOS/Linux 虚假 `$HOME/AppData/` 路径 bug |
 
 ## 更新
 
@@ -29,68 +40,58 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 
 | 参数 | 作用 |
 |------|------|
-| `bash install.sh` | 智能模式（默认） |
+| `bash install.sh` | 智能模式 + 自动感知本机 AI Agent（**v1.3.0 默认**） |
+| `bash install.sh --all` | 强制全量 11 目标部署（绕过 detect） |
+| `bash install.sh --only=zcode,cursor` | 只给指定 agent id 部署（逗号或空格分隔） |
 | `bash install.sh --force` | 跳过 5 秒等待，强制重装 |
 | `bash install.sh --dry-run` | 只检查版本不实际安装 |
 | `bash install.sh -h` | 显示帮助 |
 
-## 它做了什么（v1.1.0 全面同步 · v1.2.0 一体化 · v1.2.2 Cursor 兼容 · v1.2.6 路径平铺）
+## 它做了什么（v1.1.0 全面同步 · v1.2.0 一体化 · v1.2.2 Cursor 兼容 · v1.3.0 自动感知）
 
 | 步骤 | 行为 |
 |------|------|
 | 0️⃣ 版本自检 | 读 `~/.loopengine/.installed_version`，已装同版本则 5 秒等待 |
+| 0️⃣.5 **AI Agent 自动感知**（v1.3.0） | 扫描本机 9 个特征路径，输出已检测列表；可用 `--all` / `--only` 覆盖 |
 | 1️⃣ 拉源码 | `git clone --depth 1` 到 `/tmp/loopengine-install-$$/`，自动清理 |
-| 2️⃣ 部署（6 子步） | **2a** 渲染 7 plugin manifest（去 _comment，version 同步）<br>**2b-pre** 清理 v1.2.5 遗留的 plugin 命名空间（旧 `~/.claude/skills/loopengine/` 等）<br>**2b-1** 平铺 skills 到 6 个 Skills 全局加载工具（Claude/Codex/Cursor/Pi/Copilot/ZCode 用户级）<br>**2b-2** 复制 skills 到 3 个 plugin 命名空间工具（Gemini/内置包/ZCode CLI cache）<br>**2c** 复制 `hooks/` 到 3 个 plugin 目标<br>**2d** 部署 plugin manifest 到 3 个 plugin 目标 + Claude marketplace + **ZCode enabledPlugins 注册**<br>**2e** 复制 `AGENTS.md` + `README.md` 到 3 个 plugin 目标 |
+| 2️⃣ 部署（5 子步） | **2a** 渲染 7 plugin manifest（去 _comment，version 同步；v1.2.2 加 Cursor）<br>**2b** 复制 `skills/` 到目标（**v1.3.0 平台分支** + agent filter）<br>**2c** 复制 `hooks/` 到目标<br>**2d** 部署 7 个 `plugin.json` / `marketplace.json` / `gemini-extension.json`<br>**2e** 复制 `AGENTS.md` + `README.md` 到目标 |
 | 3️⃣ MCP 三件套 | `pip install --user jcodemunch-mcp headroom` + `npm i -g repomix`（已装会跳过） |
 | 4️⃣ ZCode 桌面版 MCP | 自动写入 `~/.zcode/cli/config.json` 的 `mcp.servers`（**v1.0 根因**：桌面版真正入口） |
 | 5️⃣ 7 条红线 | 把 AGENTS.md 的 7 条 🔴 红线章节注入 7 个工具的**用户级**规则文件（sentinel markers，幂等；v1.2.2 扩展自 5 条） |
-| 6️⃣ 自检 | 验证关键路径 + manifest 数 + 写入 `~/.loopengine/.installed_version` |
+| 5️⃣.5 **Cursor MCP 合并**（v1.3.0） | win/macOS/Linux 自动写入 `~/.cursor/mcp.json` 的 `mcpServers`（保留 drawio 等用户自有 server） |
+| 6️⃣ 自检 | 验证关键路径 + manifest 数 + 写入 `~/.loopengine/.installed_version`（**v1.3.0 阈值按平台 + agent 过滤自适应**） |
 
-### 同步目标一览（v1.0 → v1.2 扩展 8.5 倍）
+### 同步目标一览
 
-| 类别 | v1.0.2 路径数 | v1.2.2 路径数 | 增量 |
-|------|:---:|:---:|------|
-| skills/ | 8 | 9 | **+1**（v1.2.2 加 Cursor） |
-| hooks/ | 0 | 9 | **+9** |
-| AGENTS.md | 0 | 9 | **+9** |
-| README.md | 0 | 9 | **+9** |
-| plugin manifest | 0 | 7 | **+7**（v1.2.2 加 Cursor plugin.json） |
-| ZCode 桌面版 MCP | 1 | 1 | — |
-| 7 条红线注入 | 7 | 7 | —（注入目标数不变；每文件 5 → 7 条规则块） |
-| 版本号文件 | 0 | 1 | **+1** |
-| **合计** | **16** | **52** | **+36** |
+`--all` 时取全量 11 路径（默认仅 detect 到本机已装工具，5-9 路径自适应）：
+- skills/ 8-9 路径
+- hooks/ 8-9 路径
+- AGENTS.md / README.md 8-9 路径
+- plugin manifest 5-7 路径
+- ZCode 桌面版 MCP 1 路径
+- Cursor MCP（v1.3.0+） 1 路径（仅 detect 到 cursor）
+- 7 条红线注入 7 工具用户级文件
+- 版本号文件 1 路径
 
-## 9 工具部署目标（v1.2.6 平铺模式 · v1.2.2 加 Cursor）
+**v1.3.0+ 自适应**：`skill_ok >= 总目标的 80%` 即视为通过（v1.2.x 硬阈值 8/9 改为自适应）。
 
-### 平铺目标（6 项 · 技能作为 root_dir 子目录 · v1.2.6 新设计）
+## 工具部署目标（v1.3.0 按平台分支）
 
-适用工具的 Skills 全局加载机制 = 平铺 `<root>/<skill_name>/SKILL.md`：
+| AI 工具 | Windows 路径 | macOS / Linux 路径 |
+|---------|-------------|---------------------|
+| **ZCode** | `~/.zcode/skills/loopengine/` | `~/.zcode/skills/loopengine/` |
+| Claude Code | `~/.claude/skills/loopengine/` | `~/.claude/skills/loopengine/` |
+| Codex | `~/.codex/skills/loopengine/` | `~/.codex/skills/loopengine/` |
+| Gemini CLI | `~/.gemini/extensions/loopengine/` | `~/.gemini/extensions/loopengine/` |
+| GitHub Copilot | `~/.copilot/skills/loopengine/` | `~/.copilot/skills/loopengine/` |
+| Pi | `~/.pi/skills/loopengine/` | `~/.pi/skills/loopengine/` |
+| Cursor | `~/.cursor/skills/loopengine/` | `~/.cursor/skills/loopengine/` |
+| **ZCode 内置包**（Windows 专属） | `~/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin/` | ❌ 不部署（v1.3.0 修复：避免创建虚假 `$HOME/AppData`） |
+| **ZCode CLI 缓存** | `~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/` | `~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/` |
+| **Cursor MCP**（v1.3.0 新增） | `~/.cursor/mcp.json` | `~/.cursor/mcp.json` |
 
-| AI 工具 | 约定路径 | 加载方式 |
-|---------|---------|---------|
-| **ZCode（用户级）** | `~/.zcode/skills/orch/` 等 34 个平铺 | Skills 全局加载（fallback） |
-| Claude Code | `~/.claude/skills/orch/` 等 34 个平铺 | Skills 全局加载 |
-| Codex | `~/.codex/skills/orch/` 等 34 个平铺 | Skills 全局加载 |
-| Cursor | `~/.cursor/skills/orch/` 等 34 个平铺 | Skills 全局加载 |
-| GitHub Copilot | `~/.copilot/skills/orch/` 等 34 个平铺 | Skills 全局加载 |
-| Pi | `~/.pi/skills/orch/` 等 34 个平铺 | Skills 全局加载 |
-
-### Plugin 命名空间目标（3 项 · 技能在 root_dir/skills/ · 保留 plugin 模式）
-
-| AI 工具 | 约定路径 | 加载方式 |
-|---------|---------|---------|
-| Gemini CLI | `~/.gemini/extensions/loopengine/skills/orch/` 等 | Plugin manifest |
-| ZCode 内置包（Windows） | `~/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin/skills/orch/` 等 | Plugin manifest |
-| **ZCode CLI 缓存（v1.2.6 加版本号子目录）** | `~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/1.2.6/skills/orch/` 等 | Plugin manifest |
-
-> 🟢 **v1.2.6 关键修复**：ZCode CLI cache 路径加 `${COMMON_VERSION}` 子目录。
-> 旧 v1.2.5 缺版本号（`.../loopengine/`），导致 ZCode 找不到 plugin。其他 plugin（如 ios-simulator）都有 `0.1.0/` 版本子目录。
->
-> 🟢 **v1.2.6 新增**：ZCode enabledPlugins + known_marketplaces 自动注册（v1.2.5 漏了关键一步，即使物理部署了 plugin，ZCode 仍不会加载）。
->
-> 🟢 **v1.2.6 路径平铺**：6 个 Skills 工具改为平铺到 `<root>/<skill_name>/`，符合 Skills 全局加载机制。v1.2.5 嵌套 `loopengine/skills/<name>/` 3 层是错的。
->
-> 🟢 **Cursor**（v1.2.2）：skills 平铺到 `~/.cursor/skills/orch/` 等，红线注入路径仍为 `~/.cursor/rules/loopengine-interaction.mdc`（互补不冲突）。
+> 🟢 ZCode 用户级 fallback 是关键 — 即使其他 ZCode 内部插件路径不动，技能也能加载。
+> 🟢 **Cursor 完整集成**（v1.2.2 + v1.3.0）：skills/hooks/plugin.json 部署到 `~/.cursor/skills/loopengine/`，红线注入 `~/.cursor/rules/loopengine-interaction.mdc`，**MCP 合并写入 `~/.cursor/mcp.json`**（保留 drawio 等用户自有 server）。
 
 ## 全局红线注入（Step 5）
 
@@ -109,6 +110,20 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 - **用户保留**：你的其他自定义内容不会被覆盖
 - **自动同步**：重跑 `install.sh`（智能模式）时规则自动更新
 
+## Cursor MCP 合并（v1.3.0 新增 · Step 5.5）
+
+`install.sh` 自动把 3 个 MCP server 路径注入到 `~/.cursor/mcp.json` 的 `mcpServers`：
+
+- `jcodemunch`（指向 `jcodemunch-mcp.exe` / `.cmd`）
+- `repomix`（指向 `repomix.exe` / `.cmd`）
+- `headroom`（指向 `headroom.exe` / `.cmd`）
+
+**关键差异**（[F] 来自本机 `.mcp.json` 实测）：
+- **Cursor IDE** schema：`mcpServers.<name>.{command, args}` （**无** `type` 字段）
+- **ZCode 桌面版** schema：`mcp.servers.<name>.{type: "stdio", command, args}`
+
+**保留策略**：用 `setdefault` 保留所有顶层字段和用户已有 server（如 `drawio`），仅强制覆写 3 个 LoopEngine 自己的 key。原子写（`.tmp` + `os.replace`）。
+
 ## 验证
 
 开新 AI 会话后发送：
@@ -121,83 +136,46 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 - 解释出 "loop + go + orch 多技能编排" 核心价值
 - 列出 orch 的 5 类（调研+决策 / 分析+建议 / 诊断+修复 / 设计+实现 / 并行调研）
 
+自动安装验证：
+
+```bash
+# 1. 自检通过
+bash install.sh --dry-run
+
+# 2. 检查 9 工具 skill 部署
+ls ~/.zcode/skills/loopengine/skills/orch/   # ZCode 用户级
+ls ~/.cursor/skills/loopengine/skills/orch/ # Cursor
+
+# 3. 检查 Cursor MCP 合并
+cat ~/.cursor/mcp.json                       # 4 server: drawio + jcodemunch + repomix + headroom
+
+# 4. 检查 7 红线注入
+grep "LOOPENGINE-MANAGED" ~/.zcode/AGENTS.md # 7 sentinel markers
+
+# 5. 检查版本号
+cat ~/.loopengine/.installed_version         # 1.3.1
+```
+
 ## 故障排查
 
 | 现象 | 解决 |
 |------|------|
 | `git clone` 失败 | 检查网络/VPN；可手动下载 ZIP 解压后跑 `bash install.sh` |
 | `pip install` 失败 | 先 `pip install --upgrade pip`；用 `python -m pip install --user <pkg>` 替代 |
-| **v1.2.5 → v1.2.6 升级后技能仍找不到** | 检查 `~/.zcode/skills/`（用户级 fallback）是否有 `orch/` 等目录；缺失就 `bash install.sh --force` 重装 |
-| **ZCode 桌面版仍不显示 loopengine 技能** | 检查 `cat ~/.zcode/cli/config.json` 的 `plugins.enabledPlugins` 是否有 `loopengine@zcode-plugins-official: true`；缺失就重跑 install.sh（v1.2.6 已自动注册） |
-| **ZCode CLI cache 路径找不到** | v1.2.6 起路径变为 `~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/1.2.6/`（带版本号子目录）；旧 v1.2.5 无版本号路径已自动清理 |
 | `npm install -g` 失败 | 检查 Node.js；Linux/macOS 上需要 sudo 或 `npm config set prefix` |
 | 装完 ZCode 还是看不到 loopengine 技能 | 重跑 `bash install.sh`（覆盖所有目标目录） |
-| **ZCode MCP 工具不显示** | 检查 `cat ~/.zcode/cli/config.json` 是否有 `mcp.servers` 三个 server；缺失就重跑 `bash install.sh`（v1.1.0 已吸收原 `zcode-mcp-ensure.sh` 功能） |
+| **ZCode MCP 工具不显示** | 检查 `cat ~/.zcode/cli/config.json` 是否有 `mcp.servers` 三个 server；缺失就重跑 `bash install.sh` |
+| **Cursor MCP 工具不显示**（v1.3.0 新增） | 检查 `cat ~/.cursor/mcp.json` 是否有 3 server（jcodemunch/repomix/headroom）；缺失就重跑 `bash install.sh --force`（确保 `--all` 或 detect 到 cursor） |
 | MCP 工具显示了但调用失败 | 命令路径要带 Windows 扩展名（`jcodemunch-mcp.exe` / `repomix.cmd` / `headroom.exe`），install.sh 已自动处理 |
 | 想强制重装最新版本 | `rm ~/.loopengine/.installed_version && bash install.sh` |
+| **v1.3.0 detect 没识别某个工具** | 用 `bash install.sh --only=zcode,cursor --force` 显式指定；或用 `--all` 强制全量 |
 
 ## 设计哲学
 
+- **不依赖** ZCode 内部 `marketplace.json` / `.zcode-plugin/plugin.json` 注册（v2.0 重构后）
 - **不重启** AI 工具即可生效（直接 cp 到约定目录）
 - **不重复造轮子**：每个工具的"内部机制"对我们是黑盒；只关心"约定目录"
-- **覆盖 9 大 AI 工具**（ZCode + Claude Code + Codex + Gemini + Cursor + Copilot + Pi + ZCode 桌面版/内置包/CLI 缓存）
+- **覆盖 7 AI 工具**（ZCode + Claude Code + Codex + Gemini + Cursor + Copilot + Pi）+ ZCode 桌面版/内置包/CLI 缓存 3 路径；Kimi/OpenCode 走各自平台原生命令
 - **单一真源**：plugin manifest 改版本号 = 改 `.plugin-template.json` 的 `version` 字段（6 个 overlay 自动同步）
-- **v1.2.6 修正**：依赖 ZCode `enabledPlugins` + `known_marketplaces` 注册（v1.2.5 漏了关键一步；v1.2.6 自动注册）
-
-## v1.2.6 Release Notes（2026-07-01 · 路径平铺修复）
-
-### 关键 bug（v1.2.5 → v1.2.6 必须升级）
-
-v1.2.5 install.sh 把 skills 装到 `~/.claude/skills/loopengine/skills/orch/` 这种 3 层嵌套路径，
-**用户视角** `~/.claude/skills/orch/` 是空的找不到技能，**ZCode 视角** enabledPlugins 没注册也找不到 plugin。
-
-v1.2.6 修复：
-
-1. **路径平铺（6 个 Skills 工具）**：技能直接作为 root_dir 子目录
-   - `~/.claude/skills/orch/` 等（v1.2.5 是 `~/.claude/skills/loopengine/skills/orch/`）
-   - 适用：Claude Code / Codex / Cursor / Pi / Copilot / ZCode 用户级
-2. **ZCode CLI cache 加版本号子目录**：`.../loopengine/1.2.6/skills/orch/`（v1.2.5 无版本号）
-3. **新增 ZCode enabledPlugins + known_marketplaces 注册**（v1.2.5 漏了关键一步）
-4. **plugin 模式 3 工具保留**（Gemini / ZCode 内置包 / ZCode CLI 缓存）
-5. **自动清理 v1.2.5 遗留的旧 plugin 命名空间**（`~/.claude/skills/loopengine/` 等）
-
-### 升级方法
-
-```bash
-# 方式 1: 智能模式（推荐）
-bash install.sh
-
-# 方式 2: 强制重装（如果智能模式检测同版会等 5 秒）
-bash install.sh --force
-
-# 方式 3: 卸载旧版再装（彻底清理 v1.2.5 残留）
-rm -rf ~/.zcode/skills/loopengine ~/.claude/skills/loopengine \
-       ~/.codex/skills/loopengine ~/.copilot/skills/loopengine \
-       ~/.pi/skills/loopengine ~/.cursor/skills/loopengine \
-       ~/.gemini/extensions/loopengine \
-       '~/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin' \
-       ~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine
-rm ~/.loopengine/.installed_version
-bash install.sh --force
-```
-
-### 验证
-
-升级后检查：
-
-```bash
-# 1) 平铺目标 — 技能应直接作为 root_dir 子目录
-ls ~/.claude/skills/orch/      # 应有 SKILL.md
-ls ~/.cursor/skills/clean-code/  # 应有 SKILL.md
-
-# 2) ZCode CLI cache — 应有版本号子目录
-ls ~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/1.2.6/
-
-# 3) ZCode enabledPlugins — loopengine 应已注册
-cat ~/.zcode/cli/config.json | python3 -c "import json,sys; print(json.load(sys.stdin)['plugins']['enabledPlugins'])"
-# 应输出: {'loopengine@zcode-plugins-official': True, ...}
-
-# 4) ZCode known_marketplaces — zcode-plugins-official 应已注册
-cat ~/.zcode/cli/plugins/known_marketplaces.json | python3 -c "import json,sys; print([m['id'] for m in json.load(sys.stdin)['marketplaces']])"
-# 应输出: ['claude-plugins-official', 'zcode-plugins-official']
-```
+- **v1.3.0+ 自动感知**：默认只给本机已装工具部署；显式 `--all` / `--only` 可覆盖
+- **v1.3.1 三平台合一**：3 平台脚本从 ~145 → ~18 行（-87%），共享 `common_run_platform_steps` 主驱动
