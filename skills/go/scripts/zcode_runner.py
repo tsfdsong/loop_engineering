@@ -186,6 +186,15 @@ def build_prompt(task, worktree_dir, handoff_summaries=None):
                 parts.append(f"- 提示: {hs['next_task_hint']}")
             parts.append("")
 
+    orch_runtime_context = _get_orch_runtime_context(worktree_dir, task)
+    if orch_runtime_context:
+        parts.append("## orch v2 运行时真源")
+        parts.append("以下 orch v2 资产是真实运行路径要消费的规则与契约，请按它们实现，不要只改文档:")
+        parts.append("```")
+        parts.append(orch_runtime_context)
+        parts.append("```")
+        parts.append("")
+
     # 注入 repomix 代码结构 (Python 层调用 CLI, 节省 token)
     repo_structure = _get_repomix_structure(worktree_dir, task.get("files", []))
     if repo_structure:
@@ -202,6 +211,46 @@ def build_prompt(task, worktree_dir, handoff_summaries=None):
     parts.append("完成后请 git add + commit。")
 
     return "\n".join(parts)
+
+
+def _get_orch_runtime_context(worktree_dir, task):
+    """
+    当任务明显在实现 orch v2 本身时，注入 orch 运行时真源摘要，
+    确保执行路径真正消费 references，而不是只更新文档。
+    """
+    task_files = task.get("files", [])
+    task_text = " ".join(
+        str(x) for x in [task.get("name", ""), task.get("prompt", "")]
+    ).lower()
+    touches_orch = any("skills/orch/" in f or "hooks/" in f for f in task_files)
+    mentions_orch = "orch" in task_text or "orchestrator" in task_text
+    if not (touches_orch or mentions_orch):
+        return None
+
+    worktree_dir = Path(worktree_dir)
+    refs = [
+        worktree_dir / "skills/orch/SKILL.md",
+        worktree_dir / "skills/orch/references/intent-schema.json",
+        worktree_dir / "skills/orch/references/capability-registry.yaml",
+        worktree_dir / "skills/orch/references/dag-rules.yaml",
+        worktree_dir / "skills/orch/references/executor-contracts/direct-skill.json",
+        worktree_dir / "skills/orch/references/executor-contracts/loop.json",
+        worktree_dir / "skills/orch/references/executor-contracts/go.json",
+    ]
+    chunks = []
+    for path in refs:
+        if not path.exists():
+            continue
+        try:
+            content = path.read_text(encoding="utf-8").strip()
+        except OSError:
+            continue
+        if len(content) > 1600:
+            content = content[:1600] + "\n... (截断)"
+        chunks.append(f"### {path.relative_to(worktree_dir)} ###\n{content}")
+    if not chunks:
+        return None
+    return "\n\n".join(chunks)
 
 
 def _get_repomix_structure(worktree_dir, task_files):

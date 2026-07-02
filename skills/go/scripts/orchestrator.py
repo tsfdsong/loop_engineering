@@ -108,21 +108,7 @@ def _split_tasks_with_zcode(feature, project_dir, tier):
             "status": state_manager.TASK_PENDING,
         }]
 
-    split_prompt = f"""分析以下功能需求,拆分成可并发的编码子任务:
-
-功能: "{feature}"
-项目目录: {project_dir}
-
-只输出 JSON,不要其他文字:
-{{"tasks": [
-  {{"id": "T1", "name": "名称", "prompt": "执行指令", "depends_on": [], "skills": [], "files": ["路径"]}}
-]}}
-
-规则:
-1. 操作不同文件的子任务 depends_on 为空 (可并发)
-2. 有依赖关系的标注 depends_on
-3. files 边界不重叠
-4. L2 拆 2-3 个, L3 拆 3-5 个"""
+    split_prompt = _build_split_prompt(feature, project_dir, tier)
 
     result = zcode_runner.call_zcode(split_prompt, project_dir, mode="yolo", timeout=120)
     tasks = _parse_tasks_json(result.get("stdout", ""))
@@ -138,6 +124,77 @@ def _split_tasks_with_zcode(feature, project_dir, tier):
         task.setdefault("files", [])
 
     return tasks
+
+
+def _build_split_prompt(feature, project_dir, tier):
+    parts = [
+        "分析以下功能需求,拆分成可并发的编码子任务:",
+        "",
+        f'功能: "{feature}"',
+        f"项目目录: {project_dir}",
+        "",
+    ]
+
+    orch_context = _load_orch_planning_context(feature, project_dir)
+    if orch_context:
+        parts.extend([
+            "以下 orch v2 运行时真源会约束拆分方式。若任务与 orch 编排有关，必须优先依据这些 family/rules/contracts 来拆分，不要凭空发明流程:",
+            "```",
+            orch_context,
+            "```",
+            "",
+        ])
+
+    parts.extend([
+        "只输出 JSON,不要其他文字:",
+        '{"tasks": [',
+        '  {"id": "T1", "name": "名称", "prompt": "执行指令", "depends_on": [], "skills": [], "files": ["路径"]}',
+        "]}",
+        "",
+        "规则:",
+        "1. 操作不同文件的子任务 depends_on 为空 (可并发)",
+        "2. 有依赖关系的标注 depends_on",
+        "3. files 边界不重叠",
+        "4. L2 拆 2-3 个, L3 拆 3-5 个",
+    ])
+    return "\n".join(parts)
+
+
+def _load_orch_planning_context(feature, project_dir):
+    """
+    仅在目标明显涉及 orch/orchestration 时，把 orch 真源摘要带入拆分 prompt，
+    让 Step ③ 的任务拆分也消费 references。
+    """
+    feature_lower = feature.lower()
+    if not any(token in feature_lower for token in ["orch", "orchestrat", "编排", "调度"]):
+        return None
+
+    project_dir = Path(project_dir)
+    refs = [
+        project_dir / "skills/orch/references/intent-schema.json",
+        project_dir / "skills/orch/references/capability-registry.yaml",
+        project_dir / "skills/orch/references/dag-rules.yaml",
+        project_dir / "skills/orch/references/executor-contracts/direct-skill.json",
+        project_dir / "skills/orch/references/executor-contracts/loop.json",
+        project_dir / "skills/orch/references/executor-contracts/go.json",
+    ]
+
+    chunks = []
+    for path in refs:
+        if not path.exists():
+            continue
+        try:
+            content = path.read_text(encoding="utf-8").strip()
+        except OSError:
+            continue
+        if len(content) > 1200:
+            content = content[:1200] + "\n... (截断)"
+        rel = path.relative_to(project_dir).as_posix()
+        chunks.append(f"### {rel} ###\n{content}")
+
+    if not chunks:
+        return None
+    return "\n\n".join(chunks)
 
 
 def _parse_tasks_json(stdout):
