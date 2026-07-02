@@ -60,7 +60,7 @@ def strip_meta(d: dict) -> dict:
     return out
 
 
-# ── P4 重构：抽公共 JSON I/O 公共函数 ─────────────────────────
+# ── JSON I/O 公共函数 ─────────────────────────
 def _read_json(path: str) -> dict:
     """读 JSON 文件，UTF-8 编码。"""
     with open(path, "r", encoding="utf-8") as f:
@@ -120,7 +120,7 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
     rendered = 0
 
-    # ── P5 重构：自动发现 .*-plugin/plugin.json（不再硬编码 5 个目录名）──
+    # 自动发现 .*-plugin/plugin.json（glob 模式扫描所有 .*-plugin 目录）
     overlay_paths = sorted(glob.glob(os.path.join(project_root, ".*-plugin", "plugin.json")))
     for overlay_path in overlay_paths:
         # 从 .claude-plugin/plugin.json 提取 claude-plugin（去前导点）

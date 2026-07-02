@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ════════════════════════════════════════════════════════════
-# LoopEngine 一键安装 v1.3.0 — 跨平台自动感知调度器（macOS/Windows/Linux）
+# LoopEngine 一键安装 v1.3.1 — 跨平台自动感知调度器（macOS/Windows/Linux）
 # ════════════════════════════════════════════════════════════
 # 一行安装:
 #   curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
@@ -11,10 +11,11 @@
 #   - 已装旧版 → 升级
 #   - 拉源码每次都做（git clone --depth 1），所以 install.sh 天然具备"更新"能力
 #
-# 自动感知（v1.3.0）：
+# 自动感知：
 #   - OS：uname -s 自动检测（Darwin→macos / Linux→linux / MINGW|MSYS|CYGWIN→windows）
 #   - AI Agent：common_detect_installed_agents 扫描本机 ~/.zcode ~/.claude ~/.cursor ...
-#     默认只给已检测到的 Agent 部署；--all 强制全量；--only=zcode,cursor 显式指定
+#     等 7 个特征路径，默认只给已检测到的 Agent 部署；--all 强制全量；--only=zcode,cursor 显式指定
+#     （Kimi / OpenCode 走各自平台原生命令手动部署，不在 install.sh 范围）
 #
 # 参数:
 #   --dry-run           只检查版本不实际安装（拉源码 + 比对 + 输出计划）
@@ -29,7 +30,7 @@
 #   scripts/install/macos.sh        ← macOS 特定（pip3 + ~/Library/Python/3.*/bin）
 #   scripts/install/windows.sh      ← Windows 特定（Git Bash + %APPDATA% + path → forward slash）
 #   scripts/install/linux.sh        ← Linux 特定（pip3 + ~/.local/bin）
-#   scripts/merge_cursor_config.py  ← Cursor MCP 合并写入（v1.3.0 新增）
+#   scripts/merge_mcp_config.py    ← ZCode + Cursor MCP 合并（v1.3.1 合一，--schema=zcode|cursor）
 #
 # v1.3.0 重构（2026-07-02 自动感知 + Cursor 适配 + Win 路径 bug 修复）：
 #   • OS + AI Agent 平台全自动感知（默认按本机已装的 Agent 部署）
@@ -86,7 +87,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         -h|--help)
             cat <<'HELP'
-LoopEngine 一键安装 v1.3.0（跨平台：macOS / Windows Git Bash / Linux）
+LoopEngine 一键安装 v1.3.1（跨平台：macOS / Windows Git Bash / Linux）
 
 用法:
   bash install.sh                 # 智能模式 + 自动感知本机 AI Agent
@@ -116,9 +117,8 @@ HELP
 done
 
 # ── 本地优先覆盖（开发模式）──────────────────────────────
-if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
-    COMMON_LOCAL_SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-fi
+# install.sh 与 _common.sh 在同目录；SCRIPT_DIR 即项目根
+COMMON_LOCAL_SRC_DIR="${SCRIPT_DIR:-}"
 
 # ── 顶部横幅 ──────────────────────────────────────────────
 echo ""

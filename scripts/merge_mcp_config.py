@@ -14,7 +14,8 @@
 # 强制覆写脚本负责的 server key（路径变化时同步）。
 # 原子写：先写 .tmp 再 rename，避免中途崩溃留截断 JSON
 #
-# v1.3.1 新增：合并自原 merge_zcode_config.py（v1.2.3）+ merge_cursor_config.py（v1.3.0）
+# v1.3.1 新增：合并 ZCode 桌面版 + Cursor IDE 两种 MCP schema
+# 由 install.sh 的 common_write_zcode_desktop_config / common_deploy_cursor_mcp 调用
 # ────────────────────────────────────────────────────────────
 
 import json

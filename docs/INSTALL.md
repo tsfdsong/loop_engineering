@@ -153,7 +153,7 @@ cat ~/.cursor/mcp.json                       # 4 server: drawio + jcodemunch + r
 grep "LOOPENGINE-MANAGED" ~/.zcode/AGENTS.md # 7 sentinel markers
 
 # 5. 检查版本号
-cat ~/.loopengine/.installed_version         # 1.3.0
+cat ~/.loopengine/.installed_version         # 1.3.1
 ```
 
 ## 故障排查

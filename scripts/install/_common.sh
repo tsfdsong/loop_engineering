@@ -2,14 +2,9 @@
 # ════════════════════════════════════════════════════════════
 # scripts/install/_common.sh — LoopEngine 安装共享逻辑
 # ════════════════════════════════════════════════════════════
-# 平台无关的安装步骤（git clone / 9 工具部署 / 7 红线 / 自检）
+# 平台无关的安装步骤（detect / clone / render / deploy / inject / check）
 # 由 install.sh + scripts/install/{macos,windows,linux}.sh 通过 source 加载
-#
-# v1.2.4 新增（2026-07-01 跨平台架构）：
-#   • 从 v1.2.3 install.sh 提取平台无关逻辑
-#   • 暴露函数：clone_repo / deploy_to_9_tools / inject_red_lines /
-#     deployment_check / smart_check_version / write_version_file
-#   • SENTINEL 防重入
+# 3 平台脚本只保留 platform-specific 检测 + 单行 *_main 调用
 # ════════════════════════════════════════════════════════════
 
 # SENTINEL 防重入
@@ -377,7 +372,7 @@ common_write_zcode_desktop_config() {
     fi
 
     mkdir -p "$(dirname "$cfg")"
-    if python "$COMMON_SCRIPT_DIR/scripts/merge_mcp_config.py" zcode "$cfg" "$jcode_exe" "$repo_exe" 2>/dev/null; then
+    if python "$COMMON_SCRIPT_DIR/scripts/merge_mcp_config.py" zcode "$cfg" "$jcode_exe" "$repo_exe"; then
         echo -e "  ${_GREEN}✅${_RESET} [ZCode 桌面版 MCP] $cfg"
         COMMON_TARGETS+=("ZCode 桌面版 MCP:$cfg")
     else
@@ -386,17 +381,23 @@ common_write_zcode_desktop_config() {
     fi
 }
 
+# ── common_platform_title (v1.3.1 抽出 · 去重) ─────────────
+# platform id → 显示名 (windows/macos/linux → Windows/macOS/Linux)
+# 调用：common_platform_title <pf> → 输出显示名（未知平台 → 空）
+common_platform_title() {
+    case "${1:-}" in
+        windows) echo "Windows" ;;
+        macos)   echo "macOS" ;;
+        linux)   echo "Linux" ;;
+    esac
+}
+
 # ── common_step5_5_cursor_mcp (v1.3.1 抽出) ───────────────
 # v1.3.0 重复 3 平台 *_main 末尾，v1.3.1 抽到 _common.sh
 # 仅当 detect 到 cursor 时调用
 common_step5_5_cursor_mcp() {
-    local pf="${COMMON_PLATFORM:-}"
     local pf_title
-    case "$pf" in
-        windows) pf_title="Windows" ;;
-        macos)   pf_title="macOS" ;;
-        linux)   pf_title="Linux" ;;
-    esac
+    pf_title=$(common_platform_title "${COMMON_PLATFORM:-}")
 
     if [[ " ${COMMON_AGENT_LIST:-} " == *" cursor "* ]]; then
         echo ""
@@ -413,15 +414,11 @@ common_step5_5_cursor_mcp() {
 common_run_platform_steps() {
     local pf="${1:-${COMMON_PLATFORM:-}}"
     local pf_title
-    case "$pf" in
-        windows) pf_title="Windows" ;;
-        macos)   pf_title="macOS" ;;
-        linux)   pf_title="Linux" ;;
-        *)
-            echo -e "${_RED}❌ 未知平台：${pf}${_RESET}" >&2
-            return 1
-            ;;
-    esac
+    pf_title=$(common_platform_title "$pf")
+    if [ -z "$pf_title" ]; then
+        echo -e "${_RED}❌ 未知平台：${pf}${_RESET}" >&2
+        return 1
+    fi
 
     echo ""
     echo -e "${_BOLD}🔌 Step 3: 安装 MCP 三件套（${pf_title}）...${_RESET}"
@@ -456,7 +453,7 @@ common_clone_repo() {
     # v1.2.5 扩展：除 .py 外，还覆盖 .plugin-template.json 与 .*-plugin/plugin.json
     # 否则本地修改 plugin manifest 后，install.sh 仍从远端 clone 的旧版本渲染，修复不可见
     if [ -n "${COMMON_LOCAL_SRC_DIR:-}" ] && [ -d "$COMMON_LOCAL_SRC_DIR/scripts" ]; then
-        # v1.2.5 修复: COMMON_LOCAL_SRC_DIR = 项目根（install.sh:84），不是 scripts/
+        # 修复: COMMON_LOCAL_SRC_DIR = 项目根（install.sh 与 _common.sh 同目录），不是 scripts/
         # 之前的 ../ 是 bug，去掉
         cp -f "$COMMON_LOCAL_SRC_DIR/scripts"/*.py "$COMMON_WORK/scripts/" 2>/dev/null
         # 覆盖 plugin manifest 关键 JSON
@@ -680,7 +677,7 @@ common_deploy_cursor_mcp() {
 
     local cfg="$HOME/.cursor/mcp.json"
     mkdir -p "$(dirname "$cfg")"
-    if python "$COMMON_SCRIPT_DIR/scripts/merge_mcp_config.py" cursor "$cfg" "$jcode_exe" "$repo_exe" "$hdrm_exe" 2>/dev/null; then
+    if python "$COMMON_SCRIPT_DIR/scripts/merge_mcp_config.py" cursor "$cfg" "$jcode_exe" "$repo_exe" "$hdrm_exe"; then
         echo -e "  ${_GREEN}✅${_RESET} [Cursor MCP] $cfg"
         COMMON_TARGETS+=("Cursor MCP:$cfg")
     else
