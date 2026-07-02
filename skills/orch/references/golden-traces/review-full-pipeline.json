@@ -14,5 +14,6 @@
     "clean-code",
     "brainstorming",
     "writing-plans"
-  ]
+  ],
+  "acceptance_criteria_ref": "spec §15.1"
 }

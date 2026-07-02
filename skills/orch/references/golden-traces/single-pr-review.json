@@ -1,0 +1,10 @@
+{
+  "input": "帮我审查这个 PR",
+  "task_shape": "single_skill",
+  "scenario_family": null,
+  "actions": ["code_review"],
+  "expected_behavior": "orch_exit_native_match",
+  "orch_role": "passthrough",
+  "rationale": "Single-skill task. orch must exit and let native description matching route to code-reviewer skill. See spec §1.4 G1 (single_skill → orch 退出) and §15.3 acceptance.",
+  "acceptance_criteria_ref": "spec §15.3"
+}

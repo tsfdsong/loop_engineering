@@ -1,0 +1,130 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://loopengine.local/schemas/handoff-orch-v2.json",
+  "title": "orch v2 Handoff Schema",
+  "description": "Phase-to-phase structured context handoff used by orch v2 between skill nodes in a DAG. See docs/superpowers/specs/2026-07-02-orch-v2-c-lite-design.md §10.1.",
+  "type": "object",
+  "required": [
+    "phase",
+    "scope_applied",
+    "findings_summary",
+    "next_phase_hint"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "phase": {
+      "type": "string",
+      "enum": [
+        "system-review",
+        "code-reviewer",
+        "clean-code",
+        "brainstorming",
+        "writing-plans",
+        "systematic-debugging",
+        "loop-fix",
+        "verification-before-completion",
+        "evidence-first",
+        "agent-browser",
+        "web-regression-e2e",
+        "web-visual-diff",
+        "web-audit-a11y",
+        "web-perf-budget",
+        "dispatching-parallel-agents",
+        "loop",
+        "go"
+      ],
+      "description": "Skill/phase that produced this handoff. Must be a registered orch action executor."
+    },
+    "scope_applied": {
+      "type": "string",
+      "enum": [
+        "full_project",
+        "diff_only",
+        "module",
+        "file",
+        "external_url"
+      ],
+      "description": "Effective scope level used by the phase (matches Intent Schema scope_level)."
+    },
+    "hotspot_modules": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Module/file paths identified as high-priority for downstream phases. May be empty.",
+      "default": []
+    },
+    "findings_summary": {
+      "type": "object",
+      "required": ["critical", "important", "minor"],
+      "additionalProperties": false,
+      "properties": {
+        "critical": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of critical-severity findings."
+        },
+        "important": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of important-severity findings."
+        },
+        "minor": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of minor-severity findings."
+        }
+      },
+      "description": "Severity-bucketed finding counts produced by this phase."
+    },
+    "top_issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "important", "minor"]
+          },
+          "module": { "type": "string" }
+        }
+      },
+      "description": "Top issues (most material) the next phase should focus on.",
+      "default": []
+    },
+    "next_phase_hint": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Free-text hint for the next phase: scope to focus, modules to deep-dive, or actions to avoid."
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "path"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["report", "patch", "test_result", "trace", "plan", "screenshot", "metric"]
+          },
+          "path": { "type": "string" },
+          "summary": { "type": "string" }
+        }
+      },
+      "description": "Concrete artifact paths produced by this phase (reports, patches, traces, etc.).",
+      "default": []
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Phase-level confidence (0.0-1.0). Optional but recommended for synthesis nodes."
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Wall-clock duration in milliseconds. Optional."
+    }
+  }
+}

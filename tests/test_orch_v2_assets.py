@@ -70,8 +70,12 @@ class TestOrchV2Assets(unittest.TestCase):
             "skills/orch/references/families/research_compare.yaml",
             "skills/orch/references/families/web_qa.yaml",
             "skills/orch/references/families/parallel_investigation.yaml",
-            "skills/orch/references/golden-traces/review-full-plan.json",
-            "skills/orch/references/golden-traces/web-qa-report.json",
+            "skills/orch/references/golden-traces/review-full-pipeline.json",
+            "skills/orch/references/golden-traces/web-qa-parallel.json",
+            "skills/orch/references/golden-traces/single-pr-review.json",
+            "skills/orch/references/golden-traces/cross-family-mix.json",
+            "skills/orch/references/golden-traces/low-confidence-clarify.json",
+            "skills/orch/references/handoff-orch-schema.json",
         ]
         for rel in required:
             self.assertTrue((ROOT / rel).exists(), rel)
@@ -118,7 +122,7 @@ class TestOrchV2Assets(unittest.TestCase):
         trace = json.loads(
             (
                 ROOT
-                / "skills/orch/references/golden-traces/review-full-plan.json"
+                / "skills/orch/references/golden-traces/review-full-pipeline.json"
             ).read_text(encoding="utf-8")
         )
         self.assertEqual(trace["scenario_family"], "review")
