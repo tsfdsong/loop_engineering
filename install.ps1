@@ -446,7 +446,14 @@ function Write-ZCodeDesktopConfig {
     $repo = Convert-ToForwardSlashes $repo
     $cfg = Join-Path $env:USERPROFILE ".zcode\cli\config.json"
     New-Item -ItemType Directory -Path (Split-Path $cfg) -Force | Out-Null
-    $out = & python (Join-Path $script:ScriptDir "scripts\merge_mcp_config.py") zcode $cfg $jcode $repo 2>&1
+    # PS 5.1 bug：python 抛异常时，stderr 被转成 RemoteException ErrorRecord，
+    # `$LASTEXITCODE` 仍可能是 0。改用 try/catch 捕获 ErrorRecord。
+    try {
+        $out = & python (Join-Path $script:ScriptDir "scripts\merge_mcp_config.py") zcode $cfg $jcode $repo 2>&1
+    } catch {
+        Write-Err "合并 $cfg 失败：$($_.Exception.Message)"
+        return
+    }
     if ($LASTEXITCODE -eq 0) {
         Write-Ok "[ZCode 桌面版 MCP] $cfg"
         [void]$script:Targets.Add("ZCode 桌面版 MCP`:$cfg")
