@@ -297,11 +297,12 @@ From debugging sessions:
 
 ---
 
-## 论源（v1.0.4 工程实践红线对接）
+## 论源（v1.0.5 工程实践红线对接）
 
 本技能作为以下工程实践红线的**方法论支撑**（单点真源引用，AGENTS.md §9）：
 
 - **R3.1 根因分析** — 直接对应本技能 Iron Law「NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST」；禁止症状级修复（吞异常 / 改判断绕过 / 加默认值掩盖）
+- **R3.5 同根 Bug 扫描红线** — 对应本技能 Phase 3（Root Cause）的"变体识别"扩展；要求根因定位到机制层后，全仓搜索同机制所有调用点，列出全部受影响位置后一次性修复全部或登记 deferred
 
-> **红线触发场景**：任何 AI 修复 Bug / 排查故障 / 处理测试失败时，必须遵循 R3.1；本技能提供根因分析 5 阶段方法论（Reproduce → Isolate → Root Cause → Fix → Verify）。
-> **同步版本**：AGENTS.md v1.0.4（2026-07-03）
+> **红线触发场景**：任何 AI 修复 Bug / 排查故障 / 处理测试失败时，必须遵循 R3.1 + R3.5；本技能提供根因分析 5 阶段方法论（Reproduce → Isolate → Root Cause → Fix → Verify）+ 同根变体扫描 4 步流程（定位机制 → 全仓搜索 → 列位置 → 全修 / defer）。
+> **同步版本**：AGENTS.md v1.0.5（2026-07-03）
