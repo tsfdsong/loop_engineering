@@ -212,7 +212,13 @@ function Filter-ToolRootDirs($entries, $wantIds) {
 function Render-Plugins {
     Write-Step "Step 2a: 渲染 7 个 plugin manifest..."
     $script:RenderedDir = Join-Path $script:Work ".rendered-manifests"
-    $out = & python (Join-Path $script:ScriptDir "scripts\render_plugins.py") $script:Work $script:RenderedDir 2>&1
+    # PS 5.1：python 抛异常时 stderr 转 RemoteException，$LASTEXITCODE 可能为 0
+    try {
+        $out = & python (Join-Path $script:ScriptDir "scripts\render_plugins.py") $script:Work $script:RenderedDir 2>&1
+    } catch {
+        Write-Err "manifest 渲染失败：$($_.Exception.Message)"
+        exit 1
+    }
     if ($LASTEXITCODE -ne 0) {
         Write-Err "manifest 渲染失败（exit $LASTEXITCODE）"
         Write-Err "python 输出: $out"
@@ -536,7 +542,13 @@ function Inject-RedLines {
 
     foreach ($t in $targets) {
         New-Item -ItemType Directory -Path (Split-Path $t.Path) -Force | Out-Null
-        $out = & python (Join-Path $script:ScriptDir "scripts\inject_rules.py") $t.Path $blockDir 2>&1
+        # PS 5.1：python 抛异常时 stderr 转 RemoteException，$LASTEXITCODE 可能为 0
+        try {
+            $out = & python (Join-Path $script:ScriptDir "scripts\inject_rules.py") $t.Path $blockDir 2>&1
+        } catch {
+            Write-Err "[$($t.Label) 红线] 失败：$($_.Exception.Message)"
+            continue
+        }
         if ($LASTEXITCODE -eq 0) {
             Write-Ok "[$($t.Label) 红线] $($t.Path)"
             [void]$script:Targets.Add("$($t.Label) 红线`:$($t.Path)")
@@ -572,7 +584,13 @@ function Deploy-CursorMcp {
 
     $cfg = Join-Path $env:USERPROFILE ".cursor\mcp.json"
     New-Item -ItemType Directory -Path (Split-Path $cfg) -Force | Out-Null
-    $out = & python (Join-Path $script:ScriptDir "scripts\merge_mcp_config.py") cursor $cfg $jcode $repo $hdrm 2>&1
+    # PS 5.1：python 抛异常时 stderr 转 RemoteException，$LASTEXITCODE 可能为 0
+    try {
+        $out = & python (Join-Path $script:ScriptDir "scripts\merge_mcp_config.py") cursor $cfg $jcode $repo $hdrm 2>&1
+    } catch {
+        Write-Err "[Cursor MCP] 失败：$($_.Exception.Message)"
+        return
+    }
     if ($LASTEXITCODE -eq 0) {
         Write-Ok "[Cursor MCP] $cfg"
         [void]$script:Targets.Add("Cursor MCP`:$cfg")
