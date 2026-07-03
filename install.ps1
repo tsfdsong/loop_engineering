@@ -212,8 +212,12 @@ function Filter-ToolRootDirs($entries, $wantIds) {
 function Render-Plugins {
     Write-Step "Step 2a: 渲染 7 个 plugin manifest..."
     $script:RenderedDir = Join-Path $script:Work ".rendered-manifests"
-    & python (Join-Path $script:ScriptDir "scripts\render_plugins.py") $script:Work $script:RenderedDir
-    if ($LASTEXITCODE -ne 0) { Write-Err "manifest 渲染失败，终止安装"; exit 1 }
+    $out = & python (Join-Path $script:ScriptDir "scripts\render_plugins.py") $script:Work $script:RenderedDir 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Err "manifest 渲染失败（exit $LASTEXITCODE）"
+        Write-Err "python 输出: $out"
+        exit 1
+    }
     Write-Ok "manifest 渲染完成: $($script:RenderedDir)"
 }
 
@@ -442,11 +446,13 @@ function Write-ZCodeDesktopConfig {
     $repo = Convert-ToForwardSlashes $repo
     $cfg = Join-Path $env:USERPROFILE ".zcode\cli\config.json"
     New-Item -ItemType Directory -Path (Split-Path $cfg) -Force | Out-Null
-    & python (Join-Path $script:ScriptDir "scripts\merge_mcp_config.py") zcode $cfg $jcode $repo
+    $out = & python (Join-Path $script:ScriptDir "scripts\merge_mcp_config.py") zcode $cfg $jcode $repo 2>&1
     if ($LASTEXITCODE -eq 0) {
         Write-Ok "[ZCode 桌面版 MCP] $cfg"
         [void]$script:Targets.Add("ZCode 桌面版 MCP`:$cfg")
-    } else { Write-Err "合并 $cfg 失败" }
+    } else {
+        Write-Err "合并 $cfg 失败（exit $LASTEXITCODE）: $out"
+    }
 }
 
 # ════════════════════════════════════════════════════════════
@@ -523,10 +529,12 @@ function Inject-RedLines {
 
     foreach ($t in $targets) {
         New-Item -ItemType Directory -Path (Split-Path $t.Path) -Force | Out-Null
-        & python (Join-Path $script:ScriptDir "scripts\inject_rules.py") $t.Path $blockDir 2>&1 | Out-Null
+        $out = & python (Join-Path $script:ScriptDir "scripts\inject_rules.py") $t.Path $blockDir 2>&1
         if ($LASTEXITCODE -eq 0) {
             Write-Ok "[$($t.Label) 红线] $($t.Path)"
             [void]$script:Targets.Add("$($t.Label) 红线`:$($t.Path)")
+        } else {
+            Write-Err "[$($t.Label) 红线] 失败（exit $LASTEXITCODE）: $out"
         }
     }
     Remove-Item $blockDir -Recurse -Force -ErrorAction SilentlyContinue
@@ -557,11 +565,11 @@ function Deploy-CursorMcp {
 
     $cfg = Join-Path $env:USERPROFILE ".cursor\mcp.json"
     New-Item -ItemType Directory -Path (Split-Path $cfg) -Force | Out-Null
-    & python (Join-Path $script:ScriptDir "scripts\merge_mcp_config.py") cursor $cfg $jcode $repo $hdrm
+    $out = & python (Join-Path $script:ScriptDir "scripts\merge_mcp_config.py") cursor $cfg $jcode $repo $hdrm 2>&1
     if ($LASTEXITCODE -eq 0) {
         Write-Ok "[Cursor MCP] $cfg"
         [void]$script:Targets.Add("Cursor MCP`:$cfg")
-    } else { Write-Err "合并 $cfg 失败" }
+    } else { Write-Err "合并 $cfg 失败（exit $LASTEXITCODE）: $out" }
 }
 
 # ════════════════════════════════════════════════════════════
