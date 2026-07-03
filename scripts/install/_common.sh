@@ -899,6 +899,6 @@ common_print_target_summary() {
     done
     echo ""
     echo -e "${_BOLD}💡 验证 (开新 AI 会话后发送):${_RESET}"
-    echo -e "  ${_CYAN}\"告诉我 LoopEngine 的核心价值，并列出 orch 调度的 5 类复合任务\"${_RESET}"
+    echo -e "  ${_CYAN}\"告诉我 LoopEngine 的核心价值，并说明 orch v2 的场景家族（family）有哪些\"${_RESET}"
     echo ""
 }

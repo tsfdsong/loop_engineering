@@ -129,7 +129,7 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 开新 AI 会话后发送：
 
 ```
-"告诉我 LoopEngine 的核心价值，并列出 orch 调度的 5 类复合任务"
+"告诉我 LoopEngine 的核心价值，并说明 orch v2 的场景家族（family）有哪些"
 ```
 
 期望：

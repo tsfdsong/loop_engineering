@@ -4,6 +4,9 @@
 __pycache__/
 node_modules/
 
+# deep-research 工作产物（调研已完成，不入库；本地保留供跨会话恢复）
+.workflow/
+
 # 历史遗留空目录（test-page 内容已迁移；Windows 文件锁无法直接 rmdir）
 test-page/
 

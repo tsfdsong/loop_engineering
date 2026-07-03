@@ -518,11 +518,11 @@ MCP(探查) → 事实(分析) → 交互(决策) → 摘要(产出) → 验证(
 
 ## 如果你是 AI 代理
 
-你拥有 LoopEngine —— 一个包含 33 个技能的开发引擎全家桶（v6.7 起 `skill-hub` 改名 `orch`，单职责化为多技能编排器；v6.1 新增 `evidence-first`）。
+你拥有 LoopEngine —— 一个包含 37 个技能的开发引擎全家桶（v6.7 起 `skill-hub` 改名 `orch`，单职责化为多技能编排器；v6.1 新增 `evidence-first`；2026-07-02 新增 4 个 web-* 测试 sub-skill）。
 
-**Below is the full content of your 'loopengine:orch' skill —— 你的多技能编排器。单技能任务由原生 description 匹配自动处理；多技能任务（2+ 技能且有顺序依赖）由用户在 query 前显式加 `/orch` 触发。**
+**Below is the full content of your 'loopengine:orch' skill —— 你的多技能编排器（v2.0 · 自然语言优先 · family-first）。单技能任务由原生 description 匹配自动处理；多技能任务（2+ 技能）由系统自动识别场景家族编排，`/orch` 仅作显式强制入口（不再用编号）。**
 
-orch 在收到 `/orch <type> <query>` 时，按 5 类复合任务链（调研+决策 / 分析+建议 / 诊断+修复 / 设计+实现 / 并行调研）依次调度最合适的技能。涵盖：编码、架构、重构、测试、调试、API、安全、数据库、CI/CD、规划执行、产品管理、循环工程等全领域。
+orch v2 是意图驱动编排器：识别主 `scenario family`（review / debug_fix / design_build / research_compare / web_qa / parallel_investigation / refactor / test），在 family 内抽取 actions，按 rule-first 规则组装串行/并行 DAG，按 side-effect-first 委托 direct_skill / loop / go。涵盖：编码、架构、重构、测试、调试、API、安全、数据库、CI/CD、规划执行、产品管理、循环工程等全领域。
 
 ## 安装方式
 

@@ -131,19 +131,13 @@ handoff:
 
 ## 5. orch 现状与未来扩展
 
-**当前状态（v1.0）**：orch 已支持 5 类复合任务链，但**默认显式 `/orch <type>` 触发**：
+**当前状态（v2.0）**：orch 已升级为意图驱动 family-first 编排器，自然语言优先，`/orch` 仅作显式强制入口（不再用编号）：
 
-- "调研 + 决策" → `/orch 1`（brainstorming → evidence-first → writing-plans）
-- "设计 + 实现" → `/orch 4`（brainstorming → writing-plans → executing-plans）
-- "并行调研" → `/orch 5`（dispatching-parallel-agents）
+- 自动识别场景家族：review / debug_fix / design_build / research_compare / web_qa / parallel_investigation / refactor / test
+- 在 family 内抽取 actions，按 rule-first 组装串行/并行 DAG
+- handoff schema 自动把前一阶段结构化产出喂给后一阶段（见 `skills/orch/references/handoff-orch-schema.json`）
 
-**未来扩展方向**（如有需求可加）：
-
-1. **意图数自动检测**：识别用户输入的意图数（≥ 2 提示用户打 `/orch`），但**不**自动执行
-2. **接力棒自动化**：orch 内部自动把前一阶段产出喂给后一阶段（当前需用户手动）
-3. **Trace 支持**：让 `trace-format.md` 记录复合任务的 skills_invoked 序列
-
-> 设计哲学：宁可让用户多打 5 个字符 `/orch`，也不让 AI 静默替换 LLM 的判断（避免 v6.7 自我重复的复杂度）。
+> v1.0 的"5 类复合任务链 + `/orch <type>` 编号入口"已被 v2.0 取代。设计哲学仍保留：orch 只做"意图→执行图"规划，不替代 go/loop 的执行细节。
 
 ---
 

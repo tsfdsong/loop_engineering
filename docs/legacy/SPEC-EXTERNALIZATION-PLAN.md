@@ -1,4 +1,7 @@
-# Plan: spec/plan 完全外部化（LoopEngine v2.1）
+# Plan: spec/plan 完全外部化（LoopEngine v2.1）—— 已完成 · 归档
+
+> ⚠️ **ARCHIVED (2026-07-03)**：本迁移计划已执行完毕（设计文档已外部化到 `loop_engineering_specs` 仓库）。
+> 保留作历史参考。当前机制说明见 `docs/spec-repo-link.md`。
 
 > **状态**: 用户已批准（`/orch 4` + 选项 D "完全外部化"）
 > **日期**: 2026-07-02
