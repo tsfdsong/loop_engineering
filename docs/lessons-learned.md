@@ -90,6 +90,61 @@
 
 ---
 
+## 📚 L#003 · 2026-07-03 · v1.3.2 piped-mode BASH_SOURCE 误解析事故（`/dev/scripts/install/_common.sh`）
+
+### 现象
+在 WSL / Git Bash 跑 `curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash` 立即报错并退出：
+
+```
+bash: line 61: /dev/scripts/install/_common.sh: No such file or directory
+```
+
+报错路径 `/dev/scripts/install/_common.sh` 明显不合理（`/dev` 是设备目录），但 install.sh 直接退出，`curl | bash` 这种"一行安装"的卖点完全失效。
+
+### 根因（2 层）
+1. **`install.sh:59` 的"防御性" fallback 反成 bug**：
+   ```bash
+   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-/dev/null}")" 2>/dev/null && pwd || echo "")"
+   ```
+   设计意图：BASH_SOURCE[0] 为空时 fallback 到 `/dev/null` 防止 unset 报错。
+   实际效果：piped stdin 模式下 BASH_SOURCE[0] 确实为空 → fallback 命中 → `dirname /dev/null` 返回 `/dev` → SCRIPT_DIR 变成 `/dev` → `source /dev/scripts/install/_common.sh` 失败。
+2. **引入时机为 v1.2.4 跨平台分层重构**（commit `e0c64a5`, 2026-07-01）：install.sh 从单体脚本改为"调度器 + _common.sh"分层，arch 同步加了 `:-/dev/null` 防止 `set -u` 在 piped 模式 unset BASH_SOURCE[0] 时报错，但 fallback 路径选错。**未跑过"用户最小命令"端到端测试**就发布了（违反 §1.10 第 1 条黄金路径测试纪律）。
+
+### 修复（1 处精准修复 + R3.5 全仓扫描）
+- **install.sh** (`b18b872`)：
+  ```bash
+  if [ -z "$SCRIPT_DIR" ] || [ "$SCRIPT_DIR" = "/dev" ]; then
+      _COMMON_URL="https://github.com/tsfdsong/loop_engineering/raw/main/scripts/install/_common.sh"
+      _COMMON_TMP="$(mktemp -t loopengine-common.XXXXXX.sh)"
+      if ! curl -fsSL --max-time 30 "$_COMMON_URL" -o "$_COMMON_TMP"; then
+          echo "❌ 无法下载 _common.sh: $_COMMON_URL" >&2
+          rm -f "$_COMMON_TMP"
+          exit 1
+      fi
+      source "$_COMMON_TMP"
+      rm -f "$_COMMON_TMP"
+  else
+      source "$SCRIPT_DIR/scripts/install/_common.sh"
+  fi
+  ```
+- **R3.5 同根扫描**：全仓 4 个 BASH_SOURCE 用法，仅 `install.sh:59` 用了 `:-/dev/null` 形式（其他 3 处 `hooks/_lib.sh:23` / `skills/orch/hooks/install-hooks.sh:7` / `skills/orch/hooks/orch-bootstrap.sh:8` 都用简单 `${BASH_SOURCE[0]}`，file-based 调用，不踩坑）。
+- **关键设计点**：不用 `source <(curl ...)` 是因为 bash process-substitution 怪癖 — curl 失败时 process substitution 的 fd 仍"open"，让 `source` 返回 0，导致 `||` 错误处理失效（静默吞错）。改用 `mktemp + if ! curl` 显式校验退出码。
+
+### 教训（3 条）
+1. **"防御性 fallback" 可能反成 bug**：用 `${VAR:-fallback}` 模式时，fallback 值必须经过 `dirname`/`source` 等"路径解释"工具的语义验证。`/dev/null` 在 `dirname` 视角下变成 `/dev`，不是"无害"路径。**经验法则**：fallback 应该 fallback 到"已知存在的路径"（如 `$(pwd)`），而不是"已知语义无害的伪路径"。
+2. **跨模式端到端测试是 release 前置条件**（补强 §1.10）：install.sh 同时支持 file-based（`bash install.sh`）和 pipe-based（`curl | bash`）两种调用方式，但 v1.2.4 重构时只测了 file-based 一种模式，piped 模式从未被覆盖。**重构 install/deploy 类脚本时，必须同时跑 file-based + pipe-based 两种端到端测试**。
+3. **`source <(curl ...)` 的 bash 怪癖是常见陷阱**：`source <(...)` 不会传播 `<(...)` 内命令的退出码，错误处理（`||` / `set -e`）全部失效。**改用临时文件 + 显式 `if ! curl` 校验退出码**，是更可靠的模式（即使文件略大也值得）。
+
+### 验证（4 项必查）
+| # | 检查 | 结果 |
+|---|------|------|
+| 1 | `cat install.sh \| bash`（本地 mock _common.sh）→ `COMMON_VERSION=1.3.1-mock` | ✅ |
+| 2 | `bash install.sh`（file 模式）→ `COMMON_VERSION=1.3.1-mock`（无回归） | ✅ |
+| 3 | `cat install.sh \| bash` + 不可达 URL → exit 1, elapsed 2s（fail-fast，未 hang） | ✅ |
+| 4 | `bash -n install.sh` 语法检查通过 | ✅ |
+
+---
+
 <!-- BEGIN LOOPENGINE-MANAGED EVIDENCE-RULES -->
 （待补：2026-06-29 v5.4 兼容性胡乱分析事故记录，详见 AGENTS.md §2）
 <!-- END LOOPENGINE-MANAGED EVIDENCE-RULES -->
