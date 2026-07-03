@@ -18,10 +18,11 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 # PowerShell 5.1 需先强制 TLS 1.2（GitHub raw 要求），PowerShell 7+ 可省略此行
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 # 单模式：每次都强制覆盖所有文件（不要用 irm|iex，见下方说明）
-$le = "$env:TEMP\le-install.ps1"
+# 注意：文件名带时间戳避免 PS 5.1 irm -OutFile 不覆盖同名文件陷阱
+$le = "$env:TEMP\le-install-$([DateTime]::UtcNow.Ticks).ps1"
 irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 -OutFile $le
 & $le
-Remove-Item $le
+Remove-Item $le -Force
 ```
 
 **装完即用**。无需重启 AI 工具，无需懂任何目录约定，无需手动选平台或工具。
@@ -206,6 +207,7 @@ cat ~/.loopengine/.installed_version         # 1.3.2
 | **PowerShell 执行被策略阻止** | 先 `Set-ExecutionPolicy -Scope Process Bypass`（仅当前会话）；或浏览器下载后 `.\install.ps1` |
 | **GitHub raw 连接不稳定**（中国网络） | 设了 TLS 1.2 仍失败时，浏览器手动下载 `install.ps1` 到本地，`.\install.ps1`；或用代理 |
 | **PowerShell 中文乱码**（v1.3.2） | install.ps1 已加 UTF-8 BOM；若仍乱码，确认用 PowerShell 5.1+ 且文件未被二次编码 |
+| **PowerShell 跑的是旧版 install.ps1** | PS 5.1 `irm -OutFile $le` 同路径同名**不覆盖已存在文件**，导致 `& $le` 跑的是缓存旧版（含已知 bug）。**修复：文件名带时间戳**（见上方推荐命令 `le-install-$([DateTime]::UtcNow.Ticks).ps1`）或 `Remove-Item $le -Force` 先删再下 |
 | `pip install` 失败 | 先 `pip install --upgrade pip`；用 `python -m pip install --user <pkg>` 替代 |
 | `npm install -g` 失败 | 检查 Node.js；Linux/macOS 上需要 sudo 或 `npm config set prefix` |
 | 装完 ZCode 还是看不到 loopengine 技能 | 重跑 `bash install.sh`（覆盖所有目标目录） |

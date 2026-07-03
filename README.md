@@ -22,7 +22,11 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 # PowerShell 5.1 需先强制 TLS 1.2（GitHub raw 要求），PowerShell 7+ 可省略此行
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 # 单模式：每次都强制覆盖所有文件
-$le = "$env:TEMP\le-install.ps1"; irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 -OutFile $le; & $le; Remove-Item $le
+# 注意：文件名带时间戳避免 PS 5.1 irm -OutFile 不覆盖同名文件陷阱
+$le = "$env:TEMP\le-install-$([DateTime]::UtcNow.Ticks).ps1"
+irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 -OutFile $le
+& $le
+Remove-Item $le -Force
 ```
 
 > **为什么不用 `irm | iex`？** PS 5.1 下 `irm` 下载的 UTF-8 BOM 字符 + `iex` 把脚本当表达式执行，会报"无法将 ?# 项识别为 cmdlet"。临时文件模式绕过此限制。详细排查见 `docs/INSTALL.md` 故障排查表。
@@ -90,7 +94,7 @@ jcodemunch-mcp index_folder .
 | 平台 | 安装命令 | 验证 |
 |------|---------|:--:|
 | **ZCode** | `curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh \| bash`（推荐一键脚本，自动同步到 `~/.agents/skills/` 优先路径） | ✅ 实机 |
-| **Windows PowerShell** | `[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $le="$env:TEMP\le.ps1"; irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 -OutFile $le; & $le; Remove-Item $le`（v1.3.2，单模式强制覆盖） | ✅ 实机 |
+| **Windows PowerShell** | `[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $le="$env:TEMP\le-install-$([DateTime]::UtcNow.Ticks).ps1"; irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 -OutFile $le; & $le; Remove-Item $le -Force`（v1.3.2，单模式强制覆盖；时间戳文件名避 PS 5.1 缓存陷阱） | ✅ 实机 |
 | **Claude Code** | `claude plugin marketplace add https://github.com/tsfdsong/loop_engineering` 然后 `claude plugin install loopengine` | ✅ 实机 |
 | **Codex** | 插件市场搜索 `loopengine` | ⏳ |
 | **Cursor** | `/add-plugin tsfdsong/loop_engineering`（install.sh 已自动部署 skills+hooks+mcp.json） | ⏳ 应用内 |

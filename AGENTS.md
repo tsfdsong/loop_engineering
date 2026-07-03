@@ -759,8 +759,11 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 ```powershell
 # PowerShell 5.1 需先强制 TLS 1.2（GitHub raw 要求）
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-# 下载到临时文件再执行（单模式：每次都强制覆盖）
-$le = "$env:TEMP\le-install.ps1"; irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 -OutFile $le; & $le; Remove-Item $le
+# 下载到临时文件再执行（单模式：每次都强制覆盖；时间戳文件名避 PS 5.1 缓存陷阱）
+$le = "$env:TEMP\le-install-$([DateTime]::UtcNow.Ticks).ps1"
+irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 -OutFile $le
+& $le
+Remove-Item $le -Force
 ```
 
 **装完即用**。覆盖 ZCode / Claude Code / Codex / Gemini / Copilot / Pi 等 AI 编程工具的约定技能目录。详见 `docs/INSTALL.md`。
