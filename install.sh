@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ════════════════════════════════════════════════════════════
-# LoopEngine 一键安装 v1.3.1 — 跨平台自动感知调度器（macOS/Windows/Linux）
+# LoopEngine 一键安装 v1.3.2 — 跨平台自动感知调度器（macOS/Windows/Linux）
 # ════════════════════════════════════════════════════════════
 # 一行安装:
 #   curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
@@ -221,7 +221,10 @@ else
 fi
 
 # 注入共享变量（_common.sh + 4 平台子脚本通过 env 读取）
-COMMON_AGENT_LIST="$AGENT_LIST"
+# v1.3.2 修复：detect 用 printf '%s\n' 输出（换行分隔），但下游所有
+# [[ " $list " == *" id "* ]] 匹配假设空格分隔 → 全部误判。
+# 从源头标准化为空格分隔（换行/逗号/制表符 → 空格）。
+COMMON_AGENT_LIST=$(printf '%s' "$AGENT_LIST" | tr '\n,\t' '   ' | tr -s ' ')
 export COMMON_AGENT_LIST
 echo ""
 

@@ -3,7 +3,7 @@
 > **loop** 闭环编码 + **go** 全自动编排 + **orch** 多技能编排（v1.0 单职责化），一站式 AI 编程引擎插件。
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.3.1-blue)](package.json)
+[![Version](https://img.shields.io/badge/version-1.3.2-blue)](package.json)
 [![orch](https://img.shields.io/badge/orch-v2.0.0-blue)](skills/orch/SKILL.md)
 [![specs](https://img.shields.io/badge/specs-external-blue)](docs/spec-repo-link.md)
 
@@ -15,10 +15,18 @@
 
 ---
 
-## 🚀 一键安装/更新（v1.2.0 起 install.sh 智能模式合一）
+## 🚀 一键安装/更新（v1.2.0 起 install.sh 智能模式合一 · v1.3.2 新增 PowerShell）
+
+### macOS / Linux / Windows Git Bash
 
 ```bash
 curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
+```
+
+### Windows PowerShell（v1.3.2 新增 · 纯 PS，无需 Git Bash）
+
+```powershell
+irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 | iex
 ```
 
 **v1.2.0 起** install.sh = install + update 智能合一：
@@ -27,6 +35,8 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 - 已装同版 → 5 秒等待（`--force` 跳过，`--dry-run` 只检查不安装）
 
 **v1.3.0+** 自动检测已安装的 AI 编程工具（ZCode / Claude Code / Codex / Gemini CLI / GitHub Copilot / Cursor / Pi）并执行对应安装/更新；Kimi / OpenCode 走各自平台原生命令手动安装（`/plugins install` / 修改 `opencode.json`）。
+
+**v1.3.2** 新增 `install.ps1`（PowerShell 兄弟脚本），与 `install.sh` 行为契约一致，共用 3 个 Python helper（`render_plugins.py` / `inject_rules.py` / `merge_mcp_config.py`）。两个脚本并存，按平台选用：macOS/Linux 用 `.sh`，Windows 纯 PowerShell 用 `.ps1`。
 
 ---
 
@@ -82,6 +92,7 @@ jcodemunch-mcp index_folder .
 | 平台 | 安装命令 | 验证 |
 |------|---------|:--:|
 | **ZCode** | `curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh \| bash`（推荐一键脚本，自动同步到 `~/.agents/skills/` 优先路径） | ✅ 实机 |
+| **Windows PowerShell** | `irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 \| iex`（v1.3.2 新增，纯 PS 无需 Git Bash） | ✅ 实机 |
 | **Claude Code** | `claude plugin marketplace add https://github.com/tsfdsong/loop_engineering` 然后 `claude plugin install loopengine` | ✅ 实机 |
 | **Codex** | 插件市场搜索 `loopengine` | ⏳ |
 | **Cursor** | `/add-plugin tsfdsong/loop_engineering`（install.sh 已自动部署 skills+hooks+mcp.json） | ⏳ 应用内 |
@@ -197,7 +208,7 @@ jcodemunch-mcp index_folder .
 
 ```
 loopengine/
-├── skills/                  # 33 个内置技能定义（v6.4 真正融合后 · SKILL.md + references）
+├── skills/                  # 37 个内置技能定义（v1.3.2 含 4 个 web-* · SKILL.md + references）
 │   ├── loop/                # 闭环编码引擎
 │   ├── go/                  # 全自动编排引擎（v4.0 ZCode 纯血 + Worktree 并发）
 │   │   └── scripts/         # Python 编排脚本（orchestrator/zcode_runner/git_ops/state_manager）
@@ -208,7 +219,7 @@ loopengine/
 │   ├── run-hook.cmd         # 跨平台 polyglot 包装器
 │   └── hooks*.json          # 各平台钩子配置
 ├── docs/                    # 文档
-│   ├── INSTALL.md           # 安装指南（v1.3.1）
+│   ├── INSTALL.md           # 安装指南（v1.3.2 · 含 PowerShell）
 │   ├── mcp-setup-guide.md   # MCP 三件套安装配置
 │   ├── lessons-learned.md   # 事故教训库（单一真源）
 │   └── loopengineering-design/  # 架构设计图
@@ -216,8 +227,9 @@ loopengine/
 │   ├── install/             # 跨平台 install 子脚本（v1.3.1 三平台合一）
 │   ├── render_plugins.py    # plugin manifest 渲染
 │   ├── inject_rules.py      # 7 红线 sentinel 注入
-│   └── merge_mcp_config.py  # ZCode + Cursor MCP 合并（v1.3.1）
-├── install.sh               # 一键安装 + 智能更新（v1.2.0 起合一，v1.3.0 自动感知）
+│   └── merge_mcp_config.py  # ZCode + Cursor MCP 合并（v1.3.1 · headroom 可选 v1.3.2）
+├── install.sh               # 一键安装 + 智能更新（macOS/Linux/Git Bash · v1.2.0 起合一，v1.3.0 自动感知）
+├── install.ps1              # Windows PowerShell 一键安装（v1.3.2 新增 · 纯 PS 无需 Git Bash）
 ├── .zcode-plugin/           # ZCode 插件清单
 ├── .claude-plugin/          # Claude Code 插件清单
 ├── .codex-plugin/           # Codex 插件清单

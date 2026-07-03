@@ -23,7 +23,7 @@ _RESET="\033[0m"
 
 # ── 全局变量 ──────────────────────────────────────────────
 COMMON_REPO="https://github.com/tsfdsong/loop_engineering"
-COMMON_VERSION="1.3.1"
+COMMON_VERSION="1.3.2"
 COMMON_WORK=""           # clone 出来的代码根
 COMMON_SCRIPT_DIR=""     # 引用 scripts/*.py 的根（Step 1 后赋值）
 COMMON_RENDERED_DIR=""   # 渲染后的 manifest 目录
@@ -67,9 +67,21 @@ COMMON_MCP_FALLBACK_PATHS_MACOS=(
     "{HOME}/Library/Python/3.12/bin"
     "{HOME}/Library/Python/3.13/bin"
     "{HOME}/Library/Python/3.14/bin"
+    # v1.3.2 补：Homebrew Python（Apple Silicon / Intel）+ npm global + volta/nvm
+    "/opt/homebrew/bin"
+    "/usr/local/bin"
+    "/usr/local/lib/node_modules/.bin"
+    "{HOME}/.npm-global/bin"
+    "{HOME}/.volta/bin"
+    "{HOME}/.bun/bin"
 )
 COMMON_MCP_FALLBACK_PATHS_LINUX=(
     "{HOME}/.local/bin"
+    # v1.3.2 补：npm global + volta/nvm（repomix 走 npm）
+    "/usr/local/bin"
+    "/usr/lib/node_modules/.bin"
+    "{HOME}/.npm-global/bin"
+    "{HOME}/.volta/bin"
 )
 
 # ── smart_check_version ───────────────────────────────────
@@ -159,11 +171,16 @@ common_detect_installed_agents() {
 
 # ── filter_tool_root_dirs (v1.3.0) ────────────────────────
 # 按 agent ID 列表过滤 tool_root_dirs 输出
-# 入参：stdin 是 tool_root_dirs_for_platform 输出；$1 是 agent ID 列表（空格分隔）
+# 入参：stdin 是 tool_root_dirs_for_platform 输出；$1 是 agent ID 列表（空格/换行/逗号分隔均可）
 # 输出（stdout）：过滤后的 tool root 行
 # v1.3.1 改用 COMMON_LABEL_TO_ID 关联数组（顶部单一真源），去除重复 case
+# v1.3.2 修复：detect_installed_agents 用 printf '%s\n' 输出（换行分隔），
+#   但匹配逻辑 [[ " $want_ids " == *" $id "* ]] 假设空格分隔 → 全部误拒。
+#   入口处标准化为空格分隔（兼容换行/逗号/空格三种输入）。
 common_filter_tool_root_dirs() {
     local want_ids="$1"
+    # 标准化：换行/逗号/制表符 → 空格，并压紧多余空格
+    want_ids=$(printf '%s' "$want_ids" | tr '\n,\t' '   ' | tr -s ' ')
     while IFS= read -r entry; do
         [[ -z "$entry" ]] && continue
         local label="${entry%%|*}"
@@ -569,9 +586,45 @@ common_cleanup_target_top_level() {
 }
 
 # Step 2b: 复制 skills/ 到目标 skills/ 子目录
+# v1.3.2 修复 Cursor 路径：Cursor 扁平扫描 ~/.cursor/skills/<skill>/SKILL.md，
+# 而 ZCode 等支持 plugin 中间层 ~/.zcode/skills/loopengine/skills/<skill>/。
+# 对 Cursor label，skills 平铺到 root_dir 父目录（~/.cursor/skills/），
+# 而非 root_dir/skills（~/.cursor/skills/loopengine/skills/，多两层扫不到）。
+# 安全约束：Cursor 平铺到公共目录，绝不能用 find -delete 清空（会删用户其他 skill），
+# 改为逐个 skill 子目录 rsync 风格覆盖（只动 LoopEngine 拥有的目录）。
 common_copy_skills_for() {
     local label="$1" root_dir="$2" skills_dir="$3"
-    common_copy_tree "$label skills" "$skills_dir" "$root_dir/skills"
+    local skill_dst="$root_dir/skills"
+
+    # Cursor: 扁平平铺到 ~/.cursor/skills/，逐 skill 覆盖（不清空公共目录）
+    if [ "$label" = "Cursor" ]; then
+        skill_dst="$(dirname "$root_dir")"
+        if [ ! -d "$skills_dir" ]; then
+            echo -e "  ${_YELLOW}⚠${_RESET}  [$label skills] 源不存在: $skills_dir（跳过）"
+            return 0
+        fi
+        mkdir -p "$skill_dst"
+        local count=0
+        local sub
+        for sub in "$skills_dir"/*/; do
+            [ -d "$sub" ] || continue
+            local name
+            name=$(basename "$sub")
+            # 只清这个 skill 子目录（LoopEngine 拥有的），不动其他
+            rm -rf "${skill_dst:?}/$name" 2>/dev/null
+            if cp -r "$sub" "${skill_dst}/$name" 2>/dev/null; then
+                count=$((count + 1))
+            else
+                echo -e "  ${_YELLOW}⚠${_RESET}  [$label skills] 复制失败: $name"
+            fi
+        done
+        COMMON_TARGETS+=("$label skills:${skill_dst}")
+        echo -e "  ${_GREEN}✅${_RESET} [$label skills] ${count} 个 → $skill_dst（扁平）"
+        return 0
+    fi
+
+    # 其他 harness：标准 plugin 中间层路径
+    common_copy_tree "$label skills" "$skills_dir" "$skill_dst"
 }
 
 # Step 2c: 复制 hooks/ 到目标
@@ -651,21 +704,29 @@ common_copy_file() {
 # Step 5.5：写入 Cursor 全局 MCP 配置 ~/.cursor/mcp.json
 # 要求：
 #   1) agent filter 列表中包含 cursor（仅当 detect 到 Cursor 才调用）
-#   2) jcodemunch-mcp + repomix + headroom 可执行文件已通过
-#      平台 detect_mcp_exe_* 检测到（PATH 内或各平台 fallback 目录）
+#   2) jcodemunch-mcp + repomix 可执行文件已通过 detect_mcp_exe 找到（必需）
+#      headroom 可选——找不到时只跳过 headroom entry，仍写 jcodemunch + repomix
+#      （v1.3.2 修复：原逻辑强制 3 个全找到才写，导致 macOS headroom 装在
+#       Homebrew 路径不在 fallback 表时整个 Cursor MCP 配置被跳过）
 # schema: Cursor 用 mcpServers (无 type 字段)，与 ZCode mcp.servers+type:"stdio" 不同
 # 复用平台子脚本的 detect_mcp_exe_<platform> 函数 + windows.sh 的 to_forward_slashes
 common_deploy_cursor_mcp() {
-    # v1.3.1 简化：走 common_detect_mcp_exe + 平台表，删硬编码 case
     local jcode_exe repo_exe hdrm_exe
     jcode_exe=$(common_detect_mcp_exe jcodemunch-mcp) || jcode_exe=""
     repo_exe=$(common_detect_mcp_exe repomix) || repo_exe=""
     hdrm_exe=$(common_detect_mcp_exe headroom) || hdrm_exe=""
 
-    if [ -z "$jcode_exe" ] || [ -z "$repo_exe" ] || [ -z "$hdrm_exe" ]; then
-        echo -e "  ${_YELLOW}⚠${_RESET}  3 个 MCP 可执行文件未全部找到，跳过 ~/.cursor/mcp.json 写入"
-        echo -e "  ${_CYAN}ℹ${_RESET}  手动: 安装 jcodemunch-mcp + repomix + headroom 后重跑 bash install.sh --force"
+    # 必需：jcodemunch + repomix
+    if [ -z "$jcode_exe" ] || [ -z "$repo_exe" ]; then
+        echo -e "  ${_YELLOW}⚠${_RESET}  jcodemunch/repomix 未找到，跳过 ~/.cursor/mcp.json 写入"
+        echo -e "  ${_CYAN}ℹ${_RESET}  手动: 安装 jcodemunch-mcp + repomix 后重跑 bash install.sh --force"
         return 0
+    fi
+
+    # 可选：headroom 找不到仅告警，不阻断
+    if [ -z "$hdrm_exe" ]; then
+        echo -e "  ${_YELLOW}⚠${_RESET}  headroom 未找到（可选）— Cursor mcp.json 将不写 headroom entry"
+        hdrm_exe=""
     fi
 
     # Windows 路径转 forward slash（依赖平台脚本的 to_forward_slashes 函数）
@@ -687,13 +748,13 @@ common_deploy_cursor_mcp() {
 }
 
 # ── inject_red_lines ──────────────────────────────────────
-# Step 5：注入 7 条红线到 7 工具用户级 AGENTS.md
+# Step 5：注入 8 条红线到 7 工具用户级 AGENTS.md
 # 调用：common_inject_red_lines
 common_inject_red_lines() {
     local src="$COMMON_WORK/AGENTS.md"
     [ ! -f "$src" ] && { echo -e "  ${_YELLOW}⚠${_RESET}  $src 不存在，跳过"; return 0; }
 
-    # 7 条红线（与 AGENTS.md v1.0.2+ 同步）
+    # 8 条红线（与 AGENTS.md v1.0.3+ 同步）
     local managed_rules=(
         "用户交互红线:INTERACTION-RULES"
         "MCP 红线规则:MCP-RULES"
@@ -702,6 +763,7 @@ common_inject_red_lines() {
         "完成前验证红线:VERIFICATION-RULES"
         "进度汇报红线:PROGRESS-RULES"
         "Subagent 边界红线:SUBAGENT-RULES"
+        "一致性核对红线:CONSISTENCY-RULES"
     )
 
     # 7 工具用户级红线文件
@@ -755,7 +817,7 @@ common_extract_rule_block() {
     next_section_line=$(awk -v start="$begin_line" '
         BEGIN { in_code = 0 }
         NR > start {
-            if (/^[ \t]*```[ \t]*(<[^>]*>)?[ \t]*$/) { in_code = !in_code; next }
+            if (/^[ \t]*```[a-zA-Z0-9]*[ \t]*(<[^>]*>)?[ \t]*$/) { in_code = !in_code; next }
             if (!in_code && /^## /) { print NR; exit }
         }
     ' "$src")

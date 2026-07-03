@@ -40,7 +40,10 @@ def merge_zcode(cfg, jcode, repo):
 
 
 def merge_cursor(cfg, jcode, repo, hdrm):
-    """Cursor IDE：~/.cursor/mcp.json → mcpServers.<name>.{command,args}"""
+    """Cursor IDE：~/.cursor/mcp.json → mcpServers.<name>.{command,args}
+    v1.3.2: headroom 可选——为空字符串时跳过该 entry（不再强制 3 个全找到才写）。
+    同时清理可能存在的旧 headroom entry（避免残留失效路径）。
+    """
     data = _read_json(cfg)
     data.setdefault('mcpServers', {})
 
@@ -50,9 +53,13 @@ def merge_cursor(cfg, jcode, repo, hdrm):
     data['mcpServers']['repomix'] = {
         'command': repo, 'args': ['--mcp']
     }
-    data['mcpServers']['headroom'] = {
-        'command': hdrm, 'args': ['mcp', 'serve']
-    }
+    # headroom 可选：有路径才写，无路径清理旧 entry
+    if hdrm:
+        data['mcpServers']['headroom'] = {
+            'command': hdrm, 'args': ['mcp', 'serve']
+        }
+    else:
+        data['mcpServers'].pop('headroom', None)
     return data
 
 

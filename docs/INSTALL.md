@@ -1,27 +1,43 @@
 # LoopEngine 安装指南
 
-> v1.3.1（2026-07-02）— 三平台 install 脚本合一（3 平台从 ~145 → ~18 行），merge_mcp_config.py 合并 ZCode + Cursor 双 schema，AGENT 标签用关联数组去重，5 红线/工具 step 拆 5 sub-function。
+> v1.3.2（2026-07-03）— 新增 `install.ps1`（Windows PowerShell 兄弟脚本，纯 PS 无需 Git Bash）；修复 3 个 install.sh bug（filter 分隔符 / Cursor 路径扁平 / macOS MCP fallback）；merge_mcp_config.py headroom 改可选。
+> v1.3.1 三平台 install 脚本合一（3 平台从 ~145 → ~18 行），merge_mcp_config.py 合并 ZCode + Cursor 双 schema。
 > v1.3.0 OS + AI Agent 全自动感知；v1.2.0+ 智能模式（首次装 / 升级 / 同版本 5 秒等待）。
 
 ## 一行安装
+
+### macOS / Linux / Windows Git Bash
 
 ```bash
 curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
 ```
 
+### Windows PowerShell（v1.3.2 新增 · 纯 PS 无需 Git Bash）
+
+```powershell
+irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 | iex
+```
+
 **装完即用**。无需重启 AI 工具，无需懂任何目录约定，无需手动选平台或工具。
 
-## v1.3.1 核心改进
+> **执行策略提示**：若 `irm | iex` 被执行策略阻止，先跑 `Set-ExecutionPolicy -Scope Process Bypass`（仅当前会话生效）。
+
+## v1.3.2 核心改进
 
 | 改动 | 说明 |
 |------|------|
-| 🆕 **三平台脚本合一** | `_common.sh::common_run_platform_steps` + `common_detect_mcp_exe` + `common_install_mcp_packages` + `common_write_zcode_desktop_config` 替代 windows/macos/linux 各自的 3 副本函数。3 平台从 ~145 → ~18 行（-87%）|
-| 🆕 **merge_mcp_config.py 合并** | 原 merge_zcode_config.py（v1.2.3）+ merge_cursor_config.py（v1.3.0）合并为单脚本 + `--schema=zcode\|cursor` 参数。`atomic_write` 6 行在脚本内保留（不抽 `_atomic_io.py`）|
-| 🆕 **AGENT 标签关联数组** | `COMMON_LABEL_TO_ID` 关联数组替代 `AGENT_LABEL_MAP + filter case` 双份真源，加新 agent 改 1 处 |
-| 🆕 **deploy 拆 5 sub-function** | `common_deploy_to_9_tools` 100 行单函数拆为 `common_cleanup_target_top_level` / `common_copy_skills_for` / `common_copy_hooks_for` / `common_deploy_manifest_for` / `common_copy_root_docs_for` + `_for_each_target` 通用 iterator |
-| 🆕 **BASE_TARGETS 共享数组** | windows / macos\|linux tool_root_dirs 共享 7 行基础目标，windows 追加 1 行 AppData |
-| 🆕 **Kimi/OpenCode 清理** | 不在 install.sh 范围，文档/代码一致：手动 `/plugins install` / 修改 `opencode.json` |
-| v1.3.0 | OS + AI Agent 自动感知（默认按本机已装工具部署）+ Cursor MCP 合并 + 修 macOS/Linux 虚假 `$HOME/AppData/` 路径 bug |
+| 🆕 **install.ps1 新增** | Windows PowerShell 兄弟脚本（~500 行），与 install.sh 行为契约一致，共用 3 个 Python helper（render_plugins.py / inject_rules.py / merge_mcp_config.py）。两个脚本并存，按平台选用 |
+| 🔧 **filter 分隔符 bug 修复** | `common_filter_tool_root_dirs` 入口标准化 want_ids（换行/逗号/制表符 → 空格），修复 detect 用换行输出但匹配用空格导致 7 个 agent 全被误拒的 bug |
+| 🔧 **Cursor skills 路径扁平** | Cursor 改走扁平模式 `~/.cursor/skills/<name>/SKILL.md`（逐 skill 覆盖，不清空公共目录，保护用户其他 skill）；原逻辑多两层 `loopengine/skills/` Cursor 扫不到 |
+| 🔧 **macOS MCP fallback 补全** | macOS fallback 表补 Homebrew（`/opt/homebrew/bin` / `/usr/local/bin`）+ npm global + volta；Linux 补 npm global；修复 macOS headroom 装在 Homebrew 路径找不到的问题 |
+| 🔧 **headroom 解耦** | `deploy_cursor_mcp` 把 headroom 从"写 Cursor MCP 的强制门槛"降级为可选；jcodemunch + repomix 必需，headroom 找不到仅告警不阻断；`merge_mcp_config.py` cursor schema 支持空 headroom（跳过 entry） |
+
+### v1.3.2 PowerShell 特有处理
+
+| 问题 | 根因 | 修复 |
+|------|------|------|
+| 中文乱码（`ZCode 鍐呯疆鍖?`）| PowerShell 5.1 默认用 GBK 读 .ps1 | install.ps1 加 UTF-8 BOM |
+| `无法覆盖变量 HOME` | `$home` 是 PS 只读自动变量 | 改用 `$homeDir = $env:USERPROFILE` |
 
 ## 更新
 
@@ -85,13 +101,13 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 | Gemini CLI | `~/.gemini/extensions/loopengine/` | `~/.gemini/extensions/loopengine/` |
 | GitHub Copilot | `~/.copilot/skills/loopengine/` | `~/.copilot/skills/loopengine/` |
 | Pi | `~/.pi/skills/loopengine/` | `~/.pi/skills/loopengine/` |
-| Cursor | `~/.cursor/skills/loopengine/` | `~/.cursor/skills/loopengine/` |
+| Cursor | `~/.cursor/skills/loopengine/`（hooks/manifest）+ `~/.cursor/skills/<skill>/`（v1.3.2 扁平） | `~/.cursor/skills/loopengine/`（hooks/manifest）+ `~/.cursor/skills/<skill>/`（v1.3.2 扁平） |
 | **ZCode 内置包**（Windows 专属） | `~/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin/` | ❌ 不部署（v1.3.0 修复：避免创建虚假 `$HOME/AppData`） |
 | **ZCode CLI 缓存** | `~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/` | `~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/` |
 | **Cursor MCP**（v1.3.0 新增） | `~/.cursor/mcp.json` | `~/.cursor/mcp.json` |
 
 > 🟢 ZCode 用户级 fallback 是关键 — 即使其他 ZCode 内部插件路径不动，技能也能加载。
-> 🟢 **Cursor 完整集成**（v1.2.2 + v1.3.0）：skills/hooks/plugin.json 部署到 `~/.cursor/skills/loopengine/`，红线注入 `~/.cursor/rules/loopengine-interaction.mdc`，**MCP 合并写入 `~/.cursor/mcp.json`**（保留 drawio 等用户自有 server）。
+> 🟢 **Cursor 完整集成**（v1.2.2 + v1.3.0 + v1.3.2 扁平修复）：skills 扁平部署到 `~/.cursor/skills/<skill>/`（v1.3.2 改动，原 v1.3.1 多两层 `loopengine/skills/` Cursor 扫不到）；hooks/plugin.json 在 `~/.cursor/skills/loopengine/`（plugin 根）；红线注入 `~/.cursor/rules/loopengine-interaction.mdc`；**MCP 合并写入 `~/.cursor/mcp.json`**（保留 drawio 等用户自有 server，headroom 可选）。
 
 ## 全局红线注入（Step 5）
 
@@ -110,19 +126,21 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 - **用户保留**：你的其他自定义内容不会被覆盖
 - **自动同步**：重跑 `install.sh`（智能模式）时规则自动更新
 
-## Cursor MCP 合并（v1.3.0 新增 · Step 5.5）
+## Cursor MCP 合并（v1.3.0 新增 · Step 5.5 · v1.3.2 headroom 改可选）
 
-`install.sh` 自动把 3 个 MCP server 路径注入到 `~/.cursor/mcp.json` 的 `mcpServers`：
+`install.sh` / `install.ps1` 自动把 MCP server 路径注入到 `~/.cursor/mcp.json` 的 `mcpServers`：
 
-- `jcodemunch`（指向 `jcodemunch-mcp.exe` / `.cmd`）
-- `repomix`（指向 `repomix.exe` / `.cmd`）
-- `headroom`（指向 `headroom.exe` / `.cmd`）
+- `jcodemunch`（指向 `jcodemunch-mcp.exe` / `.cmd`）— **必需**
+- `repomix`（指向 `repomix.exe` / `.cmd`）— **必需**
+- `headroom`（指向 `headroom.exe` / `.cmd`）— **可选**（v1.3.2 改动：找不到时跳过该 entry，不阻断写入）
 
 **关键差异**（[F] 来自本机 `.mcp.json` 实测）：
 - **Cursor IDE** schema：`mcpServers.<name>.{command, args}` （**无** `type` 字段）
 - **ZCode 桌面版** schema：`mcp.servers.<name>.{type: "stdio", command, args}`
 
-**保留策略**：用 `setdefault` 保留所有顶层字段和用户已有 server（如 `drawio`），仅强制覆写 3 个 LoopEngine 自己的 key。原子写（`.tmp` + `os.replace`）。
+**保留策略**：用 `setdefault` 保留所有顶层字段和用户已有 server（如 `drawio`），仅强制覆写 LoopEngine 自己的 key。原子写（`.tmp` + `os.replace`）。
+
+**v1.3.2 headroom 解耦背景**：v1.3.1 及之前要求 jcodemunch + repomix + headroom **三个全找到**才写 Cursor mcp.json，但 macOS 上 headroom 常装在 Homebrew 路径（`/opt/homebrew/bin`，不在 fallback 表），导致整个 Cursor MCP 配置被跳过 → "macOS 不能用"。v1.3.2 把 headroom 降级为可选，并补全 macOS/Linux fallback 路径表。
 
 ## 验证
 
@@ -143,17 +161,17 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 bash install.sh --dry-run
 
 # 2. 检查 9 工具 skill 部署
-ls ~/.zcode/skills/loopengine/skills/orch/   # ZCode 用户级
-ls ~/.cursor/skills/loopengine/skills/orch/ # Cursor
+ls ~/.zcode/skills/loopengine/skills/orch/   # ZCode 用户级（plugin 中间层）
+ls ~/.cursor/skills/orch/                    # Cursor（v1.3.2 扁平，无 loopengine/ 中间层）
 
 # 3. 检查 Cursor MCP 合并
-cat ~/.cursor/mcp.json                       # 4 server: drawio + jcodemunch + repomix + headroom
+cat ~/.cursor/mcp.json                       # drawio + jcodemunch + repomix（+ 可选 headroom）
 
 # 4. 检查 7 红线注入
 grep "LOOPENGINE-MANAGED" ~/.zcode/AGENTS.md # 7 sentinel markers
 
 # 5. 检查版本号
-cat ~/.loopengine/.installed_version         # 1.3.1
+cat ~/.loopengine/.installed_version         # 1.3.2
 ```
 
 ## 故障排查
@@ -161,14 +179,18 @@ cat ~/.loopengine/.installed_version         # 1.3.1
 | 现象 | 解决 |
 |------|------|
 | `git clone` 失败 | 检查网络/VPN；可手动下载 ZIP 解压后跑 `bash install.sh` |
+| **PowerShell `irm\|iex` 被阻止**（v1.3.2） | 先 `Set-ExecutionPolicy -Scope Process Bypass`（仅当前会话）；或本地下载后 `.\install.ps1 -Force` |
+| **PowerShell 中文乱码**（v1.3.2） | install.ps1 已加 UTF-8 BOM；若仍乱码，确认用 PowerShell 5.1+ 且文件未被二次编码 |
 | `pip install` 失败 | 先 `pip install --upgrade pip`；用 `python -m pip install --user <pkg>` 替代 |
 | `npm install -g` 失败 | 检查 Node.js；Linux/macOS 上需要 sudo 或 `npm config set prefix` |
 | 装完 ZCode 还是看不到 loopengine 技能 | 重跑 `bash install.sh`（覆盖所有目标目录） |
 | **ZCode MCP 工具不显示** | 检查 `cat ~/.zcode/cli/config.json` 是否有 `mcp.servers` 三个 server；缺失就重跑 `bash install.sh` |
-| **Cursor MCP 工具不显示**（v1.3.0 新增） | 检查 `cat ~/.cursor/mcp.json` 是否有 3 server（jcodemunch/repomix/headroom）；缺失就重跑 `bash install.sh --force`（确保 `--all` 或 detect 到 cursor） |
-| MCP 工具显示了但调用失败 | 命令路径要带 Windows 扩展名（`jcodemunch-mcp.exe` / `repomix.cmd` / `headroom.exe`），install.sh 已自动处理 |
-| 想强制重装最新版本 | `rm ~/.loopengine/.installed_version && bash install.sh` |
-| **v1.3.0 detect 没识别某个工具** | 用 `bash install.sh --only=zcode,cursor --force` 显式指定；或用 `--all` 强制全量 |
+| **Cursor MCP 工具不显示** | 检查 `cat ~/.cursor/mcp.json` 是否有 jcodemunch+repomix（headroom 可选）；缺失就重跑 `bash install.sh --force`（确保 detect 到 cursor） |
+| **macOS Cursor MCP 不写入**（v1.3.2 已修） | v1.3.1 macOS headroom 装在 Homebrew 路径找不到 → 整个跳过；v1.3.2 已补 fallback 表 + headroom 解耦，升级后重跑 `bash install.sh --force` |
+| **Cursor skills 看不到**（v1.3.2 已修） | v1.3.1 skills 部署在 `~/.cursor/skills/loopengine/skills/`（多两层，Cursor 扫不到）；v1.3.2 改扁平 `~/.cursor/skills/<skill>/`，升级后重跑 `--force` |
+| MCP 工具显示了但调用失败 | 命令路径要带 Windows 扩展名（`jcodemunch-mcp.exe` / `repomix.cmd` / `headroom.exe`），install.sh/ps1 已自动处理 |
+| 想强制重装最新版本 | `rm ~/.loopengine/.installed_version && bash install.sh`（或 PS: `Remove-Item ~/.loopengine/.installed_version; .\install.ps1 -Force`） |
+| **v1.3.0 detect 没识别某个工具** | 用 `bash install.sh --only=zcode,cursor --force` 显式指定；或用 `--all` 强制全量（PS: `-Only zcode,cursor -Force`） |
 
 ## 设计哲学
 
@@ -179,3 +201,4 @@ cat ~/.loopengine/.installed_version         # 1.3.1
 - **单一真源**：plugin manifest 改版本号 = 改 `.plugin-template.json` 的 `version` 字段（6 个 overlay 自动同步）
 - **v1.3.0+ 自动感知**：默认只给本机已装工具部署；显式 `--all` / `--only` 可覆盖
 - **v1.3.1 三平台合一**：3 平台脚本从 ~145 → ~18 行（-87%），共享 `common_run_platform_steps` 主驱动
+- **v1.3.2 PowerShell 兄弟**：新增 `install.ps1`（纯 PS 无需 Git Bash），与 `install.sh` 行为契约一致，共用 3 个 Python helper；两个脚本并存按平台选用
