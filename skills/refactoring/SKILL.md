@@ -304,3 +304,15 @@ Refs: <原 issue / 设计文档>"
 - 内联：legacy-code 31 行要点已融入"特殊场景：遗留代码改造"章节
 - 保留：framework-migration-full.md（140 行，strangler fig 完整模式）
 - orch 调度表已同步
+
+---
+
+## 论源（v1.0.4 工程实践红线对接）
+
+本技能作为以下工程实践红线的**方法论支撑**（单点真源引用，AGENTS.md §9）：
+
+- **R4.1 测试保护** — 直接对应本技能 workflow 的"verify（测试保护）"阶段；无测试覆盖代码禁止重构（Working Effectively with Legacy Code / Michael Feathers）
+- **R4.4 机械重构优先** — 直接对应 Refactoring by Martin Fowler 的"机械重构 → 架构重构"递进原则；rename / extract / move 优先于架构重构
+
+> **红线触发场景**：任何 AI 重构现有代码 / 处理 legacy code / 应用设计模式时，必须遵循 R4.1 + R4.4；本技能提供重构全流程方法论（识别 → 计划 → 小步 → 验证）。
+> **同步版本**：AGENTS.md v1.0.4（2026-07-03）

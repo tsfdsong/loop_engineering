@@ -312,3 +312,16 @@ Step 3: Layer 3 引入
 - 修死引用：v6.2 时该 references 文件已不存在（v6.2 仅删 SKILL.md 未删 references）→ v6.4 已改为内联要点
 - 内联：poeaa + ddia 完整内容（30+30 行）已融入 Layer 2/3 章节
 - orch 调度表已同步
+
+---
+
+## 论源（v1.0.4 工程实践红线对接）
+
+本技能作为以下工程实践红线的**方法论支撑**（单点真源引用，AGENTS.md §9）：
+
+- **R1.4 可回滚红线** — 提供"架构决策必须可回滚"的方法论（DDIA Chapter 4 编码 + 回滚 / POEAA 演进式设计）
+- **R2.4 PoC / Spike 时间盒** — 提供"重大选型必须 spike 验证 + 时间盒"的具体技术（Clean Architecture 边界识别 + spike-and-stabilize 流程）
+- **R6.2 ADR 红线** — 提供 ADR（Architecture Decision Record）的标准结构与编写流程（Michael Nygard ADR 模板 + 演进路径）
+
+> **红线触发场景**：任何 AI 做技术选型 / 架构决策 / 不可逆设计时，必须遵循 R1.4 + R2.4 + R6.2；本技能提供方法论落地路径。
+> **同步版本**：AGENTS.md v1.0.4（2026-07-03）

@@ -224,7 +224,7 @@ loopengine/
 ├── scripts/                 # 平台工具脚本
 │   ├── install/             # 跨平台 install 子脚本（v1.3.1 三平台合一）
 │   ├── render_plugins.py    # plugin manifest 渲染
-│   ├── inject_rules.py      # 7 红线 sentinel 注入
+│   ├── inject_rules.py      # 9 红线 sentinel 注入
 │   └── merge_mcp_config.py  # ZCode + Cursor MCP 合并（v1.3.1 · headroom 可选 v1.3.2）
 ├── install.sh               # 一键安装 + 智能更新（macOS/Linux/Git Bash · v1.2.0 起合一，v1.3.0 自动感知）
 ├── install.ps1              # Windows PowerShell 一键安装（v1.3.2 新增 · 纯 PS 无需 Git Bash）

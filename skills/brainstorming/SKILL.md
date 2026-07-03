@@ -162,3 +162,17 @@ A question about a UI topic is not automatically a visual question. "What does p
 
 If they agree to the companion, read the detailed guide before proceeding:
 `skills/brainstorming/visual-companion.md`
+
+---
+
+## 论源（v1.0.4 工程实践红线对接）
+
+本技能作为以下工程实践红线的**方法论支撑**（单点真源引用，AGENTS.md §9）：
+
+- **R1.1 反选项清单** — 提供"≥ 2 个被否决备选 + 否决理由"的方法论框架
+- **R1.2 机会成本可见** — 提供 trade-off 透明化的对话结构（"放弃了什么换取什么"）
+- **R5.3 Tracer Bullet** — 提供 walking skeleton（端到端最小骨架）的具体技术路径
+- **R5.7 Spike & Iterate** — 提供 spike-first 探索流程（不确定时先 spike 再实现）
+
+> **红线触发场景**：任何 AI 推荐方案 / 设计新功能 / 探索未知问题时，必须遵循 R1.1/R1.2 + R5.3/R5.7；本技能提供方法论落地路径。
+> **同步版本**：AGENTS.md v1.0.4（2026-07-03）

@@ -188,8 +188,8 @@ ls ~/.cursor/skills/orch/                    # Cursor（v1.3.2 扁平，无 loop
 # 3. 检查 Cursor MCP 合并
 cat ~/.cursor/mcp.json                       # drawio + jcodemunch + repomix（+ 可选 headroom）
 
-# 4. 检查 7 红线注入
-grep "LOOPENGINE-MANAGED" ~/.zcode/AGENTS.md # 7 sentinel markers
+# 4. 检查 9 红线注入
+grep "LOOPENGINE-MANAGED" ~/.zcode/AGENTS.md # 9 sentinel markers
 
 # 5. 检查版本号
 cat ~/.loopengine/.installed_version         # 1.3.2

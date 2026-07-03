@@ -127,3 +127,14 @@ metadata:
 - ✅ 可与 `verification-before-completion`（完成时验证）配合使用
 - ✅ 可与 `systematic-debugging`（调试）配合使用
 - ✅ 形成完整链路：evidence-first（开始）→ systematic-debugging（过程）→ verification-before-completion（完成）
+
+---
+
+## 论源（v1.0.4 工程实践红线对接）
+
+本技能作为以下工程实践红线的**方法论支撑**（单点真源引用，AGENTS.md §9）：
+
+- **R5.6 Working > Comprehensive** — 提供"先让代码 work，再补文档"的事实优先方法论；禁止"完整文档先行"导致的过度设计（与本技能"事实优先"铁律一致）
+
+> **红线触发场景**：任何 AI 处理"该不该写文档 / 什么时候补文档 / 是否需要完整设计"类问题时，必须遵循 R5.6；本技能提供 5 项事实清单 + 长篇论述前的 4 问自查。
+> **同步版本**：AGENTS.md v1.0.4（2026-07-03）

@@ -126,7 +126,7 @@ COMMON_LOCAL_SRC_DIR="${SCRIPT_DIR:-}"
 echo ""
 echo -e "${_BOLD}${_CYAN}╔══════════════════════════════════════════════════╗${_RESET}"
 echo -e "${_BOLD}${_CYAN}║  LoopEngine v${COMMON_VERSION} — 跨平台一键安装/更新     ║${_RESET}"
-echo -e "${_BOLD}${_CYAN}║  自动检测平台 · skills/AGENTS.md/hooks/MCP/7 红线 ║${_RESET}"
+echo -e "${_BOLD}${_CYAN}║  自动检测平台 · skills/AGENTS.md/hooks/MCP/9 红线 ║${_RESET}"
 echo -e "${_BOLD}${_CYAN}╚══════════════════════════════════════════════════╝${_RESET}"
 if [ "$COMMON_DRY_RUN" = true ]; then
     echo -e "  ${_CYAN}ℹ${_RESET}  ${_BOLD}--dry-run${_RESET} 模式：只检查不安装"

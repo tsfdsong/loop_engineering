@@ -294,3 +294,14 @@ From debugging sessions:
 - Random fixes approach: 2-3 hours of thrashing
 - First-time fix rate: 95% vs 40%
 - New bugs introduced: Near zero vs common
+
+---
+
+## 论源（v1.0.4 工程实践红线对接）
+
+本技能作为以下工程实践红线的**方法论支撑**（单点真源引用，AGENTS.md §9）：
+
+- **R3.1 根因分析** — 直接对应本技能 Iron Law「NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST」；禁止症状级修复（吞异常 / 改判断绕过 / 加默认值掩盖）
+
+> **红线触发场景**：任何 AI 修复 Bug / 排查故障 / 处理测试失败时，必须遵循 R3.1；本技能提供根因分析 5 阶段方法论（Reproduce → Isolate → Root Cause → Fix → Verify）。
+> **同步版本**：AGENTS.md v1.0.4（2026-07-03）

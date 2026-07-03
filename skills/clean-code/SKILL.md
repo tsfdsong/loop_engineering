@@ -326,3 +326,16 @@ metadata:
 - 内联：pragmatic-programmer 34 行要点已融入"维度 4：决策"章节
 - 保留：clean-code + code-complete 通过 `~/.agents/skills/agent-rules-books/` 规则文件引用
 - orch 调度表已同步
+
+---
+
+## 论源（v1.0.4 工程实践红线对接）
+
+本技能作为以下工程实践红线的**方法论支撑**（单点真源引用，AGENTS.md §9）：
+
+- **R1.3 YAGNI** — 直接来自 The Pragmatic Programmer「You Aren't Gonna Need It」原则；禁止为"未来可能用到"提前抽象
+- **R5.1 KISS** — 直接来自 The Pragmatic Programmer「Keep It Simple」原则；禁止为"优雅 / 通用 / 扩展性"加不必要抽象
+- **R5.2 减法红线** — 综合 Clean Code "Functions should do one thing" + Code Complete "Avoid speculative generality"；写代码前先问"能不能不写？"
+
+> **红线触发场景**：任何 AI 写代码 / 重构 / 设计抽象时，必须遵循 R1.3 + R5.1 + R5.2；本技能提供方法论落地路径。
+> **同步版本**：AGENTS.md v1.0.4（2026-07-03）

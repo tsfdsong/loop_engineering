@@ -451,7 +451,7 @@ function Write-ZCodeDesktopConfig {
 
 # ════════════════════════════════════════════════════════════
 # Step 5: Inject-RedLines（对齐 _common.sh:753-849）
-# 8 条红线 × 7 目标文件，调 inject_rules.py 幂等合并
+# 9 条红线 × 7 目标文件，调 inject_rules.py 幂等合并
 # ════════════════════════════════════════════════════════════
 function Extract-RuleBlock($srcLines, $title, $marker) {
     # 找 begin: ^## .*🔴.*<title>
@@ -478,7 +478,7 @@ function Inject-RedLines {
     $src = Join-Path $script:Work "AGENTS.md"
     if (-not (Test-Path $src)) { Write-Warn "$src 不存在，跳过"; return }
 
-    # 8 条红线 title:marker（对齐 _common.sh:758-767）
+    # 9 条红线 title:marker（对齐 _common.sh:758-768）
     $rules = @(
         @{Title="用户交互红线";    Marker="INTERACTION-RULES"}
         @{Title="MCP 红线规则";    Marker="MCP-RULES"}
@@ -488,6 +488,7 @@ function Inject-RedLines {
         @{Title="进度汇报红线";    Marker="PROGRESS-RULES"}
         @{Title="Subagent 边界红线"; Marker="SUBAGENT-RULES"}
         @{Title="一致性核对红线";  Marker="CONSISTENCY-RULES"}
+        @{Title="工程实践红线";    Marker="ENGINEERING-RULES"}
     )
     # 7 个目标文件（对齐 _common.sh:769-777，无 filter 全注入）
     $targets = @(
@@ -593,7 +594,7 @@ function Deployment-Check {
 Write-Host ""
 Write-Host "╔══════════════════════════════════════════════════╗" -ForegroundColor Cyan
 Write-Host "║  LoopEngine v$($script:Version) — Windows PowerShell 一键安装   ║" -ForegroundColor Cyan
-Write-Host "║  自动检测平台 · skills/AGENTS.md/hooks/MCP/7 红线 ║" -ForegroundColor Cyan
+Write-Host "║  自动检测平台 · skills/AGENTS.md/hooks/MCP/9 红线 ║" -ForegroundColor Cyan
 Write-Host "╚══════════════════════════════════════════════════╝" -ForegroundColor Cyan
 if ($All)     { Write-Info "LE_ALL=1：强制全量部署" }
 Write-Host ""

@@ -748,13 +748,13 @@ common_deploy_cursor_mcp() {
 }
 
 # ── inject_red_lines ──────────────────────────────────────
-# Step 5：注入 8 条红线到 7 工具用户级 AGENTS.md
+# Step 5：注入 9 条红线到 7 工具用户级 AGENTS.md
 # 调用：common_inject_red_lines
 common_inject_red_lines() {
     local src="$COMMON_WORK/AGENTS.md"
     [ ! -f "$src" ] && { echo -e "  ${_YELLOW}⚠${_RESET}  $src 不存在，跳过"; return 0; }
 
-    # 8 条红线（与 AGENTS.md v1.0.3+ 同步）
+    # 9 条红线（与 AGENTS.md v1.0.4+ 同步）
     local managed_rules=(
         "用户交互红线:INTERACTION-RULES"
         "MCP 红线规则:MCP-RULES"
@@ -764,6 +764,7 @@ common_inject_red_lines() {
         "进度汇报红线:PROGRESS-RULES"
         "Subagent 边界红线:SUBAGENT-RULES"
         "一致性核对红线:CONSISTENCY-RULES"
+        "工程实践红线:ENGINEERING-RULES"
     )
 
     # 7 工具用户级红线文件
