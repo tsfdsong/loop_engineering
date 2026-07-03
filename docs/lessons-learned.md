@@ -51,6 +51,45 @@
 
 ---
 
+## 📚 L#002 · 2026-07-03 · v1.3.2 specs 卡死事故（安装时 `git pull` 永不退出）
+
+### 现象
+用户跑 `irm .../install.ps1 | iex` 后卡住不返回。后台实际有 **1 个 powershell.exe + 7 个 git.exe 子进程**（1 个主 + `git-remote-https` + `git-credential-helper` + 4 个 helper），CPU 不高但完全无响应，**永不退出**。`git pull` 反复重试 TCP/认证，从不报错。
+
+### 根因（3 层叠加）
+1. **specs 仓库根本不存在**：`https://github.com/tsfdsong/loop_engineering_specs.git` → `Repository not found`（`git ls-remote` 实证）
+2. **本地脏 specs 目录**：`~/.loopengine/specs/.git` 已存在，origin 指向不存在的 URL，`git pull` 永远在该脏仓库上重试
+3. **install 脚本的"失败不阻塞"逻辑只挡同步失败，不挡挂起**：
+   - `bash install.sh`：`if (cd ... && git pull --ff-only 2>&1); then ... else git pull 失败（继续，不阻塞）` — 错误地假设 pull 失败会返回非 0
+   - `install.ps1`：`& git ... pull --ff-only 2>&1 | Out-Null` — `2>&1 | Out-Null` 吞掉错误输出但**吞不掉挂起**
+
+**核心混淆**：`git pull` 在远端不存在时**不是 fail** 而是 **hang**（反复重试 TCP/认证/HTTP 401）。这是 L#001 未触及的新故障类。
+
+### 修复（5 处）
+- **install.sh** (`1f0556e`)：删 `SPECS_MODE/SOURCE/TARGET_DIR` 常量 + 3 个 case 参数（`--skip-specs`/`--with-specs`/`--specs-source`）+ 整段 `install_specs()` 函数 + help 段相关行
+- **install.ps1** (`5b76938`)：删 `Clone-Specs` 函数 + 3 个 env 常量（`$SkipSpecs/$WithSpecs/$SpecsSource`）+ `DefaultSpecsSource/SpecsTargetDir` 常量 + 主流程调用
+- **本机清理**：杀掉 8 个 stuck 进程（`taskkill /F /IM git.exe; taskkill /F /IM powershell.exe`） + `rm -rf ~/.loopengine/specs` 删脏目录
+- **3 文档**（`5b76938`）：删 README specs 徽章 + "设计文档外部化"段 + AGENTS.md 顶部 specs 行 + INSTALL.md env 表的 `LE_SKIP_SPECS` 行
+- **设计层决定**：specs 功能**彻底删除**（不是默认跳过），避免任何"如果依赖不存在会怎样"的隐患
+
+### 教训（5 条 → 已在 AGENTS.md §1.10 落地为硬规则）
+1. **黄金路径测试纪律**：每个 release 必跑**用户最小命令**（零 flag）端到端至少 1 次。开发期 `--force` / `--skip-specs` 等 flag 是便利**不是替代**。
+2. **区分 fail vs hang**：失败（sync fail，返回非 0）能用 `if ! cmd` 捕获；挂起（hang，永不返回）需要 `timeout N` 主动设上限。`2>/dev/null`/`2>&1 | Out-Null` **只吞错误信息，不终止挂起**。
+3. **测试时禁用开发期 flag**：若加 flag 才"测试通过"，要立刻怀疑"用户裸跑会怎样"。`--skip-specs` 是开发便利，生产默认不应依赖。
+4. **脏状态 = 测试失败**：本地有遗留 `~/.loopengine/specs/.git`（脏）时跑 `git pull` 100% 触发 hang。**测试前清环境**应成为肌肉记忆（`rm -rf ~/.loopengine/specs` 模拟首次安装）。
+5. **加新功能时 red team 自己的设计**：specs 外部化是 5 轮前加的，当时没人问"如果 `loop_engineering_specs` 不存在会怎样"。**AI 加 feature 时要主动质疑"依赖不存在/慢/被墙"等降级路径**——任何一个没设计降级的依赖都是定时炸弹。
+
+### 验证（5 项必查）
+| # | 检查 | 结果 |
+|---|------|------|
+| 1 | `grep -c spec` install.sh / install.ps1 / docs/INSTALL.md = 0（除历史注释） | ✅ |
+| 2 | `ls ~/.loopengine/` 仅含 `.installed_version`（无 specs/） | ✅ |
+| 3 | `bash install.sh --force` 端到端跑完，无 `Step 1.5 specs` 段，无卡死 | ✅ |
+| 4 | `irm -OutFile + &` 端到端从 GitHub raw 跑远端新版（`1f0556e`），无 `Step 1.5 specs` 段 | ✅ |
+| 5 | `tasklist | grep git` 安装期间无 stuck 进程残留 | ✅ |
+
+---
+
 <!-- BEGIN LOOPENGINE-MANAGED EVIDENCE-RULES -->
 （待补：2026-06-29 v5.4 兼容性胡乱分析事故记录，详见 AGENTS.md §2）
 <!-- END LOOPENGINE-MANAGED EVIDENCE-RULES -->
