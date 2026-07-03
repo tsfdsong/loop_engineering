@@ -1,8 +1,8 @@
 # LoopEngine 安装指南
 
-> v1.3.2（2026-07-03）— 新增 `install.ps1`（Windows PowerShell 兄弟脚本，纯 PS 无需 Git Bash）；修复 3 个 install.sh bug（filter 分隔符 / Cursor 路径扁平 / macOS MCP fallback）；merge_mcp_config.py headroom 改可选。
+> v1.3.2（2026-07-03）— 新增 `install.ps1`（Windows PowerShell 兄弟脚本，纯 PS 无需 Git Bash）；修复 3 个 install.sh bug（filter 分隔符 / Cursor 路径扁平 / macOS MCP fallback）；merge_mcp_config.py headroom 改可选。**v1.3.2+ 单模式：每次执行都强制覆盖所有文件，无 dry-run/无版本等待**。
 > v1.3.1 三平台 install 脚本合一（3 平台从 ~145 → ~18 行），merge_mcp_config.py 合并 ZCode + Cursor 双 schema。
-> v1.3.0 OS + AI Agent 全自动感知；v1.2.0+ 智能模式（首次装 / 升级 / 同版本 5 秒等待）。
+> v1.3.0 OS + AI Agent 全自动感知。
 
 ## 一行安装
 
@@ -17,20 +17,32 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 ```powershell
 # PowerShell 5.1 需先强制 TLS 1.2（GitHub raw 要求），PowerShell 7+ 可省略此行
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-# 下载到临时文件再执行（支持 -Force / -DryRun 等参数；irm|iex 不支持带参）
+# 单模式：每次都强制覆盖所有文件（不要用 irm|iex，见下方说明）
 $le = "$env:TEMP\le-install.ps1"
 irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 -OutFile $le
-& $le -Force
+& $le
 Remove-Item $le
 ```
 
 **装完即用**。无需重启 AI 工具，无需懂任何目录约定，无需手动选平台或工具。
 
-> **无参简单模式**：`irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 | iex`（仅走默认智能模式，无法传 `-Force` 等参数；`iex` 把脚本当表达式执行，不支持 `param()` 传参）。
+#### ⚠️ 为什么不用 `irm | iex`？
+
+`irm | iex`（`Invoke-RestMethod | Invoke-Expression`）在 PS 5.1 下有致命问题：**`irm` 把 install.ps1 的 UTF-8 BOM 当成内容字符保留，`iex` 执行时首行变成 `?# ═══...`，报"无法将 ?# 项识别为 cmdlet"**。临时文件模式（`irm -OutFile` + `&`）绕过这个限制：`&` 把文件当脚本执行，正确处理 BOM 和编码。
+
+#### 可选环境变量（控制部署范围）
+
+install.ps1 默认自动感知 + 强制覆盖，**不传参数也能用**。下面这些是可选的范围控制：
+
+| 环境变量 | 含义 | 示例 |
+|---------|------|------|
+| `LE_ALL=1` | 强制全量部署（绕过 detect，所有 9+ 工具） | `$env:LE_ALL=1; .\install.ps1` |
+| `LE_ONLY="zcode,cursor"` | 指定 agent id | `$env:LE_ONLY="zcode,cursor"; .\install.ps1` |
+| `LE_SKIP_SPECS=1` | 跳过 specs clone | `$env:LE_SKIP_SPECS=1; .\install.ps1` |
 
 > **执行策略提示**：若被阻止，先跑 `Set-ExecutionPolicy -Scope Process Bypass`（仅当前会话生效）。
 
-> **TLS/网络故障**：PowerShell 5.1 默认 TLS 1.0，GitHub raw 强制 TLS 1.2，不设置会报 `连接被意外关闭`。若设了 TLS 1.2 仍失败（GitHub raw 在中国不稳定），用本地执行：浏览器下载 `install.ps1` 后 `.\install.ps1 -Force`。
+> **TLS/网络故障**：PowerShell 5.1 默认 TLS 1.0，GitHub raw 强制 TLS 1.2，不设置会报 `连接被意外关闭`。若设了 TLS 1.2 仍失败（GitHub raw 在中国不稳定），用本地执行：浏览器下载 `install.ps1` 后 `.\install.ps1`。
 
 ## v1.3.2 核心改进
 
@@ -189,9 +201,11 @@ cat ~/.loopengine/.installed_version         # 1.3.2
 | 现象 | 解决 |
 |------|------|
 | `git clone` 失败 | 检查网络/VPN；可手动下载 ZIP 解压后跑 `bash install.sh` |
-| **PowerShell `连接被意外关闭`**（v1.3.2） | PowerShell 5.1 默认 TLS 1.0，GitHub raw 要求 TLS 1.2。修复：命令前加 `[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12`；或升级 PowerShell 7+（默认 TLS 1.2+） |
-| **PowerShell `irm\|iex` 被阻止**（v1.3.2） | 执行策略限制。先 `Set-ExecutionPolicy -Scope Process Bypass`（仅当前会话）；或本地下载后 `.\install.ps1 -Force` |
-| **GitHub raw 连接不稳定**（中国网络） | 设了 TLS 1.2 仍失败时，浏览器手动下载 `install.ps1` 到本地，`cd` 到下载目录后 `.\install.ps1 -Force`；或用代理 |
+| **PowerShell `连接被意外关闭`** | PS 5.1 默认 TLS 1.0，GitHub raw 要求 TLS 1.2。修复：命令前加 `[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12`；或升级 PS 7+ |
+| **PowerShell `irm\|iex` 报 `?#` 或 `意外的属性 CmdletBinding`** | PS 5.1 下 `irm` 保留 UTF-8 BOM + `iex` 把脚本当表达式执行，遇 BOM/param() 报错。**修复：改用临时文件模式** `irm -OutFile $le; & $le`（见上方安装命令）。不要用 `irm \| iex` |
+| **PowerShell 参数怎么传** | install.ps1 默认就是强制模式，无需参数。可选范围控制走 env：`$env:LE_ALL=1; & $le`（全量）/ `$env:LE_ONLY="zcode,cursor"; & $le`（指定 agent） |
+| **PowerShell 执行被策略阻止** | 先 `Set-ExecutionPolicy -Scope Process Bypass`（仅当前会话）；或浏览器下载后 `.\install.ps1` |
+| **GitHub raw 连接不稳定**（中国网络） | 设了 TLS 1.2 仍失败时，浏览器手动下载 `install.ps1` 到本地，`.\install.ps1`；或用代理 |
 | **PowerShell 中文乱码**（v1.3.2） | install.ps1 已加 UTF-8 BOM；若仍乱码，确认用 PowerShell 5.1+ 且文件未被二次编码 |
 | `pip install` 失败 | 先 `pip install --upgrade pip`；用 `python -m pip install --user <pkg>` 替代 |
 | `npm install -g` 失败 | 检查 Node.js；Linux/macOS 上需要 sudo 或 `npm config set prefix` |
@@ -201,7 +215,7 @@ cat ~/.loopengine/.installed_version         # 1.3.2
 | **macOS Cursor MCP 不写入**（v1.3.2 已修） | v1.3.1 macOS headroom 装在 Homebrew 路径找不到 → 整个跳过；v1.3.2 已补 fallback 表 + headroom 解耦，升级后重跑 `bash install.sh --force` |
 | **Cursor skills 看不到**（v1.3.2 已修） | v1.3.1 skills 部署在 `~/.cursor/skills/loopengine/skills/`（多两层，Cursor 扫不到）；v1.3.2 改扁平 `~/.cursor/skills/<skill>/`，升级后重跑 `--force` |
 | MCP 工具显示了但调用失败 | 命令路径要带 Windows 扩展名（`jcodemunch-mcp.exe` / `repomix.cmd` / `headroom.exe`），install.sh/ps1 已自动处理 |
-| 想强制重装最新版本 | `rm ~/.loopengine/.installed_version && bash install.sh`（或 PS: `Remove-Item ~/.loopengine/.installed_version; .\install.ps1 -Force`） |
+| 想强制重装最新版本 | `bash install.sh`（bash 智能模式自动判断升级）或 `.\install.ps1`（PS 单模式始终覆盖） |
 | **v1.3.0 detect 没识别某个工具** | 用 `bash install.sh --only=zcode,cursor --force` 显式指定；或用 `--all` 强制全量（PS: `-Only zcode,cursor -Force`） |
 
 ## 设计哲学
