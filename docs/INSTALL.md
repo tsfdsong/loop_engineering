@@ -17,12 +17,18 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 ```powershell
 # PowerShell 5.1 需先强制 TLS 1.2（GitHub raw 要求），PowerShell 7+ 可省略此行
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 | iex
+# 下载到临时文件再执行（支持 -Force / -DryRun 等参数；irm|iex 不支持带参）
+$le = "$env:TEMP\le-install.ps1"
+irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 -OutFile $le
+& $le -Force
+Remove-Item $le
 ```
 
 **装完即用**。无需重启 AI 工具，无需懂任何目录约定，无需手动选平台或工具。
 
-> **执行策略提示**：若 `irm | iex` 被执行策略阻止，先跑 `Set-ExecutionPolicy -Scope Process Bypass`（仅当前会话生效）。
+> **无参简单模式**：`irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 | iex`（仅走默认智能模式，无法传 `-Force` 等参数；`iex` 把脚本当表达式执行，不支持 `param()` 传参）。
+
+> **执行策略提示**：若被阻止，先跑 `Set-ExecutionPolicy -Scope Process Bypass`（仅当前会话生效）。
 
 > **TLS/网络故障**：PowerShell 5.1 默认 TLS 1.0，GitHub raw 强制 TLS 1.2，不设置会报 `连接被意外关闭`。若设了 TLS 1.2 仍失败（GitHub raw 在中国不稳定），用本地执行：浏览器下载 `install.ps1` 后 `.\install.ps1 -Force`。
 

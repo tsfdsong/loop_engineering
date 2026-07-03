@@ -33,6 +33,18 @@ param(
     [string]$SpecsSource
 )
 
+# irm | iex 模式下 iex 不支持给脚本传参，改用环境变量兜底：
+#   $env:LE_DRYRUN=1; irm ... | iex   →  等价 -DryRun
+#   $env:LE_FORCE=1; $env:LE_ONLY="zcode,cursor"; irm ... | iex
+# 支持的 env：LE_DRYRUN / LE_FORCE / LE_ALL / LE_ONLY / LE_SKIP_SPECS / LE_WITH_SPECS / LE_SPECS_SOURCE
+if (-not $DryRun  -and $env:LE_DRYRUN)        { $DryRun = $true }
+if (-not $Force   -and $env:LE_FORCE)         { $Force = $true }
+if (-not $All     -and $env:LE_ALL)           { $All = $true }
+if (-not $SkipSpecs -and $env:LE_SKIP_SPECS)  { $SkipSpecs = $true }
+if (-not $WithSpecs -and $env:LE_WITH_SPECS)  { $WithSpecs = $true }
+if (-not $Only -and $env:LE_ONLY)             { $Only = $env:LE_ONLY }
+if (-not $SpecsSource -and $env:LE_SPECS_SOURCE) { $SpecsSource = $env:LE_SPECS_SOURCE }
+
 # 强制 UTF-8 输出（避免 emoji 🔴 乱码）
 $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
