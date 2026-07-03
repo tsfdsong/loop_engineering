@@ -29,7 +29,7 @@
 # ════════════════════════════════════════════════════════════
 
 # ════════════════════════════════════════════════════════════
-# 参数：通过环境变量传入（兼容 irm | iex 模式，iex 不支持 param()/$args）
+# 参数：通过环境变量传入（兼容 irm | iex 模式，iex 不支持 param()/${args}）
 # ════════════════════════════════════════════════════════════
 # 设计原则：单模式（强制）。每次执行都强制覆盖文件，无 dry-run / 无版本等待，简单高效。
 #
@@ -153,9 +153,9 @@ function Show-Status {
     if (-not $installed) {
         Write-Ok "首次安装 v$($script:Version)"
     } elseif ($installed -eq $script:Version) {
-        Write-Ok "已装 v$installed（同版，强制覆盖）"
+        Write-Ok "已装 v${installed}（同版，强制覆盖）"
     } else {
-        Write-Ok "检测到 v$installed，覆盖到 v$($script:Version)"
+        Write-Ok "检测到 v${installed}，覆盖到 v$($script:Version)"
     }
 }
 
@@ -245,7 +245,7 @@ function Render-Plugins {
         exit 1
     }
     if ($LASTEXITCODE -ne 0) {
-        Write-Err "manifest 渲染失败（exit $LASTEXITCODE）"
+        Write-Err "manifest 渲染失败（exit ${LASTEXITCODE}）"
         Write-Err "python 输出: $out"
         exit 1
     }
@@ -274,7 +274,7 @@ function Cleanup-TargetTopLevel($label, $rootDir) {
 # ════════════════════════════════════════════════════════════
 function Copy-Tree($label, $src, $dst) {
     if (-not (Test-Path $src -PathType Container)) {
-        Write-Warn "[$label] 源不存在: $src（跳过）"
+        Write-Warn "[$label] 源不存在: ${src}（跳过）"
         return
     }
     New-Item -ItemType Directory -Path $dst -Force | Out-Null
@@ -290,7 +290,7 @@ function Copy-Skills($label, $rootDir, $skillsDir) {
     if ($label -eq "Cursor") {
         $skillDst = Split-Path $rootDir -Parent  # ~/.cursor/skills
         if (-not (Test-Path $skillsDir)) {
-            Write-Warn "[Cursor skills] 源不存在: $skillsDir（跳过）"
+            Write-Warn "[Cursor skills] 源不存在: ${skillsDir}（跳过）"
             return
         }
         New-Item -ItemType Directory -Path $skillDst -Force | Out-Null
@@ -303,7 +303,7 @@ function Copy-Skills($label, $rootDir, $skillsDir) {
             $count++
         }
         [void]$script:Targets.Add("Cursor skills`:$skillDst")
-        Write-Ok "[Cursor skills] $count 个 → $skillDst（扁平）"
+        Write-Ok "[Cursor skills] $count 个 → ${skillDst}（扁平）"
         return
     }
     # 其他 harness: 标准 plugin 中间层 $rootDir/skills
@@ -321,7 +321,7 @@ function Copy-Hooks($label, $rootDir, $hooksDir) {
 # Step 2d: Deploy-Manifest（对齐 _common.sh:637-660 · 7 label 分发）
 # ════════════════════════════════════════════════════════════
 function Copy-OneFile($label, $src, $dst) {
-    if (-not (Test-Path $src)) { Write-Warn "[$label] 源不存在: $src（跳过）"; return }
+    if (-not (Test-Path $src)) { Write-Warn "[$label] 源不存在: ${src}（跳过）"; return }
     $dstDir = Split-Path $dst -Parent
     New-Item -ItemType Directory -Path $dstDir -Force | Out-Null
     Copy-Item $src $dst -Force
@@ -490,7 +490,7 @@ function Write-ZCodeDesktopConfig {
         Write-Ok "[ZCode 桌面版 MCP] $cfg"
         [void]$script:Targets.Add("ZCode 桌面版 MCP`:$cfg")
     } else {
-        Write-Err "合并 $cfg 失败（exit $LASTEXITCODE）: $out"
+        Write-Err "合并 $cfg 失败（exit ${LASTEXITCODE}）: $out"
     }
 }
 
@@ -580,7 +580,7 @@ function Inject-RedLines {
             Write-Ok "[$($t.Label) 红线] $($t.Path)"
             [void]$script:Targets.Add("$($t.Label) 红线`:$($t.Path)")
         } else {
-            Write-Err "[$($t.Label) 红线] 失败（exit $LASTEXITCODE）: $out"
+            Write-Err "[$($t.Label) 红线] 失败（exit ${LASTEXITCODE}）: $out"
         }
     }
     Remove-Item $blockDir -Recurse -Force -ErrorAction SilentlyContinue
@@ -622,7 +622,7 @@ function Deploy-CursorMcp {
     if ($LASTEXITCODE -eq 0) {
         Write-Ok "[Cursor MCP] $cfg"
         [void]$script:Targets.Add("Cursor MCP`:$cfg")
-    } else { Write-Err "合并 $cfg 失败（exit $LASTEXITCODE）: $out" }
+    } else { Write-Err "合并 $cfg 失败（exit ${LASTEXITCODE}）: $out" }
 }
 
 # ════════════════════════════════════════════════════════════
@@ -632,7 +632,7 @@ function Deployment-Check {
     Write-Step "🔬 Step 6: 部署自检..."
     $skillsTotal = ($script:Targets | Where-Object { $_ -match "skills:" }).Count
     $ok1 = $skillsTotal -ge 5
-    if ($ok1) { Write-Ok "至少 5 个目标的 skills 目录已部署（实际 $skillsTotal）" }
+    if ($ok1) { Write-Ok "至少 5 个目标的 skills 目录已部署（实际 ${skillsTotal}）" }
     else { Write-Warn "skills 目标数偏少: $skillsTotal" }
 
     $manifestCount = ($script:Targets | Where-Object { $_ -match "plugin\.json|marketplace\.json|gemini-extension" }).Count
@@ -669,7 +669,7 @@ if ($All) {
     Write-Info "LE_ALL=1：强制全量部署 ($script:AllAgentIds)"
 } elseif ($Only) {
     $script:AgentList = ($Only -split '[ ,]+' | Where-Object { $_ }) -join ' '
-    Write-Info "LE_ONLY=$Only：指定部署 ($($script:AgentList))"
+    Write-Info "LE_ONLY=${Only}：指定部署 ($($script:AgentList))"
 } elseif ($detectedList.Count -eq 0) {
     Write-Err "未检测到任何 AI Agent — 至少安装其中一个"
     Write-Info "推荐：$env:LE_ALL=1; .\install.ps1  强制全量部署"

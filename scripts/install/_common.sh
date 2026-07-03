@@ -600,7 +600,7 @@ common_copy_skills_for() {
     if [ "$label" = "Cursor" ]; then
         skill_dst="$(dirname "$root_dir")"
         if [ ! -d "$skills_dir" ]; then
-            echo -e "  ${_YELLOW}⚠${_RESET}  [$label skills] 源不存在: $skills_dir（跳过）"
+            echo -e "  ${_YELLOW}⚠${_RESET}  [$label skills] 源不存在: ${skills_dir}（跳过）"
             return 0
         fi
         mkdir -p "$skill_dst"
@@ -619,7 +619,7 @@ common_copy_skills_for() {
             fi
         done
         COMMON_TARGETS+=("$label skills:${skill_dst}")
-        echo -e "  ${_GREEN}✅${_RESET} [$label skills] ${count} 个 → $skill_dst（扁平）"
+        echo -e "  ${_GREEN}✅${_RESET} [$label skills] ${count} 个 → ${skill_dst}（扁平）"
         return 0
     fi
 
@@ -670,12 +670,12 @@ common_copy_root_docs_for() {
 common_copy_tree() {
     local label="$1" src="$2" dst="$3"
     if [ ! -d "$src" ]; then
-        echo -e "  ${_YELLOW}⚠${_RESET}  [$label] 源不存在: $src（跳过）"
+        echo -e "  ${_YELLOW}⚠${_RESET}  [$label] 源不存在: ${src}（跳过）"
         return 0
     fi
     mkdir -p "$dst"
     if ! find "$dst" -mindepth 1 -delete 2>/dev/null; then
-        echo -e "  ${_YELLOW}⚠${_RESET}  [$label] 清理旧文件失败: $dst（继续复制）"
+        echo -e "  ${_YELLOW}⚠${_RESET}  [$label] 清理旧文件失败: ${dst}（继续复制）"
     fi
     if cp -r "$src/." "$dst/" 2>/dev/null; then
         COMMON_TARGETS+=("$label:$dst")
@@ -688,7 +688,7 @@ common_copy_tree() {
 common_copy_file() {
     local label="$1" src="$2" dst="$3"
     if [ ! -f "$src" ]; then
-        echo -e "  ${_YELLOW}⚠${_RESET}  [$label] 源不存在: $src（跳过）"
+        echo -e "  ${_YELLOW}⚠${_RESET}  [$label] 源不存在: ${src}（跳过）"
         return 0
     fi
     mkdir -p "$(dirname "$dst")"
@@ -886,7 +886,7 @@ common_deployment_check() {
     local threshold=$(( skill_total * 80 / 100 ))
     [ "$threshold" -lt 1 ] && threshold=1
     if [ "$skill_ok" -ge "$threshold" ]; then
-        echo -e "  ${_GREEN}✅${_RESET} 至少 $threshold 个目标的 skills 目录已部署（实际 $skill_ok/$skill_total）"
+        echo -e "  ${_GREEN}✅${_RESET} 至少 $threshold 个目标的 skills 目录已部署（实际 $skill_ok/${skill_total}）"
         check_pass=$((check_pass + 1))
     else
         echo -e "  ${_RED}❌${_RESET} skills 目录部署不足：$skill_ok/$skill_total (< $threshold)"
