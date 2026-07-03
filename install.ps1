@@ -1,16 +1,19 @@
 ﻿# ════════════════════════════════════════════════════════════
 # LoopEngine 一键安装 v1.3.2 — Windows PowerShell 版（纯 PS，无需 Git Bash）
 # ════════════════════════════════════════════════════════════
-# 一行安装（PowerShell）:
-#   irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 | iex
+# 一行安装（PowerShell，参数走环境变量）:
+#   $env:LE_FORCE=1; irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 | iex
 #
 # 本地执行:
-#   .\install.ps1                  # 智能模式 + 自动感知
-#   .\install.ps1 -Force           # 强制重装
-#   .\install.ps1 -DryRun          # 只检查不安装
-#   .\install.ps1 -All             # 强制全量（9+ 工具）
-#   .\install.ps1 -Only zcode,cursor
-#   .\install.ps1 -SkipSpecs       # 跳过设计文档 clone
+#   .\install.ps1                          # 智能模式 + 自动感知
+#   $env:LE_FORCE=1; .\install.ps1         # 强制重装
+#   $env:LE_DRYRUN=1; .\install.ps1        # 只检查不安装
+#   $env:LE_ALL=1; .\install.ps1           # 强制全量（9+ 工具）
+#   $env:LE_ONLY="zcode,cursor"; .\install.ps1
+#   $env:LE_SKIP_SPECS=1; .\install.ps1    # 跳过设计文档 clone
+#
+# 注意：本脚本不使用 param() 块（irm|iex 模式下 iex 把脚本当表达式执行，
+#       param() 会报"意外的属性 CmdletBinding"）。参数全部通过环境变量传入。
 #
 # 兄弟脚本: install.sh（macOS/Linux/Git Bash）。两者共用 3 个 Python helper:
 #   scripts/render_plugins.py / scripts/inject_rules.py / scripts/merge_mcp_config.py
@@ -22,28 +25,29 @@
 #   • headroom 可选不阻断 Cursor MCP（bash 版强制 3 个全找到，已修）
 # ════════════════════════════════════════════════════════════
 
-[CmdletBinding()]
-param(
-    [switch]$DryRun,
-    [switch]$Force,
-    [switch]$All,
-    [string]$Only,
-    [switch]$SkipSpecs,
-    [switch]$WithSpecs,
-    [string]$SpecsSource
-)
-
-# irm | iex 模式下 iex 不支持给脚本传参，改用环境变量兜底：
-#   $env:LE_DRYRUN=1; irm ... | iex   →  等价 -DryRun
-#   $env:LE_FORCE=1; $env:LE_ONLY="zcode,cursor"; irm ... | iex
-# 支持的 env：LE_DRYRUN / LE_FORCE / LE_ALL / LE_ONLY / LE_SKIP_SPECS / LE_WITH_SPECS / LE_SPECS_SOURCE
-if (-not $DryRun  -and $env:LE_DRYRUN)        { $DryRun = $true }
-if (-not $Force   -and $env:LE_FORCE)         { $Force = $true }
-if (-not $All     -and $env:LE_ALL)           { $All = $true }
-if (-not $SkipSpecs -and $env:LE_SKIP_SPECS)  { $SkipSpecs = $true }
-if (-not $WithSpecs -and $env:LE_WITH_SPECS)  { $WithSpecs = $true }
-if (-not $Only -and $env:LE_ONLY)             { $Only = $env:LE_ONLY }
-if (-not $SpecsSource -and $env:LE_SPECS_SOURCE) { $SpecsSource = $env:LE_SPECS_SOURCE }
+# ════════════════════════════════════════════════════════════
+# 参数：通过环境变量传入（兼容 irm | iex 模式，iex 不支持 param()/$args）
+# ════════════════════════════════════════════════════════════
+# 用法：
+#   本地执行:  $env:LE_FORCE=1; .\install.ps1      或直接 .\install.ps1（默认智能模式）
+#   一行安装:  $env:LE_FORCE=1; irm https://.../install.ps1 | iex
+#   临时文件:  irm https://.../install.ps1 -OutFile $le; & $le; Remove-Item $le
+#
+# 环境变量（任一非空即视为开启）:
+#   LE_DRYRUN=1          只检查不安装
+#   LE_FORCE=1           强制重装（跳过 5 秒等待）
+#   LE_ALL=1             强制全量部署（绕过 detect）
+#   LE_ONLY="zcode,cursor"  指定 agent id（逗号或空格分隔）
+#   LE_SKIP_SPECS=1      跳过设计文档 clone
+#   LE_WITH_SPECS=1      强制 clone specs
+#   LE_SPECS_SOURCE=url  自定义 specs 来源
+$DryRun     = [bool]$env:LE_DRYRUN
+$Force      = [bool]$env:LE_FORCE
+$All        = [bool]$env:LE_ALL
+$Only       = $env:LE_ONLY
+$SkipSpecs  = [bool]$env:LE_SKIP_SPECS
+$WithSpecs  = [bool]$env:LE_WITH_SPECS
+$SpecsSource = $env:LE_SPECS_SOURCE
 
 # 强制 UTF-8 输出（避免 emoji 🔴 乱码）
 $OutputEncoding = [System.Text.Encoding]::UTF8
