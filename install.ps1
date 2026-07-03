@@ -40,14 +40,8 @@
 # 环境变量（可选，控制部署范围）:
 #   LE_ALL=1             强制全量部署（绕过 detect，所有 9+ 工具）
 #   LE_ONLY="zcode,cursor"  指定 agent id（逗号或空格分隔）
-#   LE_SKIP_SPECS=1      跳过设计文档 clone
-#   LE_WITH_SPECS=1      强制 clone specs
-#   LE_SPECS_SOURCE=url  自定义 specs 来源
 $All        = [bool]$env:LE_ALL
 $Only       = $env:LE_ONLY
-$SkipSpecs  = [bool]$env:LE_SKIP_SPECS
-$WithSpecs  = [bool]$env:LE_WITH_SPECS
-$SpecsSource = $env:LE_SPECS_SOURCE
 
 # 强制 UTF-8 输出（避免 emoji 🔴 乱码）
 $OutputEncoding = [System.Text.Encoding]::UTF8
@@ -67,8 +61,6 @@ try {
 $script:Repo = "https://github.com/tsfdsong/loop_engineering"
 $script:Version = "1.3.2"
 $script:VersionFile = Join-Path $env:USERPROFILE ".loopengine\.installed_version"
-$script:DefaultSpecsSource = "https://github.com/tsfdsong/loop_engineering_specs.git"
-$script:SpecsTargetDir = Join-Path $env:USERPROFILE ".loopengine\specs"
 
 # ── 全局状态 ──────────────────────────────────────────────
 $script:Work = ""                  # clone 出来的代码根（Step 1 后赋值）
@@ -181,30 +173,6 @@ function Clone-Repo {
 
     $skillCount = (Get-ChildItem (Join-Path $script:Work "skills") -Directory -ErrorAction SilentlyContinue).Count
     Write-Ok "已克隆到 $($script:Work) · $skillCount 个技能目录"
-}
-
-# ════════════════════════════════════════════════════════════
-# Step 1.5: Clone-Specs（对齐 install.sh:241-288）
-# ════════════════════════════════════════════════════════════
-function Clone-Specs {
-    if ($SkipSpecs) {
-        Write-Info "LE_SKIP_SPECS=1，跳过设计文档 clone"
-        return
-    }
-    $src = if ($SpecsSource) { $SpecsSource } elseif ($WithSpecs) { $script:DefaultSpecsSource } else { $script:DefaultSpecsSource }
-    Write-Step "📚 Step 1.5: 设计文档 clone → $($script:SpecsTargetDir)"
-
-    $gitDir = Join-Path $script:SpecsTargetDir ".git"
-    if (Test-Path $gitDir) {
-        Write-Info "已存在 git 仓，尝试 git pull 更新"
-        & git -C $script:SpecsTargetDir pull --ff-only 2>&1 | Out-Null
-        if ($LASTEXITCODE -eq 0) { Write-Ok "specs 已更新" } else { Write-Warn "git pull 失败（继续，不阻塞）" }
-    } elseif (Test-Path $script:SpecsTargetDir) {
-        Write-Warn "$($script:SpecsTargetDir) 已存在但不是 git 仓，跳过 clone"
-    } else {
-        & git clone --depth 1 $src $script:SpecsTargetDir 2>&1 | Out-Null
-        if ($LASTEXITCODE -eq 0) { Write-Ok "specs 已 clone" } else { Write-Warn "clone 失败（继续，不阻塞）" }
-    }
 }
 
 # ════════════════════════════════════════════════════════════
@@ -657,9 +625,6 @@ Show-Status
 
 # Step 1: clone
 Clone-Repo
-
-# Step 1.5: specs
-Clone-Specs
 
 # Step 2: 部署
 Write-Step "📦 Step 2: 部署到 AI 工具约定目录..."

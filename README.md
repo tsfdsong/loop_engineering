@@ -5,13 +5,6 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.3.2-blue)](package.json)
 [![orch](https://img.shields.io/badge/orch-v2.0.0-blue)](skills/orch/SKILL.md)
-[![specs](https://img.shields.io/badge/specs-external-blue)](docs/spec-repo-link.md)
-
-## 设计文档
-
-所有 spec / plan / ADR 已外部化到独立仓库：[`loop_engineering_specs`](https://github.com/tsfdsong/loop_engineering_specs)
-
-主仓 `install.sh` 默认自动 clone 到 `~/.loopengine/specs/`。可使用 `--skip-specs` 跳过。详见 [`docs/spec-repo-link.md`](docs/spec-repo-link.md)。
 
 ---
 
