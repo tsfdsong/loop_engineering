@@ -243,7 +243,9 @@ common_render_plugins || exit 1
 common_deploy_to_9_tools
 
 # ── 加载平台脚本 + 调 Step 3/4/5 ─────────────────────────
-PLATFORM_SCRIPT="$SCRIPT_DIR/scripts/install/${PLATFORM}.sh"
+# piped 模式下 SCRIPT_DIR=/dev（BASH_SOURCE[0] 误解析），改用 COMMON_WORK
+# （git clone 目标，common_render_plugins 里已设置，含完整 scripts/install/ 树）
+PLATFORM_SCRIPT="${COMMON_WORK:-$SCRIPT_DIR}/scripts/install/${PLATFORM}.sh"
 if [ ! -f "$PLATFORM_SCRIPT" ]; then
     echo -e "${_RED}❌ 平台脚本缺失：${PLATFORM_SCRIPT}${_RESET}"
     echo -e "  ${_CYAN}•${_RESET} 请检查 scripts/install/ 目录"
