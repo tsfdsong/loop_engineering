@@ -26,6 +26,8 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 ### Windows PowerShell（v1.3.2 新增 · 纯 PS，无需 Git Bash）
 
 ```powershell
+# PowerShell 5.1 需先强制 TLS 1.2（GitHub raw 要求），PowerShell 7+ 可省略此行
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 | iex
 ```
 
@@ -92,7 +94,7 @@ jcodemunch-mcp index_folder .
 | 平台 | 安装命令 | 验证 |
 |------|---------|:--:|
 | **ZCode** | `curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh \| bash`（推荐一键脚本，自动同步到 `~/.agents/skills/` 优先路径） | ✅ 实机 |
-| **Windows PowerShell** | `irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 \| iex`（v1.3.2 新增，纯 PS 无需 Git Bash） | ✅ 实机 |
+| **Windows PowerShell** | `[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 \| iex`（v1.3.2 新增，纯 PS 无需 Git Bash） | ✅ 实机 |
 | **Claude Code** | `claude plugin marketplace add https://github.com/tsfdsong/loop_engineering` 然后 `claude plugin install loopengine` | ✅ 实机 |
 | **Codex** | 插件市场搜索 `loopengine` | ⏳ |
 | **Cursor** | `/add-plugin tsfdsong/loop_engineering`（install.sh 已自动部署 skills+hooks+mcp.json） | ⏳ 应用内 |

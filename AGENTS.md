@@ -649,6 +649,8 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 ### Windows PowerShell（v1.3.2 新增 · 纯 PS 无需 Git Bash）
 
 ```powershell
+# PowerShell 5.1 需先强制 TLS 1.2（GitHub raw 要求）
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 | iex
 ```
 

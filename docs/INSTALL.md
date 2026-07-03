@@ -15,12 +15,16 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 ### Windows PowerShell（v1.3.2 新增 · 纯 PS 无需 Git Bash）
 
 ```powershell
+# PowerShell 5.1 需先强制 TLS 1.2（GitHub raw 要求），PowerShell 7+ 可省略此行
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 | iex
 ```
 
 **装完即用**。无需重启 AI 工具，无需懂任何目录约定，无需手动选平台或工具。
 
 > **执行策略提示**：若 `irm | iex` 被执行策略阻止，先跑 `Set-ExecutionPolicy -Scope Process Bypass`（仅当前会话生效）。
+
+> **TLS/网络故障**：PowerShell 5.1 默认 TLS 1.0，GitHub raw 强制 TLS 1.2，不设置会报 `连接被意外关闭`。若设了 TLS 1.2 仍失败（GitHub raw 在中国不稳定），用本地执行：浏览器下载 `install.ps1` 后 `.\install.ps1 -Force`。
 
 ## v1.3.2 核心改进
 
@@ -179,7 +183,9 @@ cat ~/.loopengine/.installed_version         # 1.3.2
 | 现象 | 解决 |
 |------|------|
 | `git clone` 失败 | 检查网络/VPN；可手动下载 ZIP 解压后跑 `bash install.sh` |
-| **PowerShell `irm\|iex` 被阻止**（v1.3.2） | 先 `Set-ExecutionPolicy -Scope Process Bypass`（仅当前会话）；或本地下载后 `.\install.ps1 -Force` |
+| **PowerShell `连接被意外关闭`**（v1.3.2） | PowerShell 5.1 默认 TLS 1.0，GitHub raw 要求 TLS 1.2。修复：命令前加 `[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12`；或升级 PowerShell 7+（默认 TLS 1.2+） |
+| **PowerShell `irm\|iex` 被阻止**（v1.3.2） | 执行策略限制。先 `Set-ExecutionPolicy -Scope Process Bypass`（仅当前会话）；或本地下载后 `.\install.ps1 -Force` |
+| **GitHub raw 连接不稳定**（中国网络） | 设了 TLS 1.2 仍失败时，浏览器手动下载 `install.ps1` 到本地，`cd` 到下载目录后 `.\install.ps1 -Force`；或用代理 |
 | **PowerShell 中文乱码**（v1.3.2） | install.ps1 已加 UTF-8 BOM；若仍乱码，确认用 PowerShell 5.1+ 且文件未被二次编码 |
 | `pip install` 失败 | 先 `pip install --upgrade pip`；用 `python -m pip install --user <pkg>` 替代 |
 | `npm install -g` 失败 | 检查 Node.js；Linux/macOS 上需要 sudo 或 `npm config set prefix` |
