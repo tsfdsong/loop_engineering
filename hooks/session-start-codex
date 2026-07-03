@@ -9,7 +9,8 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
 
 orch_content=$(load_orch_runtime_bundle "$PLUGIN_ROOT")
-session_context=$(build_session_context "$orch_content")
+lessons_content=$(load_recent_lessons "$PLUGIN_ROOT")
+session_context=$(build_session_context "$orch_content" "$lessons_content")
 
 # Codex: 固定使用 SDK 标准 schema（与 hooks-codex.json matcher 一致）
 printf '{\n  "additionalContext": "%s"\n}\n' "$session_context" | cat

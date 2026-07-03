@@ -90,12 +90,102 @@ escape_for_json() {
     printf '%s' "$s"
 }
 
+# 加载 lessons-learned.md 最近 7 天的 L# 条目（教训段）
+# 目的：让每个新会话自动"记得"最近的真实事故，避免重复犯错
+# v1.3.2 新增（背景：specs 卡死事故 L#002 揭示 AI 不会主动读教训库）
+#
+# 行为契约：
+#   - 解析 docs/lessons-learned.md 中所有 `## 📚 L#NNN · YYYY-MM-DD · ...` 标题
+#   - 取日期 >= (今天 - 7 天) 的条目
+#   - 每条只保留"教训（X 条）"段（避免 token 爆炸）
+#   - 找不到任何匹配 → 输出提示信息而非静默（透明降级）
+load_recent_lessons() {
+    local plugin_root="${1:-}"
+    local lessons_file="${plugin_root}/docs/lessons-learned.md"
+    local days="${LE_LESSONS_DAYS:-7}"
+
+    if [ -z "$plugin_root" ] || [ ! -f "$lessons_file" ]; then
+        printf '<!-- lessons-learned.md unavailable at %s -->\n' "$lessons_file"
+        return 0
+    fi
+
+    local cutoff
+    cutoff=$(date -u -d "${days} days ago" +%Y-%m-%d 2>/dev/null || date -u -v-${days}d +%Y-%m-%d 2>/dev/null)
+    if [ -z "$cutoff" ]; then
+        # date 命令两个版本都失败时降级（Git Bash / BSD 都支持其一）
+        printf '<!-- lessons-learned.md: date command unavailable, skipping -->\n'
+        return 0
+    fi
+
+    # 找所有 L# 标题 + 起始行号
+    local in_recent=0
+    local in_lessons_section=0
+    local output=""
+    local printed_header=0
+
+    while IFS= read -r line; do
+        # 匹配 L# 标题：## 📚 L#NNN · YYYY-MM-DD · ...
+        if [[ "$line" =~ ^##\ 📚\ L#[0-9]+\ ·\ ([0-9]{4}-[0-9]{2}-[0-9]{2}) ]]; then
+            local entry_date="${BASH_REMATCH[1]}"
+            if [[ "$entry_date" > "$cutoff" || "$entry_date" == "$cutoff" ]]; then
+                in_recent=1
+                in_lessons_section=0
+                if [ $printed_header -eq 0 ]; then
+                    output+=$'\n### 最近事故教训（最近 '"$days"' 天，AGENTS.md §1.10 测试纪律）###\n'
+                    output+='<!-- 自动注入（hooks/_lib.sh load_recent_lessons），AI 必读 -->\n'
+                    printed_header=1
+                fi
+                output+=$'\n'"$line"$'\n'
+            else
+                in_recent=0
+                in_lessons_section=0
+            fi
+            continue
+        fi
+
+        # 只在 recent 条目内处理
+        if [ $in_recent -eq 1 ]; then
+            # 遇到下一个 L# → 结束当前
+            if [[ "$line" =~ ^##\ 📚\ L#[0-9]+ ]]; then
+                in_recent=0
+                in_lessons_section=0
+                continue
+            fi
+            # 进入"教训"段
+            if [[ "$line" =~ ^###\ 教训 ]]; then
+                in_lessons_section=1
+                output+="$line"$'\n'
+                continue
+            fi
+            # 离开教训段（进入验证或下一个 ###）
+            if [ $in_lessons_section -eq 1 ] && [[ "$line" =~ ^###\ 验证 || "$line" =~ ^###\ [^\ ] ]] && [[ ! "$line" =~ ^###\ 教训 ]]; then
+                in_lessons_section=0
+                # 教训段结束，再继续读但丢弃（直到下一个 L#）
+            fi
+            if [ $in_lessons_section -eq 1 ]; then
+                output+="$line"$'\n'
+            fi
+        fi
+    done < "$lessons_file"
+
+    if [ $printed_header -eq 0 ]; then
+        printf '<!-- lessons-learned.md: 无最近 %s 天的 L# 条目（cutoff=%s） -->\n' "$days" "$cutoff"
+    else
+        printf '%s' "$output"
+    fi
+}
+
 # 构建 session_context 字符串（所有平台共享）
+# v1.3.2 扩展：注入 lessons 到 EXTREMELY_IMPORTANT 块尾部
 build_session_context() {
     local orch_content="$1"
-    local orch_escaped
+    local lessons_content="${2:-}"
+    local orch_escaped lessons_escaped=""
     orch_escaped=$(escape_for_json "$orch_content")
-    printf '<EXTREMELY_IMPORTANT>\nYou have LoopEngine — the full-stack development engine with 33 skills.\n\norch v2 is a natural-language-first, family-first, rule-first multi-skill orchestrator.\nUse native description matching for single-skill tasks. Use orch behavior when the user goal clearly requires multiple complementary skills.\n\n**Below is the runtime orch bundle (skill + orchestration references). For all other skills, use the '\''Skill'\'' tool:**\n\n%s\n</EXTREMELY_IMPORTANT>' "$orch_escaped"
+    if [ -n "$lessons_content" ]; then
+        lessons_escaped=$(escape_for_json "$lessons_content")
+    fi
+    printf '<EXTREMELY_IMPORTANT>\nYou have LoopEngine — the full-stack development engine with 33 skills.\n\norch v2 is a natural-language-first, family-first, rule-first multi-skill orchestrator.\nUse native description matching for single-skill tasks. Use orch behavior when the user goal clearly requires multiple complementary skills.\n\n**Below is the runtime orch bundle (skill + orchestration references). For all other skills, use the '\''Skill'\'' tool:**\n\n%s\n%s\n</EXTREMELY_IMPORTANT>' "$orch_escaped" "$lessons_escaped"
 }
 
 # 输出 SessionStart JSON（按 env var 路由 schema）
