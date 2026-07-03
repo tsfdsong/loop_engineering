@@ -90,6 +90,30 @@ function Write-Warn($msg)  { Write-Host "  ⚠  $msg" -ForegroundColor Yellow }
 function Write-Err($msg)   { Write-Host "  ❌ $msg" -ForegroundColor Red }
 function Write-Step($msg)  { Write-Host ""; Write-Host $msg -ForegroundColor White }
 
+# ── 错误格式化（PS 5.1 RemoteException 兼容）─────────────
+# 背景：v1.3.2 教训 L#004 — `$_.Exception.Message` 在 PS 5.1 RemoteException 下
+#       只截取 Python 异常第一行（"Traceback (most recent call last):"），
+#       完整堆栈在 ScriptStackTrace / ErrorRecord / $out 中。本函数拼成多行
+#       缩进对齐的字符串，保留 ❌ 前缀给 Write-Err 用，完整堆栈给 Write-Host。
+# 用法：Write-Host "  ❌ 上下文"; Write-Host (Format-PSError $_)
+function Format-PSError($e) {
+    $indent = "     "
+    $sb = New-Object System.Text.StringBuilder
+    [void]$sb.AppendLine("$indent$($e.Exception.GetType().FullName)")
+    $msg = ($e.Exception.Message -split "`r?`n" | ForEach-Object { "$indent$($_)" }) -join "`n"
+    [void]$sb.AppendLine($msg.TrimEnd())
+    if ($e.ScriptStackTrace) {
+        $st = ($e.ScriptStackTrace -split "`r?`n" | Select-Object -First 5 | ForEach-Object { "$indent$($_)" }) -join "`n"
+        [void]$sb.AppendLine($st)
+    }
+    if ($e.Exception.ErrorRecord -and $e.Exception.ErrorRecord.Exception) {
+        $inner = $e.Exception.ErrorRecord.Exception
+        [void]$sb.AppendLine("$indent--- inner ---")
+        [void]$sb.AppendLine("$indent$($inner.GetType().FullName): $($inner.Message)")
+    }
+    return $sb.ToString().TrimEnd()
+}
+
 # ════════════════════════════════════════════════════════════
 # Step 0.5: Detect-Agents（对齐 _common.sh:134-170）
 # ════════════════════════════════════════════════════════════
@@ -216,7 +240,8 @@ function Render-Plugins {
     try {
         $out = & python (Join-Path $script:ScriptDir "scripts\render_plugins.py") $script:Work $script:RenderedDir 2>&1
     } catch {
-        Write-Err "manifest 渲染失败：$($_.Exception.Message)"
+        Write-Err "manifest 渲染失败（PS 5.1 RemoteException）"
+        Write-Host (Format-PSError $_) -ForegroundColor Red
         exit 1
     }
     if ($LASTEXITCODE -ne 0) {
@@ -457,7 +482,8 @@ function Write-ZCodeDesktopConfig {
     try {
         $out = & python (Join-Path $script:ScriptDir "scripts\merge_mcp_config.py") zcode $cfg $jcode $repo 2>&1
     } catch {
-        Write-Err "合并 $cfg 失败：$($_.Exception.Message)"
+        Write-Err "合并 $cfg 失败（PS 5.1 RemoteException）"
+        Write-Host (Format-PSError $_) -ForegroundColor Red
         return
     }
     if ($LASTEXITCODE -eq 0) {
@@ -546,7 +572,8 @@ function Inject-RedLines {
         try {
             $out = & python (Join-Path $script:ScriptDir "scripts\inject_rules.py") $t.Path $blockDir 2>&1
         } catch {
-            Write-Err "[$($t.Label) 红线] 失败：$($_.Exception.Message)"
+            Write-Err "[$($t.Label) 红线] 失败（PS 5.1 RemoteException）"
+            Write-Host (Format-PSError $_) -ForegroundColor Red
             continue
         }
         if ($LASTEXITCODE -eq 0) {
@@ -588,7 +615,8 @@ function Deploy-CursorMcp {
     try {
         $out = & python (Join-Path $script:ScriptDir "scripts\merge_mcp_config.py") cursor $cfg $jcode $repo $hdrm 2>&1
     } catch {
-        Write-Err "[Cursor MCP] 失败：$($_.Exception.Message)"
+        Write-Err "[Cursor MCP] 失败（PS 5.1 RemoteException）"
+        Write-Host (Format-PSError $_) -ForegroundColor Red
         return
     }
     if ($LASTEXITCODE -eq 0) {

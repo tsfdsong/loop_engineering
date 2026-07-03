@@ -145,6 +145,111 @@ bash: line 61: /dev/scripts/install/_common.sh: No such file or directory
 
 ---
 
+## 📚 L#004 · 2026-07-03 · v1.3.2 PS 5.1 RemoteException 截断事故（4 处 `❌ …Traceback` 无具体内容）
+
+### 现象
+Windows PowerShell 5.1 用户跑 `irm … | & $le` 装 v1.3.2，Step 4 / Step 5 / Step 5.5 全部报：
+```
+❌ 合并 C:\Users\admin\.zcode\cli\config.json 失败：Traceback (most recent call last):
+❌ [ZCode 红线] 失败：Traceback (most recent call last):
+❌ [Cursor MCP] 失败：Traceback (most recent call last):
+```
+异常信息**只到 "Traceback (most recent call last):" 就截断**，完全没有 traceback 后续的 `File`、`line 42`、`TypeError` 等定位信息。`install_managed_rules()` 同步红线步骤全军覆没（7/7 targets fail），但安装脚本"假装"完成（"部署到 34 个路径"），用户无法判断是真错还是可忽略。
+
+### 根因（3 层叠加）
+1. **PS 5.1 RemoteException 的 `.Message` 只含 stderr 第一行**：当 PowerShell 5.1 启动 python 子进程，子进程向 stderr 写完 multi-line 异常后退出，PS 5.1 会把 stderr 包装成 `RemoteException` ErrorRecord，但 `.Message` 字段只保留**第一行**（即 "Traceback (most recent call last):"），完整堆栈在 `.ScriptStackTrace`、`.Exception.ErrorRecord.Exception.Message`、被 `2>&1` 捕获的 `$out` 等其他位置。
+2. **旧 install.ps1 在 4 个 catch 块都用 `$_.Exception.Message`**（commit `1ed3a82` / `c8862f0` v1.3.2 修复时引入）：`try { & python ... 2>&1 } catch { Write-Err "失败：$($_.Exception.Message)" }` —— `.Message` 在 PS 5.1 下就是"Traceback..."那一行，所以错误输出形如"失败：Traceback (most recent call last):"（仅前缀 + 第一行，无任何定位信息）。
+3. **R3.5 同根扫描缺失**：v1.3.2 提交时只测了"happy path"（$LASTEXITCODE != 0 时的 `Write-Err "失败（exit N）: $out"`），**未测 catch 分支**（PS 5.1 RemoteException 路径），所以"错误信息被截断"这个 bug 一直没被暴露。**违反 §1.10 第 1 条黄金路径测试纪律**：只测了 success 路径，未测 error 路径。
+
+### 修复（新增 `Format-PSError` 辅助 + 4 处替换）
+- **install.ps1 新增 `Format-PSError($e)` 辅助函数**（line 93-117，~25 行）：
+  ```powershell
+  # 输出格式：5 行缩进对齐，保留 ❌ 前缀给 Write-Err，完整堆栈给 Write-Host
+  function Format-PSError($e) {
+      $indent = "     "
+      $sb = New-Object System.Text.StringBuilder
+      [void]$sb.AppendLine("$indent$($e.Exception.GetType().FullName)")
+      $msg = ($e.Exception.Message -split "`r?`n" | ForEach-Object { "$indent$($_)" }) -join "`n"
+      [void]$sb.AppendLine($msg.TrimEnd())
+      if ($e.ScriptStackTrace) {
+          $st = ($e.ScriptStackTrace -split "`r?`n" | Select-Object -First 5 | ForEach-Object { "$indent$($_)" }) -join "`n"
+          [void]$sb.AppendLine($st)
+      }
+      if ($e.Exception.ErrorRecord -and $e.Exception.ErrorRecord.Exception) {
+          $inner = $e.Exception.ErrorRecord.Exception
+          [void]$sb.AppendLine("$indent--- inner ---")
+          [void]$sb.AppendLine("$indent$($inner.GetType().FullName): $($inner.Message)")
+      }
+      return $sb.ToString().TrimEnd()
+  }
+  ```
+- **4 处 catch 块替换**（`render_plugins` Step 2a / `merge_mcp_config` Step 4 / `inject_rules` Step 5 / `merge_mcp_config` Step 5.5）：
+  ```powershell
+  } catch {
+      Write-Err "合并 $cfg 失败（PS 5.1 RemoteException）"   # 之前是 "...失败：$($_.Exception.Message)"
+      Write-Host (Format-PSError $_) -ForegroundColor Red   # 新增：完整堆栈
+      return
+  }
+  ```
+- **关键设计点**：
+  1. **`$e.Exception.Message -split "`r?`n"`** 是关键：即使 PS 5.1 把 Message 截断到第一行，至少保留换行后的尾部；未截断时（`$LASTEXITCODE` 路径）能完整展示。
+  2. **不只依赖 `.Message`**，并行展示 `ScriptStackTrace`（PowerShell 调用栈）和 `.ErrorRecord.Exception`（嵌套 inner exception），三个数据源互补，最大化恢复概率。
+  3. **保留 `Write-Err` 单行 ❌ 前缀**（用户熟悉的格式），把多行堆栈**追加到下一行**用 `Write-Host -ForegroundColor Red`（不被 `Write-Err` 截断/重格式化），最不容易破坏现有日志/正则。
+- **R3.5 同根扫描**：全 install.ps1 4 个 catch 块（`render_plugins` / `merge_mcp_config zcode` / `inject_rules` / `merge_mcp_config cursor`）4/4 全部替换；`render_plugins.py` 自身不变（它是 Python 子进程，不是 PS 错误处理点）。
+- **install.sh 不修**：bash 直接 `2>&1` 捕获 stderr 到 `$out`，无 RemoteException 概念，原生 multi-line 完整。`grep "失败" install.sh` 0 hits，证明 bash 路径无此问题。
+
+### 教训（4 条）
+1. **PS 5.1 错误处理铁律**："**永远不要在 catch 块只读 `$_.Exception.Message`**"。完整信息散落在 4 个字段：`.Message`（可能截断）、`.ScriptStackTrace`（PS 调用栈）、`.Exception.ErrorRecord.Exception.Message`（嵌套 inner）、被 `2>&1` 捕获到 `$out`（子进程原始输出）。**用 helper 函数聚合**才能稳定恢复（本次 `Format-PSError`）。
+2. **R3.5 全仓扫描的"同根"判别标准 = 错误模式相同**（不是文件位置相同）。4 个 catch 块分布在 install.ps1 不同函数（Step 2a / Step 4 / Step 5 / Step 5.5），但**错误模式都是 "PS 5.1 RemoteException + `.Exception.Message`"**，同根变体必须一次性全修。
+3. **黄金路径测试必须含 error 路径**（补强 §1.10 第 1 条）：v1.3.2 之前的 PR 只在 happy path 跑通就发版，但**错误处理的回归测试比 happy path 更重要**（happy path 出错会立刻被用户看到；error path 出错会被静默吞掉，半年后才被用户挖出）。**新加测试纪律**："任何 catch 块至少配 1 个 negative test，强制触发该 catch 并断言输出含关键定位信息"。
+4. **unit test 必须真实触发目标 bug，不能用合成 exception 蒙混**（debug 教训）：第一次写 Test 3 用 `RuntimeException("Traceback: ...")` 合成，意外发现 `RuntimeException` 不会触发 PS 5.1 的截断行为（截断只发生在**子进程 stderr**），导致 Test 3 假设错误。**改用模拟的"first-line-only" message**（传 `"Traceback (most recent call last):"` 给 ErrorRecord）来忠实模拟真实 PS 5.1 RemoteException 行为。**经验法则**：bug 在哪一层触发，test 必须在那一层模拟。
+
+### 验证（5 项必查）
+| # | 检查 | 结果 |
+|---|------|------|
+| 1 | `tests/test-format-pserror.ps1` 3/3 测试通过（multi-line Message / single-line regression / truncated-message recovery） | ✅ |
+| 2 | `Parser::ParseFile(install.ps1)` 语法检查通过（4020 tokens） | ✅ |
+| 3 | 4 处 catch 块 `grep "Exception.Message"` 仅剩 2 处（1 处在 Format-PSError 内部正确用法，1 处在 helper 顶部 bug 背景注释，均非 catch 块） | ✅ |
+| 4 | install.sh 无 `失败` 关键字（bash 路径不受影响） | ✅ |
+| 5 | 全 install.ps1 4/4 catch 块都用 `Format-PSError $_`（R3.5 同根扫描） | ✅ |
+
+---
+
+## 📚 L#005 · 2026-07-03 · v1.3.2 PS 5.1 UTF-8 无 BOM 文件解析事故（test 文件 with Chinese fails to parse）
+
+### 现象
+写 `tests/test-format-pserror.ps1` 时加了带中文的 `<# ... #>` block 注释（"验证 PS 5.1 RemoteException 下能暴露完整 Python 堆栈"），运行测试报：
+```
+Get-Content : 无法将参数绑定到参数"Path"，因为该参数是空值。
+所在位置 C:\tsfdsong\python-project\loop_engineering\tests\test-format-pserror.ps1:13 字符: 22
++ $lines = Get-Content $installPs1
++                      ~~~~~~~~~~~
+```
+行 13 是 `$installPs1 = Join-Path $projectRoot 'install.ps1'`，但 PowerShell 报错的源码行（"line 13"）显示的是 `$lines = Get-Content $installPs1`（行 14）—— **整个文件解析被 block 注释里的中文污染**，导致 `$installPs1` 变量没被赋值就跳到下一行。
+
+### 根因（2 层）
+1. **PS 5.1 默认按系统 ANSI 代码页（Windows-1252 / GBK）解析 `.ps1` 文件**，不识别 UTF-8 多字节序列。`install.ps1` 顶部有 UTF-8 BOM（`ef bb bf`），PS 5.1 看到 BOM 才切换到 UTF-8 解码模式；`tests/test-format-pserror.ps1` 是 `Write` 工具默认输出（无 BOM），PS 5.1 按 ANSI 解码时把 `e9 aa 8c`（验）等 3 字节 UTF-8 序列当成 3 个单字节字符，**后续的 ASCII 也因 decoder state 错位而错位**，直到下一个换行才重置—— 导致 `$installPs1 = ...` 这行被错误地"吞掉"，变量没赋值。
+2. **`Write` 工具不主动加 BOM**：BOM 在 cross-platform 场景有争议（PS 7+ 仍认 BOM，bash 不认），多数编辑器/工具默认不写 BOM。**这是 PS 5.1 的 historic 包袱**，PS 6+ 已切到 UTF-8 默认，但 PS 5.1 是 Windows 默认 shell（用户群最大），无法绕过。
+
+### 修复（2 处决策）
+- **本次 test 文件**：去掉所有中文（`# ...` inline 注释 + `<# ... #>` block 注释 + 字符串字面量），保持 ENGLISH-ONLY + 顶部加注释说明 "PS 5.1 编码陷阱"。test 不是交付件，不影响产品。
+- **未来 `.ps1` 模板（如 `install.ps1` 副本 / new test 模板）**：在 PS 5.1 兼容期内（5+ 年），所有 .ps1 文件**默认带 UTF-8 BOM**。`install.ps1` 现有 BOM 不动（验证过 `head -c 5 install.ps1 | xxd` 是 `ef bb bf 23 20`），`render_plugins.py` / `merge_mcp_config.py` / `inject_rules.py` 等 Python 文件**不受影响**（Python 3 默认 UTF-8）。
+
+### 教训（3 条）
+1. **PS 5.1 文件编码铁律**：**.ps1 文件含非 ASCII 字符 → 必须有 UTF-8 BOM**（`ef bb bf` 头 3 字节）。无 BOM 的 .ps1 在 PS 5.1 下，block 注释里的中文会把整个文件解析搞坏（变量赋值失效、错误行号偏移 ±1）。**新 PS 模板的最低验收标准**：`head -c 5 file.ps1 | xxd` 必须以 `efbbbf` 开头（如果含中文/emoji）。
+2. **错误行号偏移 = 文件解析损坏的早期信号**：本次错误报"line 13"但实际错误在 line 14，且 `$installPs1` 显示 null —— 这是 PS 5.1 文件解析的典型症状。**遇到"line N 报错但代码看着对"**，第一反应是检查文件 BOM（`head -c 5 file.ps1 | xxd`），而不是怀疑逻辑。
+3. **测试文件不是交付件，可妥协**：交付件（install.ps1、_common.sh）必须支持中英文用户（带 BOM + 中文 OK）；**test 文件只需在 PS 5.1 + 开发者本地能跑**，可以 ENGLISH-ONLY（不损失可读性，省 BOM 复杂度）。**判别标准**：test 是开发者工具，install 是用户契约 —— 同样 1 个中文字符，处理方式可不同。
+
+### 验证（4 项必查）
+| # | 检查 | 结果 |
+|---|------|------|
+| 1 | `head -c 5 install.ps1 \| xxd` → `efbbbf`（UTF-8 BOM 存在） | ✅ |
+| 2 | `head -c 5 tests/test-format-pserror.ps1 \| xxd` → `23727171`（`#requ`，无 BOM，但全 ENGLISH 无中文可接受） | ✅ |
+| 3 | 去掉中文后 `powershell -File tests/test-format-pserror.ps1` 3/3 PASS | ✅ |
+| 4 | `Parser::ParseFile(install.ps1)` 4020 tokens 无 syntax error | ✅ |
+
+---
+
 <!-- BEGIN LOOPENGINE-MANAGED EVIDENCE-RULES -->
 （待补：2026-06-29 v5.4 兼容性胡乱分析事故记录，详见 AGENTS.md §2）
 <!-- END LOOPENGINE-MANAGED EVIDENCE-RULES -->
