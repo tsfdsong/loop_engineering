@@ -58,7 +58,21 @@ set -euo pipefail
 # ── 加载共享逻辑 ──────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-/dev/null}")" 2>/dev/null && pwd || echo "")"
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/scripts/install/_common.sh"
+if [ -z "$SCRIPT_DIR" ] || [ "$SCRIPT_DIR" = "/dev" ]; then
+    # Piped 模式（curl|bash / wget -O-|bash）：BASH_SOURCE[0] 为空 → 走网络拉取
+    _COMMON_URL="https://github.com/tsfdsong/loop_engineering/raw/main/scripts/install/_common.sh"
+    _COMMON_TMP="$(mktemp -t loopengine-common.XXXXXX.sh)"
+    if ! curl -fsSL --max-time 30 "$_COMMON_URL" -o "$_COMMON_TMP"; then
+        echo "❌ 无法下载 _common.sh: $_COMMON_URL" >&2
+        rm -f "$_COMMON_TMP"
+        exit 1
+    fi
+    # shellcheck disable=SC1090
+    source "$_COMMON_TMP"
+    rm -f "$_COMMON_TMP"
+else
+    source "$SCRIPT_DIR/scripts/install/_common.sh"
+fi
 
 # ── 参数解析 ──────────────────────────────────────────────
 COMMON_DRY_RUN=false
