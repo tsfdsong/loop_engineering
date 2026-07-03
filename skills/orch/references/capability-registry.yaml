@@ -84,30 +84,30 @@ browser_explore:
 
 browser_regression_test:
   capability: regression_testing
-  executor_kind: direct_skill
+  executor_kind: loop              # 写 e2e/ 脚手架 7+ 文件 + CI workflow
   skill: web-regression-e2e
-  side_effects: none
+  side_effects: write
   compatible_families: [web_qa]
 
 browser_visual_diff:
   capability: visual_regression
-  executor_kind: direct_skill
+  executor_kind: loop              # 写 baseline 截图 + diff
   skill: web-visual-diff
-  side_effects: none
+  side_effects: write
   compatible_families: [web_qa]
 
 browser_accessibility_audit:
   capability: accessibility_audit
-  executor_kind: direct_skill
+  executor_kind: loop              # 写 a11y 报告（JSON+HTML）
   skill: web-audit-a11y
-  side_effects: none
+  side_effects: write
   compatible_families: [web_qa]
 
 browser_perf_audit:
   capability: perf_audit
-  executor_kind: direct_skill
+  executor_kind: loop              # 写 perf 报告（JSON+HTML+summary）
   skill: web-perf-budget
-  side_effects: none
+  side_effects: write
   compatible_families: [web_qa]
 
 synthesize_findings:

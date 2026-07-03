@@ -39,9 +39,10 @@
         "diff_only",
         "module",
         "file",
-        "external_url"
+        "external_url",
+        "web_url_set"
       ],
-      "description": "Effective scope level used by the phase (matches Intent Schema scope_level)."
+      "description": "Effective scope level used by the phase (matches Intent Schema scope_level). web_url_set covers multi-URL web_qa audits."
     },
     "hotspot_modules": {
       "type": "array",
@@ -89,6 +90,43 @@
       },
       "description": "Top issues (most material) the next phase should focus on.",
       "default": []
+    },
+    "web_qa_findings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "e2e_failures": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Count of failing E2E regression tests (web-regression-e2e output)."
+        },
+        "a11y_violations": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "critical": { "type": "integer", "minimum": 0, "default": 0 },
+            "serious": { "type": "integer", "minimum": 0, "default": 0 },
+            "moderate": { "type": "integer", "minimum": 0, "default": 0 },
+            "minor": { "type": "integer", "minimum": 0, "default": 0 }
+          },
+          "description": "axe-core severity bucketed counts (web-audit-a11y output)."
+        },
+        "visual_diffs": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Count of pages with visual regressions (web-visual-diff output)."
+        },
+        "perf_regressions": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Count of metrics breaching perf budget (web-perf-budget output)."
+        }
+      },
+      "description": "Structured aggregation of web_qa family fan-out outputs. Consumed by synthesize_findings and downstream combination families (web_qa_then_debug_fix / web_qa_then_refactor). Optional; present only for web_qa phase handoffs.",
+      "default": {}
     },
     "next_phase_hint": {
       "type": "string",

@@ -12,6 +12,8 @@ global:
     - [review, refactor]        # 审查后重构
     - [debug_fix, test]         # 修复后加回归测试
     - [design_build, test]      # 新功能带测试
+    - [web_qa, debug_fix]       # web 审计发现 bug → 修复
+    - [web_qa, refactor]        # web 审计后重构改进
 
 review:
   order: [system_review, code_review, code_quality_simplify]
@@ -72,3 +74,9 @@ combination_rules:
   design_build_then_test:
     sequence: [design_build, test]
     bridge: handoff.built_modules
+  web_qa_then_debug_fix:
+    sequence: [web_qa, debug_fix]
+    bridge: handoff.web_qa_findings   # web 审计 4 路输出（e2e/a11y/visual/perf）→ debug_fix 修复
+  web_qa_then_refactor:
+    sequence: [web_qa, refactor]
+    bridge: handoff.review_findings   # web 审计发现 → refactor 改进
