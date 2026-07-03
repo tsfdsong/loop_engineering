@@ -3,7 +3,7 @@ name: web-perf-budget
 description: Use when enforcing performance budgets via Lighthouse and Web Vitals. Triggers on "perf budget", "performance budget", "lighthouse", "Web Vitals", "LCP", "CLS", "INP", "性能预算", "首屏加载". Enforces LCP/CLS/INP thresholds defined in perf-budget.json. Not for visual regression (use web-visual-diff) or accessibility (use web-audit-a11y).
 metadata:
   version: "1.0.0"
-  engine: "lighthouse ^12.0.0"
+  engine: "lighthouse ^12.0.0 + playwright-lighthouse ^4.0.0"
   default_device: mobile
   default_throttling: Fast 3G
 ---
@@ -11,6 +11,19 @@ metadata:
 # web-perf-budget
 
 Enforce performance budgets (LCP / CLS / INP / FCP / TTI) via Lighthouse.
+
+## Prerequisites（首次使用前必装）
+
+| 依赖 | 安装命令 | 说明 |
+|---|---|---|
+| Playwright + 浏览器 | 复用 web-regression-e2e 的 `e2e/`；无则 `npm i -D @playwright/test && npx playwright install chromium` | — |
+| lighthouse | `npm i -D lighthouse` | CLI 审计（metadata.engine）|
+| playwright-lighthouse | `npm i -D playwright-lighthouse` | Playwright 集成（Quick start 用 `playAudit`）|
+
+## config 协作（A4 约定）
+
+`web-regression-e2e` 是 `e2e/playwright.config.ts` 的唯一 owner。
+本 skill 的测试文件放 `e2e/tests/perf/`，共用同一 config，不新建 config。
 
 ## When to use
 

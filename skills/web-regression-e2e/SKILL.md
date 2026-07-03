@@ -12,6 +12,22 @@ metadata:
 
 Generate, run, and integrate Playwright regression E2E tests for any web project.
 
+## Prerequisites（首次使用前必装）
+
+| 依赖 | 安装命令 | 说明 |
+|---|---|---|
+| Node.js ≥ 18 | — | Playwright 运行时 |
+| Playwright + 浏览器 | `cd e2e && npm install && npx playwright install --with-deps chromium` | 首次跑必装；`--with-deps` 装系统依赖（Linux）|
+| 复用系统 Chrome（可选） | `PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium` | 省 ~300MB 下载 |
+
+> 若项目首次跑：先按 `references/scaffold-templates.md` 生成 `e2e/` 目录，再装依赖。
+
+## `playwright.config.ts` 所有权（A4 约定）
+
+`web-regression-e2e` 是 `e2e/playwright.config.ts` 的**唯一 owner**。
+其他 web-* skill（visual-diff / a11y / perf）若需调整 config（如 `expect.toMatchSnapshot`、`projects`），
+**追加字段**到同一 config，不要新建第二个 config。冲突协商见各 skill 的 "config 协作" 段。
+
 ## When to use
 
 - Project has no `e2e/` directory → scaffold full suite
@@ -39,7 +55,7 @@ Generate, run, and integrate Playwright regression E2E tests for any web project
 
 2. **If `NEEDS_SCAFFOLD`**: ask user for project type (Antd / MUI / Tailwind / other) and target URL
 3. **If `HAS_E2E`**: skip to step 5 (run)
-4. **Scaffold**: copy templates from `references/ci-integration-templates.md` to project
+4. **Scaffold**: copy templates from `references/scaffold-templates.md` to project `e2e/` directory (covers §1-§10: package.json / playwright.config.ts / fixtures / utils / sample tests)
 5. **Run**:
    ```bash
    cd <project> && npx playwright test --reporter=html,list
@@ -118,6 +134,7 @@ Choose one:
 
 ## references/
 
+- `references/scaffold-templates.md` — e2e/ 目录脚手架源（§1-§10：package.json / playwright.config.ts / fixtures / utils / sample tests）
 - `references/data-testid-conventions.md` — 怎么给组件加测试钩子（命名 + 层级）
 - `references/antd-wait-patterns.md` — Antd Modal/Drawer/Tabs/Form 的等待模式
 - `references/auth-bypass-patterns.md` — dev login / cookie 注入 / mock JWT
