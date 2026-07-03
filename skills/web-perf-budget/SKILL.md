@@ -20,7 +20,7 @@ Enforce performance budgets (LCP / CLS / INP / FCP / TTI) via Lighthouse.
 | lighthouse | `npm i -D lighthouse` | CLI 审计（metadata.engine）|
 | playwright-lighthouse | `npm i -D playwright-lighthouse` | Playwright 集成（Quick start 用 `playAudit`）|
 
-## config 协作（A4 约定）
+## config 协作
 
 `web-regression-e2e` 是 `e2e/playwright.config.ts` 的唯一 owner。
 本 skill 的测试文件放 `e2e/tests/perf/`，共用同一 config，不新建 config。

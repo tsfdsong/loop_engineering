@@ -251,8 +251,7 @@ import { SEL } from "@utils/selectors";
 
 test("首次进入显示 loading 后显示内容", async ({ page }) => {
   await page.goto("/");
-  // 先看到 skeleton（可选）
-  // await expect(page.getByTestId(SEL.loadingSkeleton)).toBeVisible();
+  // 等待 loading 消失后内容区出现（可选断言 skeleton 可见，按需加）
   await expect(page.getByTestId(SEL.loadingSkeleton)).toBeHidden();
   await expect(page.getByTestId(SEL.emptyState)).toBeVisible();
 });

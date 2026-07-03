@@ -17,7 +17,7 @@ Detect unintended UI changes by comparing screenshots across runs.
 |---|---|---|
 | Playwright + 浏览器 | 复用 web-regression-e2e 已装的 `e2e/`；无则 `npm i -D @playwright/test && npx playwright install chromium` | 不需单独装 pixelmatch（Playwright `toHaveScreenshot` 内置像素对比）|
 
-## config 协作（A4 约定）
+## config 协作
 
 `web-regression-e2e` 是 `e2e/playwright.config.ts` 的唯一 owner。
 本 skill 向同一 config **追加** `expect.toMatchSnapshot` 字段（见下 Phase 1），不新建 config。

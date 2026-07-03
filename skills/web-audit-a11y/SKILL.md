@@ -18,7 +18,7 @@ Audit web pages for accessibility (WCAG) compliance using axe-core.
 | Playwright + 浏览器 | 复用 web-regression-e2e 的 `e2e/`；无则 `npm i -D @playwright/test && npx playwright install chromium` | — |
 | axe-core | `npm i -D @axe-core/playwright` | WCAG 规则引擎 |
 
-## config 协作（A4 约定）
+## config 协作
 
 `web-regression-e2e` 是 `e2e/playwright.config.ts` 的唯一 owner。
 本 skill 的测试文件放 `e2e/tests/a11y/`，共用同一 config 的 `baseURL` / `projects`，不新建 config。

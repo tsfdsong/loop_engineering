@@ -22,7 +22,7 @@ Generate, run, and integrate Playwright regression E2E tests for any web project
 
 > 若项目首次跑：先按 `references/scaffold-templates.md` 生成 `e2e/` 目录，再装依赖。
 
-## `playwright.config.ts` 所有权（A4 约定）
+## `playwright.config.ts` 所有权
 
 `web-regression-e2e` 是 `e2e/playwright.config.ts` 的**唯一 owner**。
 其他 web-* skill（visual-diff / a11y / perf）若需调整 config（如 `expect.toMatchSnapshot`、`projects`），
