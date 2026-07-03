@@ -1,6 +1,6 @@
 ---
 name: web-regression-e2e
-description: Use when generating, scaffolding, or running Playwright E2E regression tests for a web application. Triggers on "regression E2E", "Playwright", "e2e 测试", "回归测试", "scaffold e2e", "CI 集成测试". Works for any web project (Antd, MUI, Tailwind, native HTML). Not for exploratory bug hunting (use agent-browser/dogfood) or unit tests (already covered by project's vitest/jest).
+description: Use when generating, scaffolding, or running Playwright E2E regression tests for a web application. Triggers on "regression E2E", "Playwright", "e2e 测试", "回归测试", "scaffold e2e", "CI 集成测试". Works for any web project (Antd, MUI, Tailwind, native HTML). Focus is project-level scaffolding (e2e/ directory, auth fixtures, CI workflows); for general E2E methodology/patterns (POM, fixtures, selectors, test pyramid) use the testing skill. Not for exploratory bug hunting (use agent-browser/dogfood) or unit tests (already covered by project's vitest/jest).
 metadata:
   version: "1.0.0"
   engine: "@playwright/test ^1.50.0"

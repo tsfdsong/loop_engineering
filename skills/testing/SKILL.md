@@ -1,6 +1,6 @@
 ---
 name: testing
-description: "Use when writing tests, setting up TDD, adding test coverage, or designing test strategies. Triggers on '测试', 'TDD', '单元测试', '端到端', 'mock', 'test'. Do NOT use for: fixing test failures (use systematic-debugging), or code review (use code-reviewer)."
+description: "Use when writing tests, setting up TDD, adding test coverage, or designing test strategies. Triggers on '测试', 'TDD', '单元测试', '端到端', 'mock', 'test'. Covers the general test pyramid methodology (unit/integration/E2E patterns, POM, fixtures, selectors). For web-project E2E scaffolding + CI integration (generating e2e/ directory, auth fixtures, CI workflows), use web-regression-e2e instead. Do NOT use for: fixing test failures (use systematic-debugging), or code review (use code-reviewer)."
 metadata:
   version: "2.1"
   type: skill
