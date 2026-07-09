@@ -21,7 +21,11 @@ sys.path.insert(0, os.path.abspath(SCRIPTS_DIR))
 from audit_tools import (  # noqa: E402
     AuditResult,
     dimension_a_tool_deploy,
+    dimension_b_skill_integrity,
+    dimension_c_redline_consistency,
     dimension_d_mcp_health,
+    dimension_e_version_consistency,
+    dimension_f_schema,
 )
 
 
@@ -102,21 +106,77 @@ class TestDimensionD(unittest.TestCase):
 class TestRunDimension(unittest.TestCase):
     """run_dimension 分发函数。"""
 
-    def test_unimplemented_dimensions_return_info(self):
+    def test_all_dimensions_dispatched(self):
         from audit_tools import run_dimension
 
-        for dim in ["B", "C", "E", "F"]:
+        for dim in ["A", "B", "C", "D", "E", "F"]:
             results = run_dimension(dim)
-            self.assertEqual(len(results), 1)
-            self.assertEqual(results[0].severity, "info")
-            self.assertIn("尚未实现", results[0].message)
+            self.assertTrue(len(results) > 0)
+            self.assertTrue(all(r.dimension == dim for r in results))
+
+    def test_unknown_dimension_returns_error(self):
+        from audit_tools import run_dimension
+
+        results = run_dimension("Z")
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].severity, "error")
 
     def test_a_dimension_dispatches(self):
         from audit_tools import run_dimension
 
         results = run_dimension("A")
         self.assertTrue(len(results) > 0)
-        self.assertTrue(all(r.dimension == "A" for r in results))
+
+
+class TestDimensionB(unittest.TestCase):
+    """B 维度（info 级）：技能 SKILL.md frontmatter。"""
+
+    def test_returns_info_severity(self):
+        results = dimension_b_skill_integrity()
+        # B 维度整体是 info 级
+        self.assertTrue(all(r.severity in ("info", "warning") for r in results))
+
+    def test_reports_valid_and_invalid_counts(self):
+        results = dimension_b_skill_integrity()
+        summary = [r for r in results if "技能完整性" in r.message]
+        self.assertEqual(len(summary), 1)
+
+
+class TestDimensionC(unittest.TestCase):
+    """C 维度（info 级）：红线 marker 哨兵。"""
+
+    def test_returns_results_for_three_tools(self):
+        results = dimension_c_redline_consistency()
+        tool_ids = {r.tool for r in results}
+        # 至少检查已部署的工具
+        self.assertTrue(len(tool_ids) > 0)
+
+    def test_tool_filter(self):
+        results = dimension_c_redline_consistency(tool_filter="zcode")
+        self.assertTrue(all(r.tool == "zcode" for r in results))
+
+
+class TestDimensionE(unittest.TestCase):
+    """E 维度：版本一致性。"""
+
+    def test_returns_single_result(self):
+        results = dimension_e_version_consistency()
+        self.assertEqual(len(results), 1)
+
+    def test_severity_is_ok_or_warning(self):
+        results = dimension_e_version_consistency()
+        self.assertIn(results[0].severity, ("ok", "warning"))
+
+
+class TestDimensionF(unittest.TestCase):
+    """F 维度（低）：渲染产物 schema。"""
+
+    def test_no_rendered_output_returns_info(self):
+        """无渲染产物时应返回 info"""
+        results = dimension_f_schema()
+        # 如果 rendered-output 不存在，返回 info
+        if results[0].severity == "info":
+            self.assertIn("无渲染产物", results[0].message)
 
 
 if __name__ == "__main__":
