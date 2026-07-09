@@ -44,5 +44,6 @@
       "Write"
     ],
     "websiteURL": "https://github.com/tsfdsong/loopengine"
-  }
+  },
+  "commands": "./commands/"
 }

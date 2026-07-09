@@ -304,5 +304,80 @@ class TestIntegration(unittest.TestCase):
             self.assertEqual(codex_out["hooks"], "./hooks/hooks-codex.json")
 
 
+from render_plugins import (  # noqa: E402
+    TOOL_ADAPTERS,
+    ToolAdapter,
+    render_adapter,
+)
+
+
+class TestToolAdapter(unittest.TestCase):
+    """ToolAdapter 注册表测试（v1.4 PR-1）。"""
+
+    def test_tool_adapters_has_5_active_entries(self):
+        """TOOL_ADAPTERS 应有 5 个启用条目（Kimi 注释掉）"""
+        self.assertEqual(len(TOOL_ADAPTERS), 5)
+
+    def test_zcode_adapter_has_activate_callable(self):
+        """ZCode 必须有 activate 回调"""
+        zcode = next(a for a in TOOL_ADAPTERS if a.id == "zcode")
+        self.assertIsNotNone(zcode.activate)
+        self.assertEqual(zcode.skills_layout, "plugin-embedded")
+
+    def test_claude_adapter_has_marketplace_extra_output(self):
+        """Claude Code 必须有 marketplace.json extra_output"""
+        cc = next(a for a in TOOL_ADAPTERS if a.id == "claude-code")
+        self.assertTrue(
+            any(e.get("kind") == "marketplace" for e in cc.extra_outputs)
+        )
+
+    def test_zcode_adapter_drops_mcpServers(self):
+        """ZCode 的 drop_fields 应含 mcpServers"""
+        zcode = next(a for a in TOOL_ADAPTERS if a.id == "zcode")
+        self.assertIn("mcpServers", zcode.drop_fields)
+
+    def test_render_adapter_drops_fields(self):
+        """render_adapter 应剥离 drop_fields 中的字段"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            template = {"name": "x", "version": "1.0", "mcpServers": {"s": {}}}
+            overlay_dir = os.path.join(tmpdir, ".zcode-plugin")
+            overlay_path = os.path.join(overlay_dir, "plugin.json")
+            os.makedirs(overlay_dir)
+            with open(overlay_path, "w") as f:
+                json.dump({"skills": "./skills/"}, f)
+            adapter = ToolAdapter(
+                id="test",
+                label="Test",
+                compliance="adapter-backed",
+                overlay_path=".zcode-plugin/plugin.json",
+                output_path="out.json",
+                drop_fields=["mcpServers"],
+            )
+            result = render_adapter(template, adapter, tmpdir, tmpdir)
+            self.assertTrue(result)
+            with open(os.path.join(tmpdir, "out.json")) as f:
+                data = json.load(f)
+            self.assertNotIn("mcpServers", data)
+            self.assertIn("skills", data)
+
+    def test_render_adapter_returns_false_for_missing_overlay(self):
+        """overlay 不存在时返回 False"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            adapter = ToolAdapter(
+                id="test",
+                label="Test",
+                compliance="adapter-backed",
+                overlay_path=".nonexistent/plugin.json",
+                output_path="out.json",
+            )
+            result = render_adapter({}, adapter, tmpdir, tmpdir)
+            self.assertFalse(result)
+
+    def test_all_adapters_have_unique_ids(self):
+        """所有 adapter 的 id 应唯一"""
+        ids = [a.id for a in TOOL_ADAPTERS]
+        self.assertEqual(len(ids), len(set(ids)))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

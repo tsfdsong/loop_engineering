@@ -841,6 +841,30 @@ common_extract_rule_block() {
 common_inject_rules_to_target() {
     local label="$1" target="$2" block_dir="$3"
     mkdir -p "$(dirname "$target")"
+
+    # Cursor .mdc 文件需要 YAML frontmatter（alwaysApply: true）才会被自动注入
+    # 如果 .mdc 不存在或缺少 frontmatter，先写入头部
+    case "$target" in
+        *.mdc)
+            if [ ! -f "$target" ] || ! head -1 "$target" 2>/dev/null | grep -q '^---$'; then
+                local mdc_header="---
+alwaysApply: true
+description: LoopEngine 9 条红线（强制注入）
+---
+"
+                if [ -f "$target" ]; then
+                    # 文件存在但无 frontmatter：在头部插入
+                    local existing
+                    existing=$(cat "$target")
+                    printf '%s\n%s\n' "$mdc_header" "$existing" > "$target"
+                else
+                    # 文件不存在：创建带 frontmatter 的空文件
+                    printf '%s\n' "$mdc_header" > "$target"
+                fi
+            fi
+            ;;
+    esac
+
     if python "$COMMON_SCRIPT_DIR/scripts/inject_rules.py" "$target" "$block_dir"; then
         echo -e "  ${_GREEN}✅${_RESET} [$label 红线] $target"
         COMMON_TARGETS+=("$label 红线:$target")
