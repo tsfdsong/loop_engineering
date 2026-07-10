@@ -135,7 +135,6 @@ class ToolAdapter:
     notes: str = ""
     drop_fields: List[str] = field(default_factory=list)
     extra_outputs: List[dict] = field(default_factory=list)
-    skills_layout: str = "flat"  # "flat" | "plugin-embedded" | "n/a"
     activate: Optional[Callable] = None
 
 
@@ -212,7 +211,6 @@ TOOL_ADAPTERS: List[ToolAdapter] = [
                 "output_path": "claude-plugin/marketplace.json",
             }
         ],
-        skills_layout="flat",
     ),
     # ── Adapter-backed ──
     ToolAdapter(
@@ -226,7 +224,6 @@ TOOL_ADAPTERS: List[ToolAdapter] = [
             "MCP 写 config.json mcp.servers"
         ),
         drop_fields=["mcpServers"],
-        skills_layout="plugin-embedded",
         activate=activate_zcode_plugin,
     ),
     ToolAdapter(
@@ -239,7 +236,6 @@ TOOL_ADAPTERS: List[ToolAdapter] = [
             "skills 用户级平铺；rules 用 .mdc"
             "（需 alwaysApply frontmatter）"
         ),
-        skills_layout="flat",
     ),
     ToolAdapter(
         id="codex",
