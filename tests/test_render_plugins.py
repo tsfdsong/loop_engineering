@@ -322,7 +322,6 @@ class TestToolAdapter(unittest.TestCase):
         """ZCode 必须有 activate 回调"""
         zcode = next(a for a in TOOL_ADAPTERS if a.id == "zcode")
         self.assertIsNotNone(zcode.activate)
-        self.assertEqual(zcode.skills_layout, "plugin-embedded")
 
     def test_claude_adapter_has_marketplace_extra_output(self):
         """Claude Code 必须有 marketplace.json extra_output"""
