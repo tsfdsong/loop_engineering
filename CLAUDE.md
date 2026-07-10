@@ -10,20 +10,28 @@ orch v2 是意图驱动编排器：识别主 `scenario family`（review / debug_
 
 ## 安装方式
 
-### 一键安装
+### 一键安装（推荐 · 所有平台通用）
 ```bash
 curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
 ```
 
-### 各平台原生命令
-- **ZCode**: `zcode plugin install tsfdsong/loopengine`
-- **Claude Code**: `/plugin install loopengine@tsfdsong`
-- **Codex**: 从插件市场搜索 "loopengine"
-- **Cursor**: `/add-plugin tsfdsong/loopengine`
-- **Gemini CLI**: `gemini extensions install https://github.com/tsfdsong/loopengine`
-- **Copilot CLI**: `copilot plugin install loopengine@tsfdsong`
-- **Kimi Code**: `/plugins install https://github.com/tsfdsong/loopengine`
-- **Pi**: `pi install git:github.com/tsfdsong/loopengine`
+install.sh 自动检测已安装的 AI 工具并部署：plugin manifest 渲染 + skills/hooks/commands 复制 + MCP 配置 + 9 条红线注入。
+
+### Windows PowerShell
+```powershell
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$le = "$env:TEMP\le-install-$([DateTime]::UtcNow.Ticks).ps1"
+irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 -OutFile $le
+& $le
+Remove-Item $le -Force
+```
+
+### 部署验证（v1.4 新增）
+```bash
+python3 scripts/audit_tools.py    # 6 维度部署审计（A 工具部署/B 技能/C 红线/D MCP/E 版本/F Schema）
+```
+
+详见 [README.md](README.md)。
 
 ## 贡献
 
