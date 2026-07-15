@@ -101,9 +101,22 @@ Step ⑤ 闭环编码（详见 references/gate-matrix.md + references/self-heali
   • 门禁矩阵: G1-G8 + F1-F5（按任务特征启用）
   • 自愈闭环: 门禁失败 → A/B/C/🎨 分级触发
   • Decide:
-    ✅ 门禁全绿 → success，进入交付
+    ✅ 门禁全绿 → success，进入 Step ⑤.5 验证官
     🟡 连续2轮无进展 → stagnated → AskUserQuestion
     🔴 exhausted → AskUserQuestion
+  │
+  ▼
+Step ⑤.5 验证官独立验证（🆕 v6.12 · 三层防御 B 层）
+  门禁全绿后，派 verification-officer subagent 做独立验证：
+  • 不复用 implementer 上下文，从零验证（解决"既写又验"利益冲突）
+  • 按 task_type 路由验证策略（frontend/api/backend/script/config）
+  • 验证官写 .verify-state/<SID>/verdict.json（Stop hook 的判据）
+
+  判定:
+    ✅ VERIFIED → 进入 Step ⑥ 交付
+    ❌ FAILED → 回到 Step ⑤ 自愈（修代码后重派验证官）
+    ⛔ BLOCKED → AskUserQuestion（环境问题）
+    ❓ NEEDS_CONTEXT → AskUserQuestion（问用户验证方式）
   │
   ▼
 Step ⑥ 交付验证（按模式裁剪）

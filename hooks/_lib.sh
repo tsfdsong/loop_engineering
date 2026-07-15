@@ -177,6 +177,12 @@ load_recent_lessons() {
 
 # 构建 session_context 字符串（所有平台共享）
 # v1.3.2 扩展：注入 lessons 到 EXTREMELY_IMPORTANT 块尾部
+#
+# 注意：格式串里的换行必须用字面 \\n（两字符），不能用 \n。
+# 原因：printf 会把 \n 解释成真实 0x0a，但 orch_escaped/lessons_escaped 里的换行
+# 已是字面 \\n（经 escape_for_json 转义）。若格式串产生真实 0x0a，整个 session_context
+# 塞进 JSON 字符串值后会违反 JSON 规范（控制字符 0x00-0x1F 必须转义），导致 ZCode
+# strict schema 校验失败（diagnosing-hooks pitfall #8）。详见 L#006 根因 B。
 build_session_context() {
     local orch_content="$1"
     local lessons_content="${2:-}"
@@ -185,14 +191,24 @@ build_session_context() {
     if [ -n "$lessons_content" ]; then
         lessons_escaped=$(escape_for_json "$lessons_content")
     fi
-    printf '<EXTREMELY_IMPORTANT>\nYou have LoopEngine — the full-stack development engine with 33 skills.\n\norch v2 is a natural-language-first, family-first, rule-first multi-skill orchestrator.\nUse native description matching for single-skill tasks. Use orch behavior when the user goal clearly requires multiple complementary skills.\n\n**Below is the runtime orch bundle (skill + orchestration references). For all other skills, use the '\''Skill'\'' tool:**\n\n%s\n%s\n</EXTREMELY_IMPORTANT>' "$orch_escaped" "$lessons_escaped"
+    printf '<EXTREMELY_IMPORTANT>\\nYou have LoopEngine — the full-stack development engine with 33 skills.\\n\\norch v2 is a natural-language-first, family-first, rule-first multi-skill orchestrator.\\nUse native description matching for single-skill tasks. Use orch behavior when the user goal clearly requires multiple complementary skills.\\n\\n**Below is the runtime orch bundle (skill + orchestration references). For all other skills, use the '\''Skill'\'' tool:**\\n\\n%s\\n%s\\n</EXTREMELY_IMPORTANT>' "$orch_escaped" "$lessons_escaped"
 }
 
 # 输出 SessionStart JSON（按 env var 路由 schema）
 # Uses printf instead of heredoc to work around bash 5.3+ heredoc hang.
+#
+# 路由优先级（关键：ZCode 必须在 Claude 之前判断）：
+#   ZCode 同时设置 ZCODE_PLUGIN_ROOT 和 CLAUDE_PLUGIN_ROOT。若 CLAUDE 分支在前，
+#   ZCode 会误入 Claude 嵌套 schema（hookSpecificOutput），触发 ZCode strict JSON
+#   校验失败（diagnosing-hooks pitfall #8），导致 hook.run.failed。
+#   因此 ZCode 分支必须置顶。详见 L#006。
 emit_session_start_json() {
     local session_context="$1"
-    if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
+    if [ -n "${ZCODE_PLUGIN_ROOT:-}" ] && [ -z "${COPILOT_CLI:-}" ]; then
+        # ZCode sets ZCODE_PLUGIN_ROOT (同时也会设 CLAUDE_PLUGIN_ROOT，必须优先匹配)
+        # ZCode strict schema 期望顶层 additionalContext（非 hookSpecificOutput 嵌套）
+        printf '{\n  "additionalContext": "%s"\n}\n' "$session_context" | cat
+    elif [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
         # Cursor sets CURSOR_PLUGIN_ROOT (may also set CLAUDE_PLUGIN_ROOT)
         printf '{\n  "additional_context": "%s"\n}\n' "$session_context" | cat
     elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -z "${COPILOT_CLI:-}" ]; then

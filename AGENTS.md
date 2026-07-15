@@ -1,7 +1,7 @@
 # LoopEngine — 循环工程全家桶
 
-> **v1.0.5+ · 9 条全局红线（8 + 1）· 单点真源 · install.sh install_managed_rules() 自动同步**
-> **本项目红线版本演进**：v1.0.x（5 条）→ v1.0.2+（7 条，新增进度汇报 + Subagent 边界）→ v1.0.3+（8 条，新增一致性核对）→ v1.0.4+（9 条，新增工程实践红线）→ **v1.0.5+（9 条红线不变，§9 新增 R3.5 同根 Bug 扫描红线，规则总数 16 → 17 条）**
+> **v1.0.6+ · 10 条全局红线（9 + 1）· 单点真源 · install.sh install_managed_rules() 自动同步**
+> **本项目红线版本演进**：v1.0.x（5 条）→ v1.0.2+（7 条）→ v1.0.3+（8 条）→ v1.0.4+（9 条）→ v1.0.5+（§9 新增 R3.5）→ **v1.0.6+（10 条，新增验证 Gate 红线 · 机器级三层防御）**
 > **用户交互红线 2026-07-01 强化**：从 4 条升级为 5 条（新增"决策点必须用 AskUserQuestion 触发"+ §6 自查清单）
 > **摘要输出红线 2026-07-01 强化**：新增"决策点硬约束"（决策点文字必配 AskUserQuestion 工具调用）
 > **工程实践红线 2026-07-03 新增**：方案选型 / 技术选型 / 修复 / 重构 / 小步快跑 / 决策记录 6 维度共 17 条（v1.0.5 新增 R3.5 同根 Bug 扫描）
@@ -707,9 +707,77 @@ NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 
 ---
 
-## 关联规则总览（9 条红线的关系 · 单点真源）
+## 🔴 10. 验证 Gate 红线（执行端 · 机器强制 · 单点真源 · 2026-07-15 加入）🆕
 
-> **以下是 9 条红线的"关系网"**，单一真源 = 本节。各红线章节内的"关联规则"已在 v1.0.2+ 移除以避免重复。
+> **针对红线 5（完成前验证）的 enforcement gap**：红线 5 是 prompt 级软约束（靠 AI 自觉），
+> L#002 事故证明 AI 可绕过（加 `--skip-specs` 5 次跳过真实测试仍宣称"端到端验证通过"）。
+> 本红线部署**机器级**三层防御，让"有代码改动但无独立验证证据 = Stop hook 阻断"，AI 无法绕过。
+
+### 10.1 铁律
+
+```
+NO COMPLETION CLAIMS WITHOUT MACHINE-VERIFIED EVIDENCE
+```
+
+任何含 Edit/Write 代码改动的任务，**必须**有 verdict.json 验证证据才能宣称完成。这不是自律——是 Stop hook 机器校验。
+
+### 10.2 三层防御架构
+
+| 层 | 机制 | 文件 | 强制力 |
+|---|---|---|---|
+| **D 证据文件** | verdict.json（真相源） | `.verify-state/<SID>/verdict.json` | 可审计 |
+| **B 验证官** | verification-officer subagent 独立验证 | `skills/verification-officer/` | 解决利益冲突 |
+| **A Stop hook** | 机器级阻断（exit 2） | `hooks/verify-gate.sh` | AI 无法绕过 |
+
+### 10.3 工作流
+
+```
+SessionStart hook → 初始化 .verify-state/<SID>/
+PostToolUse hook → Write/Edit 标记 has_code_changes=true
+                → Bash(test) 追加 evidence-log.jsonl
+                → Agent(verdict签名) 写 verdict.json
+验证官 subagent → 独立验证 → 写 verdict.json
+Stop hook → 读 verdict.json:
+    VERIFIED → exit 0 放行
+    FAILED → exit 2 阻断（强制修复后重验）
+    缺失/过期 → exit 2 阻断（"必须先派验证官"）
+    阻断 ≥3 次 → exit 0 软警告（防无限循环）
+```
+
+### 10.4 触发与豁免
+
+**触发**：任何含 Edit/Write/MultiEdit/ApplyPatch 工具调用的会话
+
+**豁免**（has_code_changes 不会被标记为 true）：
+- 纯对话 / 纯调研（无代码改动）
+- 纯 Read（只读探查）
+- 纯 Bash 执行类操作（git/cp/ls）
+
+### 10.5 违规判定
+
+| 违规行为 | 自愈方法 |
+|---------|---------|
+| 有代码改动但未派验证官就宣称完成 | Stop hook 自动阻断（exit 2）→ 强制派验证官 |
+| 验证官返回 FAILED 但仍宣称完成 | Stop hook 自动阻断 → 强制修复后重验 |
+| 伪造 verdict.json（verifier=self 但未真验证） | 验证官 subagent 独立验证可发现；evidence-log.jsonl 交叉比对 |
+| 阻断 ≥3 次后强行放行 | 软警告注入 additionalContext（用户可见，标注"未经独立验证"） |
+
+### 10.6 与其他红线的关系
+
+| 协同红线 | 关系 |
+|---------|------|
+| 🔴 5 完成前验证 | 红线 5 = prompt 级（意图层）；红线 10 = 机器级（行为层）。**红线 10 是红线 5 的 enforcement 层** |
+| 🔴 7 Subagent 边界 | 验证官 subagent 遵循红线 7 的 5 类必接输入 + 独立验证义务 |
+| 🔴 9 工程实践 | R3.1 根因分析 → 验证官 FAILED 时必须给根因分类；R5.3 Tracer Bullet → 验证官先验骨架再验细节 |
+| 🔴 1 MCP | 验证官前端任务用 agent-browser 三件套（errors/network/snapshot）|
+
+> **冲突时优先级**：**完成前验证（红线 5·诚信端）= 验证 Gate（红线 10·执行端）**（两者同源，红线 10 是红线 5 的机器实现）
+
+---
+
+## 关联规则总览（10 条红线的关系 · 单点真源）
+
+> **以下是 10 条红线的"关系网"**，单一真源 = 本节。各红线章节内的"关联规则"已在 v1.0.2+ 移除以避免重复。
 
 | 红线 | 工作流端 | 上游依赖 | 下游约束 | 冲突时优先级 |
 |------|---------|---------|---------|------------|
@@ -722,6 +790,7 @@ NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 | 🔴 7. Subagent 边界 | 执行（越界） | MCP+事实 | 完成前验证 | 让位于完成前验证 |
 | 🔴 8. 一致性核对 | 追踪（多任务回扫） | MCP+事实 | 全部（每 3 任务触发） | 让位于完成前验证 |
 | 🔴 9. 工程实践 | 开发（选型+质量+节奏） | MCP+事实+交互 | 全部（任何写代码场景） | 让位于完成前验证 |
+| 🔴 10. 验证 Gate | 执行（机器强制） | 完成前验证 | 全部（代码改动必须 verdict） | **= 完成前验证**（红线 5 的机器层） |
 
 **端到端工作流图示**：
 
@@ -732,6 +801,7 @@ MCP(探查) → 事实(分析) → 交互(决策) → 摘要(产出) → 验证(
                        └─ Subagent 边界(执行越界) ─┘
                        └─ 一致性核对(多任务回扫) 🆕
                        └─ 工程实践(选型+质量+节奏) 🆕
+                                              └─ 验证 Gate(机器强制 · 红线5的enforcement层) 🆕
 ```
 
 ---

@@ -50,9 +50,23 @@ Step ⑤ 闭环编码（纯自动）
   • 自愈闭环: 自动修复失败门禁（见 references/self-healing.md）
   
   Decide:
-    ✅ 门禁全绿 → success，进入交付
+    ✅ 门禁全绿 → success，进入 Step ⑤.5 验证官
     🟡 连续2轮无进展 → stagnated，返回给 go（被调用时）或自动降级
     🔴 exhausted（默认4轮×1.5=6轮）→ 返回给 go 或自动终止
+    │
+    │
+Step ⑤.5 验证官独立验证（🆕 v6.12 · 三层防御 B 层）
+  门禁全绿后，派 verification-officer subagent 做独立验证：
+  • 不复用 implementer 上下文，从零验证（解决利益冲突）
+  • 按 task_type 路由：frontend→F1-F5 / api→curl / backend→测试+红绿 / script→裸命令
+  • 验证官写 .verify-state/<SID>/verdict.json
+  • 返回 4 状态：VERIFIED / FAILED / BLOCKED / NEEDS_CONTEXT
+
+  判定:
+    ✅ VERIFIED → 进入 Step ⑥ 交付
+    ❌ FAILED → 回到 Step ⑤ 自愈（修代码后重派验证官）
+    ⛔ BLOCKED → 返回给 go（环境问题，非代码）
+    ❓ NEEDS_CONTEXT → AskUserQuestion 问用户验证方式
     │
     │
 Step ⑥ 交付（📝审计闸门）

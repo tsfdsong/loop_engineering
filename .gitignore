@@ -19,3 +19,7 @@ docs/superpowers/
 # IDE 配置
 .idea/
 .worktrees/
+
+# 验证 Gate 状态目录（运行时产物，不入库）
+# 包含 verdict.json / evidence-log.jsonl / has_code_changes 等会话级证据
+.verify-state/
