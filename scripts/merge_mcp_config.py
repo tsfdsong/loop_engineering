@@ -15,17 +15,21 @@
 # 原子写：先写 .tmp 再 rename，避免中途崩溃留截断 JSON
 #
 # v1.3.1 新增：合并 ZCode 桌面版 + Cursor IDE 两种 MCP schema
-# 由 install.sh 的 common_write_zcode_desktop_config / common_deploy_cursor_mcp 调用
 # ────────────────────────────────────────────────────────────
 
-import json
-import os
 import sys
+
+# 单一真源（红线 9 R5.2）：从 _lib 导入，消除本文件独立实现
+from _lib.json_io import atomic_write_json, read_json
+
+# 兼容旧接口（tests/test_merge_mcp_config.py 通过 _atomic_write_json / _read_json 调用）
+_atomic_write_json = atomic_write_json
+_read_json = read_json
 
 
 def merge_zcode(cfg, jcode, repo):
     """ZCode 桌面版：~/.zcode/cli/config.json → mcp.servers.<name>.{type,command,args}"""
-    data = _read_json(cfg)
+    data = read_json(cfg)
     data.setdefault('mcp', {}).setdefault('servers', {})
 
     data['mcp']['servers']['jcodemunch'] = {
@@ -44,7 +48,7 @@ def merge_cursor(cfg, jcode, repo, hdrm):
     v1.3.2: headroom 可选——为空字符串时跳过该 entry（不再强制 3 个全找到才写）。
     同时清理可能存在的旧 headroom entry（避免残留失效路径）。
     """
-    data = _read_json(cfg)
+    data = read_json(cfg)
     data.setdefault('mcpServers', {})
 
     data['mcpServers']['jcodemunch'] = {
@@ -61,37 +65,6 @@ def merge_cursor(cfg, jcode, repo, hdrm):
     else:
         data['mcpServers'].pop('headroom', None)
     return data
-
-
-def _read_json(cfg):
-    """读 JSON；不存在/损坏 → 空 dict（带 stderr 警告）"""
-    data = {}
-    if os.path.isfile(cfg):
-        try:
-            with open(cfg, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-        except (json.JSONDecodeError, OSError) as e:
-            print(f"  ⚠ {cfg}: 读取失败 ({e.__class__.__name__})，按空配置重写",
-                  file=sys.stderr)
-            data = {}
-    return data
-
-
-def _atomic_write_json(cfg, data):
-    """原子写：先写 .tmp 再 rename，避免中途崩溃留截断 JSON"""
-    tmp = cfg + '.tmp'
-    try:
-        with open(tmp, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-        os.replace(tmp, cfg)
-    except OSError as e:
-        print(f"  ❌ 写入 {cfg} 失败: {e}", file=sys.stderr)
-        if os.path.exists(tmp):
-            try:
-                os.remove(tmp)
-            except OSError:
-                pass
-        sys.exit(1)
 
 
 def main():
@@ -119,7 +92,7 @@ def main():
         cfg, jcode, repo, hdrm = args[1:5]
         data = merge_cursor(cfg, jcode, repo, hdrm)
 
-    _atomic_write_json(cfg, data)
+    atomic_write_json(cfg, data)
     print(f"  ✅ {cfg}")
 
 

@@ -46,24 +46,38 @@ class AuditResult:
 
 # ── A 维度：工具部署完整性 ──────────────────────────────
 
+# A 维度检查表：从 TOOL_ADAPTERS 的 output_path 反向推导部署目录
+# 单一真源（红线 9 R5.2 减法）：避免 hardcode 3 个 adapter → 跟随 TOOL_ADAPTERS 增减自动更新
+# 推导规则：adapter.id → 用户级部署根（~/.{id}/skills/loopengine 或 ~/.{id}/）
+_DEPLOY_ROOT_BY_ID = {
+    "claude-code": "~/.claude/skills/loopengine",
+    "zcode": "~/.zcode/skills/loopengine",
+    "cursor": "~/.cursor/skills/loopengine",
+    "codex": "~/.codex/skills/loopengine",
+    "gemini-cli": "~/.gemini/extensions/loopengine",
+}
+
 
 def dimension_a_tool_deploy(
     tool_filter: Optional[str] = None,
 ) -> List[AuditResult]:
-    """A 维度：每个 ToolAdapter 对应的部署目录存在。"""
+    """A 维度：每个 ToolAdapter 对应的部署目录存在。
+
+    从 TOOL_ADAPTERS 派生检查路径（消除 v1.x hardcode 3 个 adapter 的不完整）。
+    """
     results = []
     home = os.path.expanduser("~")
-    checks = {
-        "claude-code": os.path.join(home, ".claude", "skills", "loopengine"),
-        "zcode": os.path.join(home, ".zcode", "skills", "loopengine"),
-        "cursor": os.path.join(home, ".cursor", "skills", "loopengine"),
-    }
     for adapter in TOOL_ADAPTERS:
         if tool_filter and adapter.id != tool_filter:
             continue
-        if adapter.id not in checks:
+        rel = _DEPLOY_ROOT_BY_ID.get(adapter.id)
+        if rel is None:
+            # adapter 存在但未注册部署路径（如 experimental / 跳过）
+            results.append(
+                AuditResult("A", "info", adapter.id, "无部署路径注册（跳过）")
+            )
             continue
-        path = checks[adapter.id]
+        path = os.path.join(home, rel.lstrip("~/").replace("/", os.sep))
         if os.path.isdir(path):
             results.append(
                 AuditResult("A", "ok", adapter.id, f"部署目录存在: {path}")
@@ -172,18 +186,37 @@ def dimension_b_skill_integrity(
 
 # ── C 维度：红线一致性（info 级 · 哨兵）────────────────
 
+# 单一真源（clean-code 维度 4 · DRY 真义）：从 scripts/_lib/redline_markers.txt 派生
+# 消除与 _common.sh::managed_rules 的漂移；修复 v1.0.6+ 第 10 条漏校验 bug
+def _load_redline_markers() -> List[str]:
+    markers_file = os.path.join(SCRIPTS_DIR, "_lib", "redline_markers.txt")
+    if not os.path.isfile(markers_file):
+        # fallback：hardcode 9 条（向后兼容）
+        return [
+            "BEGIN LOOPENGINE-MANAGED INTERACTION-RULES",
+            "BEGIN LOOPENGINE-MANAGED MCP-RULES",
+            "BEGIN LOOPENGINE-MANAGED EVIDENCE-RULES",
+            "BEGIN LOOPENGINE-MANAGED SUMMARY-RULES",
+            "BEGIN LOOPENGINE-MANAGED VERIFICATION-RULES",
+            "BEGIN LOOPENGINE-MANAGED PROGRESS-RULES",
+            "BEGIN LOOPENGINE-MANAGED SUBAGENT-RULES",
+            "BEGIN LOOPENGINE-MANAGED CONSISTENCY-RULES",
+            "BEGIN LOOPENGINE-MANAGED ENGINEERING-RULES",
+        ]
+    markers: List[str] = []
+    with open(markers_file, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            # 格式：<标题>|<MARKER>
+            parts = line.split("|", 1)
+            if len(parts) == 2:
+                markers.append(f"BEGIN LOOPENGINE-MANAGED {parts[1].strip()}")
+    return markers
 
-REDLINE_MARKERS = [
-    "BEGIN LOOPENGINE-MANAGED INTERACTION-RULES",
-    "BEGIN LOOPENGINE-MANAGED MCP-RULES",
-    "BEGIN LOOPENGINE-MANAGED EVIDENCE-RULES",
-    "BEGIN LOOPENGINE-MANAGED SUMMARY-RULES",
-    "BEGIN LOOPENGINE-MANAGED VERIFICATION-RULES",
-    "BEGIN LOOPENGINE-MANAGED PROGRESS-RULES",
-    "BEGIN LOOPENGINE-MANAGED SUBAGENT-RULES",
-    "BEGIN LOOPENGINE-MANAGED CONSISTENCY-RULES",
-    "BEGIN LOOPENGINE-MANAGED ENGINEERING-RULES",
-]
+
+REDLINE_MARKERS = _load_redline_markers()
 
 
 def dimension_c_redline_consistency(

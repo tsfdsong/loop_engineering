@@ -311,24 +311,30 @@ def _resume_orchestration(project_dir):
 def _run_system_review(project_dir):
     """
     Step ⑦.5: G10 系统审查。
-    
+
     按变更范围自动判断深度:
     - < 3 文件且未跨模块 → 仅 Step 1 自洽性
     - ≥ 3 文件或跨模块 → Step 1 + 2
     - 跨架构级 → 全三步
-    
-    调用 ZCode 加载 system-review 技能执行。
+
+    调用 ZCode 加载 system-review 技能执行。判定 severity 用结构化 JSON 协议
+    （system-review agent 输出 verdict.json），不再用字符串匹配 emoji/英文
+    （消除 v6.x "改个 emoji 即漏判" 的脆性 — 红线 9 R3.1 根因级）。
     """
+    import json
+    import tempfile
+    from pathlib import Path
+
     # 获取变更范围
     try:
         base_branch = "main"
         state = state_manager.read_state(project_dir)
         if state.get("base_branch"):
             base_branch = state["base_branch"]
-        
+
         changed_files = git_ops.get_changed_files(project_dir, base_branch)
         file_count = len(changed_files)
-        
+
         # 判断跨模块
         dirs = set()
         for f in changed_files:
@@ -354,22 +360,56 @@ def _run_system_review(project_dir):
 
     print(f"   深度: {depth} (变更 {file_count} 文件, 跨模块={cross_module})")
 
+    # 协议化判定：让 system-review 输出 verdict.json（结构化），而不是匹配字符串
+    verdict_path = Path(tempfile.gettempdir()) / f"system-review-verdict-{os.getpid()}.json"
+    review_prompt += (
+        f"\n\n【强制协议】审查结束后必须将结果写入 JSON 文件 {verdict_path}（UTF-8）。"
+        "schema: {\"severity\": \"error\"|\"warning\"|\"pass\", \"findings_count\": int, "
+        "\"dimensions_covered\": [\"self_consistency\", \"architecture\", \"improvement\"]}。"
+        "未写文件或 schema 校验失败 → 降级到 legacy 字符串匹配（兼容老 agent）。"
+    )
+
     result = zcode_runner.call_zcode(review_prompt, project_dir, mode="yolo", timeout=300)
 
-    # 从输出判断严重度
+    # 优先读 verdict.json（结构化），失败再降级到字符串匹配（兼容老 agent）
     output = result.get("stdout", "") + result.get("stderr", "")
-    if "CRITICAL" in output or "ERROR" in output.upper():
-        severity = "error"
-    elif "WARNING" in output.upper() or "⚠️" in output:
-        severity = "warning"
-    else:
-        severity = "pass"
+    severity = None
+    findings_count = 0
+    dimensions_covered = []
+    verdict_missing = False
+    try:
+        if verdict_path.exists():
+            with open(verdict_path, "r", encoding="utf-8") as f:
+                verdict = json.load(f)
+            severity = verdict.get("severity")
+            findings_count = int(verdict.get("findings_count", 0))
+            dimensions_covered = list(verdict.get("dimensions_covered", []))
+            # 协议级 schema 校验
+            if severity not in ("error", "warning", "pass"):
+                raise ValueError(f"invalid severity: {severity}")
+            # 清理临时文件
+            verdict_path.unlink(missing_ok=True)
+    except (json.JSONDecodeError, ValueError, OSError) as e:
+        verdict_missing = True
+        print(f"   ⚠️ verdict.json 协议失败（{e}），降级到字符串匹配（红线 9 R3.1 警示）")
+
+    if severity is None:
+        # 降级路径（仅在协议失败时使用）
+        if "CRITICAL" in output or "ERROR" in output.upper():
+            severity = "error"
+        elif "WARNING" in output.upper() or "⚠️" in output:
+            severity = "warning"
+        else:
+            severity = "pass"
 
     return {
         "severity": severity,
         "depth": depth,
         "file_count": file_count,
         "cross_module": cross_module,
+        "findings_count": findings_count,
+        "dimensions_covered": dimensions_covered,
+        "verdict_protocol": "verdict.json" if not verdict_missing else "legacy_string_match",
         "output": output[-500:] if output else "",
     }
 

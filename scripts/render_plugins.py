@@ -34,6 +34,9 @@ import sys
 from dataclasses import dataclass, field
 from typing import Callable, List, Optional
 
+# 单一真源（红线 9 R5.2）：从 _lib 导入，消除本文件独立实现
+from _lib.json_io import deep_merge, strip_meta, write_json
+
 
 def _status_print(message: str, *, error: bool = False) -> None:
     """在不同终端编码下安全打印状态信息。"""
@@ -48,48 +51,15 @@ def _status_print(message: str, *, error: bool = False) -> None:
         print(sanitized, file=stream)
 
 
-def deep_merge(base: dict, overlay: dict) -> dict:
-    """深合并：overlay 字段覆盖 base 字段；dict 递归合并。"""
-    merged = dict(base)
-    for k, v in overlay.items():
-        if k.startswith("_"):
-            # 元数据字段（_comment）丢弃，不进入输出
-            continue
-        if k in merged and isinstance(merged[k], dict) and isinstance(v, dict):
-            merged[k] = deep_merge(merged[k], v)
-        else:
-            merged[k] = v
-    return merged
-
-
-def strip_meta(d: dict) -> dict:
-    """递归删除所有 _comment / _xxx 元数据字段。"""
-    out = {}
-    for k, v in d.items():
-        if k.startswith("_"):
-            continue
-        if isinstance(v, dict):
-            out[k] = strip_meta(v)
-        elif isinstance(v, list):
-            out[k] = [strip_meta(x) if isinstance(x, dict) else x for x in v]
-        else:
-            out[k] = v
-    return out
-
-
-# ── JSON I/O 公共函数 ─────────────────────────
+# deep_merge / strip_meta / write_json 已从 _lib.json_io 导入
+# 保留 _read_json / _write_json 别名供本文件内部使用（避免改全文调用点）
 def _read_json(path: str) -> dict:
     """读 JSON 文件，UTF-8 编码。"""
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    from _lib.json_io import read_json
+    return read_json(path)
 
 
-def _write_json(path: str, data: dict) -> None:
-    """写 JSON 文件（带 newline + ensure_ascii=False + indent=2）。"""
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-        f.write("\n")
+_write_json = write_json
 
 
 def render_plugin_json(template: dict, overlay_path: str, out_path: str, label: str) -> bool:

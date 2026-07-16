@@ -12,22 +12,16 @@
 #   - source.type = "local" 指向 ~/.zcode/cli/plugins/cache/zcode-plugins-official
 # ────────────────────────────────────────────────────────────
 
-import json
 import os
 import sys
 from datetime import datetime, timezone
 
+# 单一真源（红线 9 R5.2）：从 _lib 导入，消除本文件重复实现
+from _lib.json_io import read_json, write_json
 
-def _read_json(path: str) -> dict:
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def _write_json(path: str, data: dict) -> None:
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-        f.write("\n")
+# 兼容旧接口（tests/test_register_zcode_marketplace.py 通过 _read_json/_write_json 调用）
+_read_json = read_json
+_write_json = write_json
 
 
 def main():
@@ -45,10 +39,9 @@ def main():
         print(f"  ⚠ marketplaces.json 不存在: {mp_path}", file=sys.stderr)
         sys.exit(1)
 
-    try:
-        mp = _read_json(mp_path)
-    except json.JSONDecodeError as e:
-        print(f"  ⚠ marketplaces.json JSON 解析失败: {e}", file=sys.stderr)
+    mp = read_json(mp_path)
+    if not mp:
+        print(f"  ⚠ marketplaces.json 解析失败或为空: {mp_path}", file=sys.stderr)
         sys.exit(1)
 
     marketplaces = mp.setdefault("marketplaces", [])
@@ -74,10 +67,10 @@ def main():
         "pluginCount": 0,
     }
     marketplaces.append(new_entry)
-    _write_json(mp_path, mp)
+    write_json(mp_path, mp)
     print(f"  ✅ 已注册 marketplace: {marketplace_id}")
     return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
