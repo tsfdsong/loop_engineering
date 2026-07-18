@@ -34,6 +34,15 @@ import sys
 from dataclasses import dataclass, field
 from typing import Callable, List, Optional
 
+# v2.0 修复（2026-07-18 · system-review 发现的 v1.x 遗留 bug）：
+# render_plugins.py 被 install.sh 调用时 cwd 是临时 clone 目录，
+# 不一定是 scripts/ 自身。需要把 scripts/ 父目录加到 sys.path，
+# 让 `from _lib.json_io import ...` 在任何 cwd 下都能解析。
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_SCRIPTS_DIR = _HERE  # render_plugins.py 位于 scripts/ 下
+if _SCRIPTS_DIR not in sys.path:
+    sys.path.insert(0, _SCRIPTS_DIR)
+
 # 单一真源（红线 9 R5.2）：从 _lib 导入，消除本文件独立实现
 from _lib.json_io import deep_merge, strip_meta, write_json
 
