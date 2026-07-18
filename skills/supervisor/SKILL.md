@@ -148,3 +148,120 @@ supervisor:
 - `references/intervention-strategies.md` · R1-R4 详细决策树
 - `references/state-protocol.md` · `.supervisor-state.json` 完整 schema
 - `references/loop-boundary.md` · 与 loop 自愈的边界划分
+
+---
+
+## §N. 与 go/loop 协作（v2.0 强化 · 补 system-review 发现的 gap）
+
+### 与 go 的协作时序
+
+```
+go Step ⑤ 派发
+  ├─ 派 supervisor（subagent · 持续监控）
+  ├─ 派 loop A/B/C（subagent · 各 worktree）
+  └─ go 主流程等待 supervisor 状态文件
+
+supervisor 启动后:
+  1. 读 .loopengine.yaml · 确认 enabled_levels/r4_threshold/polling_interval
+  2. 每 polling_interval 秒读各 worktree 的 .loop-state-*.json
+  3. 异常立即触发 R1-R4
+  4. 写 .supervisor-state.json（tasks 数组 + summary）
+  5. 全完成或 R4 → 在 state 文件标 status=complete 或 r4_pending=true
+
+go 主流程:
+  - 每 N 秒读 .supervisor-state.json
+  - summary.done == total → 进入 Step ⑥ merge
+  - r4_pending=true → AskUserQuestion 上报用户
+```
+
+**通信契约（状态文件 = 唯一真源）：**
+- supervisor **只写** `.supervisor-state.json`（不直接调 go）
+- go 主流程**只读** state 文件（不主动问 supervisor）
+- 这解耦了 supervisor 与 go 的生命周期（supervisor 可独立崩溃重启 · state 文件保留）
+
+### 与 loop 的边界（不接管 loop 内部自愈）
+
+| 场景 | 谁负责 | 动作 |
+|---|---|---|
+| loop 内门禁失败（Gx ❌）| loop 自己 | A/B/C/🎨 自愈分级 |
+| loop exhausted（自愈失败）| supervisor 接管 | R2 降级（按 .loopengine.yaml fallback_chain）|
+| loop done | supervisor 记录 | tasks[].status=done · summary.done++ |
+| 依赖断裂（等永久的上游）| supervisor 接管 | R3 重切 DAG（需 go 协同）|
+| R1×2 + R2×1 都失败 | supervisor 上报 | R4 AskUserQuestion（不静默放弃）|
+
+**红线（最高优先级）：supervisor 不接管 loop 内部自愈。** 只在 loop exhausted（A/B/C/🎨 全失败）后才 R2 降级。越界 = 重复造自愈闭环 = 状态混乱。
+
+### 与 go/loop 的三方协议（v2.0 通信矩阵）
+
+| 信号流向 | 机制 | 频率 |
+|---|---|---|
+| go → supervisor | 启动时派发（Agent 工具）+ 读 `.loopengine.yaml` | 一次 |
+| supervisor → go | 写 `.supervisor-state.json`（go 轮询读） | 每 polling_interval |
+| loop → supervisor | 写 `.loop-state-*.json`（supervisor 轮询读） | 每门禁状态变更 |
+| supervisor → loop | **不直接通信**（只通过 go 重派/R2 降级间接生效） | N/A |
+| supervisor → 用户 | R4 时通过 go 触发 AskUserQuestion | 仅 R4 |
+
+---
+
+## §N. 端到端示例（v2.0 强化）
+
+### 示例 1：3 子任务监控（R1 重启 + R2 降级 + 正常完成）
+
+**上下文:** go 派发 3 子任务（T1 schema / T2 API / T3 test）· supervisor 启动监控
+
+**supervisor 时序（polling_interval=30s · r4_threshold=default）：**
+
+```
+T+0:00   supervisor 启动 → 读 .loopengine.yaml → enabled_levels=[L2,L3] ✅
+         初始化 .supervisor-state.json（tasks=[T1,T2,T3] · all running）
+T+0:30   polling #1 → T1 done · T2 running · T3 waiting
+         summary: {total:3, done:1, running:1, waiting:1}
+T+1:00   polling #2 → T2 G3 ❌（test 失败）· loop 自愈 A 级触发中
+         不干预（loop 自愈区间 · 红线）
+T+1:30   polling #3 → T2 exhausted（A/B/C/🎨 全失败）
+         🔴 触发 R1 重启 #1 → 重派 T2 到 wt-T2-v2 · interventions=["R1×1"]
+T+3:00   polling #4 → T2-v2 再次 exhausted（同类 test 失败）
+         🔴 触发 R1 重启 #2（上限）→ 重派 T2 到 wt-T2-v3 · interventions=["R1×1","R1×2"]
+T+4:30   polling #5 → T2-v3 exhausted（R1 上限达成）
+         🔴 触发 R2 降级 → 按 fallback_chain 切 DeepSeek · tasks[T2].degraded=true
+T+6:00   polling #6 → T2 done（DeepSeek 降级产物）→ T3 启动
+T+9:00   polling #7 → T3 done
+         summary: {total:3, done:3, r4_pending:false}
+         标 status=complete → go 读到 → 进入 Step ⑥ merge
+```
+
+**state 文件最终态（关键字段）：**
+```json
+{
+  "tasks": [
+    {"id":"T1","status":"done","interventions":[],"degraded":false},
+    {"id":"T2","status":"done","interventions":["R1×1","R1×2","R2×1"],"degraded":true},
+    {"id":"T3","status":"done","interventions":[],"degraded":false}
+  ],
+  "summary": {"total":3,"done":3,"r4_pending":false}
+}
+```
+
+**go 读到后的动作:** T2 degraded=true → Step ⑧ 触发 🛑 人工闸门（不自动合并 · 交付报告含 R1×2+R2×1 决策追溯）。
+
+### 示例 2：R4 上报（R1×2 + R2×1 全失败）
+
+**上下文:** T2 是核心接口 · R1 重启 2 次 + R2 降级 1 次后仍失败
+
+**supervisor 时序（接续示例 1 的 R2 失败分支）：**
+
+```
+T+6:00   R2 降级后 T2 仍 exhausted（DeepSeek 也搞不定 · 复杂度超模型能力）
+         🔴 触发 R4 上报 → 标 r4_pending=true
+         写 state: {summary:{done:2, failed:1, r4_pending:true}}
+T+6:01   go 主流程轮询读到 r4_pending=true
+         → AskUserQuestion 上报用户（不静默放弃）
+```
+
+**AskUserQuestion 选项（go 触发 · supervisor 提供 context）：**
+- **立即人工修复**（推荐 · 核心接口不可降级交付）
+- 登记后续（移入 backlog · 当前分支标 WIP）
+- 标记已知边界（文档化限制 · 部分交付）
+- 忽略（强制合并 · 风险自负）
+
+**红线兑现:** R4 必走 AskUserQuestion · 不静默放弃 · 决策由用户做（L3 层）。

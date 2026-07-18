@@ -199,3 +199,49 @@ bash skills/loop/scripts/check-agent-browser.sh
 - **满足触发条件但 > 30 分钟无任何状态输出** → 🔴 红线违规（"假死感"痛点回归）
 - **仅转述"还在做"、"差不多了"等模糊措辞** → 🔴 红线违规 → 必须用上方固定模板结构（含 N/M 计数 + 当前阶段 + 下一步 + 阻塞 + 预计剩余 5 字段）
 - **与完成前验证红线冲突时优先级**：**完成前验证（诚信端 · C1） > 进度汇报（运行端 · V5）** — 若验证证据与进度节奏冲突，先保诚信（宁可慢一步报进度，也不可未经验证宣称完成）
+
+---
+
+## §N. 端到端示例（v2.0 强化）
+
+### 示例 1：L2 单任务闭环（修分页 bug）
+
+**用户输入:** `/loop --level=L2 修复用户列表分页 bug · 验收：第 2 页能正确显示`
+
+**loop 流程（L2 标准 · G0-G9）：**
+
+1. **G0 环境预检**: ✅ agent-browser 已装（前端验证可能用到）
+2. **G1 语法/lint**: 定位 `src/users/list.tsx:45` · 发现 `pageSize=NaN`（API 返回 null 未兜底）→ 改为 `pageSize=10`
+3. **G2-G3 单元测试**: 写 `list.test.tsx`（覆盖 pageSize=null/undefined/正常值 3 case）→ `npm test` → ✅ 全绿
+4. **G4-G6 集成**: `npm run test:integration`（含路由 + API mock）→ ✅
+5. **G7 性能**: 无回归（render 时间 12ms → 11ms · 在噪声范围）
+6. **G8 文档**: 更新 CHANGELOG（fix: 用户列表分页 pageSize 兜底）
+7. **G9 代码审查**: 调用 `code-reviewer` skill → ✅（无 nits）
+8. commit + 报告
+
+**自愈场景（G3 失败 → 自愈 A 级）：**
+- G3 首次跑：test 红（mock 未模拟 null 返回）
+- 自愈分级 → **A 级**（单点修复 · test mock 补 null case）
+- 重跑 G3 → ✅ 绿 → 继续 G4
+
+**交付**: gate_result 全绿 · commit `fix(users): pagination pageSize fallback` · 等待合并确认（非 --auto 模式）
+
+### 示例 2：L3 跨模块新功能（go 调用 · F1-F5 触发）
+
+**go 派发:** `/loop --auto --level=L3 实现 orders 创建接口 · 含前端表单`
+
+**loop 流程（L3 完整 · 15+ 门禁）：**
+
+1. G0 环境预检 ✅ → G1 语法 ✅ → G2-G3 后端单测 ✅
+2. G4-G6 集成（API + DB）✅
+3. **F1-F5 前端验证**（L3 触发）:
+   - F1: agent-browser 打开 `/orders/new` → 表单渲染 ✅
+   - F2: 填表提交 → API 201 ✅
+   - F3-F5: 视觉回归 + a11y + 响应式 ✅
+4. G7 性能（首屏 LCP < 2.5s）✅
+5. G8 文档（API spec 更新）✅
+6. G9 代码审查 ✅
+7. **G10 不在 loop 跑**（交 go Step ⑦.5）
+8. commit + handoff（gate_result 传 go）
+
+**关键差异（vs 示例 1）:** L3 多跑 F1-F5 前端验证 · G10 交 go · handoff 传 gate_result · --auto 模式自动合并不等确认
