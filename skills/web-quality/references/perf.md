@@ -1,29 +1,13 @@
----
-name: web-perf-budget
-description: Use when enforcing performance budgets via Lighthouse and Web Vitals. Triggers on "perf budget", "performance budget", "lighthouse", "Web Vitals", "LCP", "CLS", "INP", "性能预算", "首屏加载". Enforces LCP/CLS/INP thresholds defined in perf-budget.json. Not for visual regression (use web-visual-diff) or accessibility (use web-audit-a11y).
-metadata:
-  version: "1.0.0"
-  engine: "lighthouse ^12.0.0 + playwright-lighthouse ^4.0.0"
-  default_device: mobile
-  default_throttling: Fast 3G
----
+# perf 子能力 — 性能预算 / Lighthouse / Web Vitals
 
-# web-perf-budget
-
-Enforce performance budgets (LCP / CLS / INP / FCP / TTI) via Lighthouse.
-
-## Prerequisites（首次使用前必装）
-
-| 依赖 | 安装命令 | 说明 |
-|---|---|---|
-| Playwright + 浏览器 | 复用 web-regression-e2e 的 `e2e/`；无则 `npm i -D @playwright/test && npx playwright install chromium` | — |
-| lighthouse | `npm i -D lighthouse` | CLI 审计（metadata.engine）|
-| playwright-lighthouse | `npm i -D playwright-lighthouse` | Playwright 集成（Quick start 用 `playAudit`）|
+> 本文件由 web-perf-budget@1.0.0 迁移而来
+> 入口：用户触发"性能预算 / Lighthouse / Web Vitals / LCP / CLS / INP / 首屏"等关键词
+> 共享前置见 `shared-setup.md`；本能力额外需 `npm i -D lighthouse playwright-lighthouse`
 
 ## config 协作
 
-`web-regression-e2e` 是 `e2e/playwright.config.ts` 的唯一 owner。
-本 skill 的测试文件放 `e2e/tests/perf/`，共用同一 config，不新建 config。
+`web-quality` 是 `e2e/playwright.config.ts` 的唯一 owner。
+perf 测试文件放 `e2e/tests/perf/`，共用同一 config，不新建 config。
 
 ## When to use
 
@@ -37,7 +21,8 @@ Enforce performance budgets (LCP / CLS / INP / FCP / TTI) via Lighthouse.
 - 单元/组件级性能 → 项目级 React DevTools Profiler
 - 真实用户监控 (RUM) → 需要部署 web-vitals SDK
 - 服务端性能 → 后端 APM
-- 视觉/交互 → `web-visual-diff` / `web-regression-e2e`
+- 视觉/交互 → `references/visual-diff.md` / `references/regression-e2e.md`
+- 无障碍 → `references/a11y.md`
 
 ## Quick start
 
@@ -89,7 +74,7 @@ test("home page perf budget", async ({ page }) => {
       formats: { json: true, html: true },
     },
   });
-  // 详见 references/lighthouse-cli-options.md
+  // 详见 perf/lighthouse-cli-options.md
 });
 ```
 
@@ -118,11 +103,11 @@ test("home page perf budget", async ({ page }) => {
 | Lighthouse HTML | `web-test-output/perf/perf-report.html` |
 | 摘要 | `web-test-output/perf/perf-summary.md` |
 
-## references/
+## references/perf/（详细参考）
 
-- `references/web-vitals-thresholds.md` — 项目类型对应合理阈值
-- `references/lighthouse-cli-options.md` — CLI 参数大全
-- `references/perf-regression-investigation.md` — 回归定位指南
+- `perf/web-vitals-thresholds.md` — 项目类型对应合理阈值
+- `perf/lighthouse-cli-options.md` — CLI 参数大全
+- `perf/perf-regression-investigation.md` — 回归定位指南
 
 ## CI 集成
 

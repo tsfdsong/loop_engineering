@@ -1,26 +1,13 @@
----
-name: web-visual-diff
-description: Use when comparing screenshots across runs to detect unintended UI changes (visual regression). Triggers on "visual diff", "screenshot comparison", "UI 回归", "视觉回归", "pixel diff", "snapshot test". First run captures baseline; subsequent runs diff against baseline. Not for accessibility (use web-audit-a11y) or performance (use web-perf-budget).
-metadata:
-  version: "1.0.0"
-  engine: "playwright + pixelmatch ^6.0.0"
-  scope: visual regression only
----
+# visual-diff 子能力 — 视觉回归 / 截图对比
 
-# web-visual-diff
-
-Detect unintended UI changes by comparing screenshots across runs.
-
-## Prerequisites（首次使用前必装）
-
-| 依赖 | 安装命令 | 说明 |
-|---|---|---|
-| Playwright + 浏览器 | 复用 web-regression-e2e 已装的 `e2e/`；无则 `npm i -D @playwright/test && npx playwright install chromium` | 不需单独装 pixelmatch（Playwright `toHaveScreenshot` 内置像素对比）|
+> 本文件由 web-visual-diff@1.0.0 迁移而来
+> 入口：用户触发"视觉回归 / UI 回归 / 截图对比 / 像素 diff / pixel diff"等关键词
+> 共享前置见 `shared-setup.md`；本能力**无需额外依赖**（Playwright `toHaveScreenshot` 内置像素对比）
 
 ## config 协作
 
-`web-regression-e2e` 是 `e2e/playwright.config.ts` 的唯一 owner。
-本 skill 向同一 config **追加** `expect.toMatchSnapshot` 字段（见下 Phase 1），不新建 config。
+`web-quality` 是 `e2e/playwright.config.ts` 的唯一 owner。
+本子能力向同一 config **追加** `expect.toMatchSnapshot` 字段（见下 Phase 1），不新建 config。
 
 ## When to use
 
@@ -33,8 +20,9 @@ Detect unintended UI changes by comparing screenshots across runs.
 
 - 探索性"哪里坏了" → `agent-browser/dogfood`
 - 像素级单元测试 → 项目级 `jest-snapshot`
-- a11y → `web-audit-a11y`
-- 性能 → `web-perf-budget`
+- a11y → `references/a11y.md`
+- 性能 → `references/perf.md`
+- 交互流程 E2E → `references/regression-e2e.md`
 
 ## Quick start
 
@@ -89,11 +77,11 @@ test("home page mobile", async ({ page }) => {
 
 ### Phase 3: 屏蔽动态内容
 
-见 `references/dynamic-content-masking.md`。
+见 `visual-diff/dynamic-content-masking.md`。
 
 ### Phase 4: 基线管理
 
-见 `references/visual-baseline-management.md`。
+见 `visual-diff/visual-baseline-management.md`。
 
 ## Inputs
 
@@ -111,11 +99,11 @@ test("home page mobile", async ({ page }) => {
 | Diff 图 | `e2e/test-results/.../diff.png` |
 | HTML 报告 | `e2e/playwright-report/` |
 
-## references/
+## references/visual-diff/（详细参考）
 
-- `references/pixelmatch-config.md` — 阈值/抗锯齿/忽略区域
-- `references/dynamic-content-masking.md` — 屏蔽时间戳/广告/动画
-- `references/visual-baseline-management.md` — 基线更新 + 审批
+- `visual-diff/pixelmatch-config.md` — 阈值/抗锯齿/忽略区域
+- `visual-diff/dynamic-content-masking.md` — 屏蔽时间戳/广告/动画
+- `visual-diff/visual-baseline-management.md` — 基线更新 + 审批
 
 ## Failure modes
 

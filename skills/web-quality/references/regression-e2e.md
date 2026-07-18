@@ -1,32 +1,16 @@
----
-name: web-regression-e2e
-description: Use when generating, scaffolding, or running Playwright E2E regression tests for a web application. Triggers on "regression E2E", "Playwright", "e2e 测试", "回归测试", "scaffold e2e", "CI 集成测试". Works for any web project (Antd, MUI, Tailwind, native HTML). Focus is project-level scaffolding (e2e/ directory, auth fixtures, CI workflows); for general E2E methodology/patterns (POM, fixtures, selectors, test pyramid) use the testing skill. Not for exploratory bug hunting (use agent-browser/dogfood) or unit tests (already covered by project's vitest/jest).
-metadata:
-  version: "1.0.0"
-  engine: "@playwright/test ^1.50.0"
-  scope: regression only (not exploratory)
-  complements: agent-browser/dogfood
----
+# regression-e2e 子能力 — Playwright E2E 回归
 
-# web-regression-e2e
-
-Generate, run, and integrate Playwright regression E2E tests for any web project.
-
-## Prerequisites（首次使用前必装）
-
-| 依赖 | 安装命令 | 说明 |
-|---|---|---|
-| Node.js ≥ 18 | — | Playwright 运行时 |
-| Playwright + 浏览器 | `cd e2e && npm install && npx playwright install --with-deps chromium` | 首次跑必装；`--with-deps` 装系统依赖（Linux）|
-| 复用系统 Chrome（可选） | `PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium` | 省 ~300MB 下载 |
-
-> 若项目首次跑：先按 `references/scaffold-templates.md` 生成 `e2e/` 目录，再装依赖。
+> 本文件由 web-regression-e2e@1.0.0 迁移而来
+> 入口：用户触发"E2E 回归 / Playwright / 端到端测试 / 跨浏览器"等关键词
+> 本能力是 web-quality 套件的"基础设施层"——另外 3 个子能力（a11y/perf/visual-diff）都依赖它建立的 `e2e/` 目录与 config
+> 共享前置见 `shared-setup.md`
+> 通用 E2E 方法论（POM / fixtures / test pyramid）见 `testing` skill
 
 ## `playwright.config.ts` 所有权
 
-`web-regression-e2e` 是 `e2e/playwright.config.ts` 的**唯一 owner**。
-其他 web-* skill（visual-diff / a11y / perf）若需调整 config（如 `expect.toMatchSnapshot`、`projects`），
-**追加字段**到同一 config，不要新建第二个 config。冲突协商见各 skill 的 "config 协作" 段。
+`web-quality` 是 `e2e/playwright.config.ts` 的**唯一 owner**（由 regression-e2e 子能力负责 scaffold）。
+其他子能力（visual-diff / a11y / perf）若需调整 config（如 `expect.toMatchSnapshot`、`projects`），
+**追加字段**到同一 config，不要新建第二个 config。冲突协商见各子能力的 "config 协作" 段。
 
 ## When to use
 
@@ -34,15 +18,15 @@ Generate, run, and integrate Playwright regression E2E tests for any web project
 - Project has `e2e/` but no CI → add workflow
 - Project has both → run + report
 - Project is single-page app (React/Vue/Angular) with routing
-- Project uses Antd 5.x / Material UI 5.x / Tailwind (see `references/antd-wait-patterns.md` for Antd)
+- Project uses Antd 5.x / Material UI 5.x / Tailwind (see `regression-e2e/antd-wait-patterns.md` for Antd)
 
 ## When NOT to use
 
 - One-off exploratory bug hunt → `agent-browser/dogfood`
 - API-only testing → project-level pytest/jest
-- Visual regression → `web-visual-diff`
-- Accessibility audit → `web-audit-a11y`
-- Performance budget → `web-perf-budget`
+- Visual regression → `references/visual-diff.md`
+- Accessibility audit → `references/a11y.md`
+- Performance budget → `references/perf.md`
 
 ## Quick start (5 steps)
 
@@ -55,7 +39,7 @@ Generate, run, and integrate Playwright regression E2E tests for any web project
 
 2. **If `NEEDS_SCAFFOLD`**: ask user for project type (Antd / MUI / Tailwind / other) and target URL
 3. **If `HAS_E2E`**: skip to step 5 (run)
-4. **Scaffold**: copy templates from `references/scaffold-templates.md` to project `e2e/` directory (covers §1-§10: package.json / playwright.config.ts / fixtures / utils / sample tests)
+4. **Scaffold**: copy templates from `regression-e2e/scaffold-templates.md` to project `e2e/` directory (covers §1-§10: package.json / playwright.config.ts / fixtures / utils / sample tests)
 5. **Run**:
    ```bash
    cd <project> && npx playwright test --reporter=html,list
@@ -95,8 +79,8 @@ e2e/
 ### Phase 3: Data-testid hooks (collaborative)
 
 Skill guides user to add `data-testid="..."` to components:
-- See `references/data-testid-conventions.md` for naming
-- See `references/antd-wait-patterns.md` for Antd components
+- See `regression-e2e/data-testid-conventions.md` for naming
+- See `regression-e2e/antd-wait-patterns.md` for Antd components
 
 ### Phase 4: Test execution
 
@@ -109,7 +93,7 @@ Default reporters: HTML + list. Trace and screenshot on failure.
 ### Phase 5: CI integration
 
 Choose one:
-- GitHub Actions (recommended, see `references/ci-integration-templates.md` § 1)
+- GitHub Actions (recommended, see `regression-e2e/ci-integration-templates.md` § 1)
 - GitLab CI (see § 2)
 - Jenkins (see § 3)
 
@@ -132,13 +116,13 @@ Choose one:
 | Trace files (on failure) | `<project>/e2e/test-results/` |
 | CI workflow | `<project>/.github/workflows/e2e.yml` |
 
-## references/
+## references/regression-e2e/（详细参考）
 
-- `references/scaffold-templates.md` — e2e/ 目录脚手架源（§1-§10：package.json / playwright.config.ts / fixtures / utils / sample tests）
-- `references/data-testid-conventions.md` — 怎么给组件加测试钩子（命名 + 层级）
-- `references/antd-wait-patterns.md` — Antd Modal/Drawer/Tabs/Form 的等待模式
-- `references/auth-bypass-patterns.md` — dev login / cookie 注入 / mock JWT
-- `references/ci-integration-templates.md` — 3 种 CI 平台的 workflow 模板
+- `regression-e2e/scaffold-templates.md` — e2e/ 目录脚手架源（§1-§10：package.json / playwright.config.ts / fixtures / utils / sample tests）
+- `regression-e2e/data-testid-conventions.md` — 怎么给组件加测试钩子（命名 + 层级）
+- `regression-e2e/antd-wait-patterns.md` — Antd Modal/Drawer/Tabs/Form 的等待模式
+- `regression-e2e/auth-bypass-patterns.md` — dev login / cookie 注入 / mock JWT
+- `regression-e2e/ci-integration-templates.md` — 3 种 CI 平台的 workflow 模板
 
 ## Failure modes & recovery
 
