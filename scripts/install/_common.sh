@@ -473,6 +473,14 @@ common_clone_repo() {
         # 修复: COMMON_LOCAL_SRC_DIR = 项目根（install.sh 与 _common.sh 同目录），不是 scripts/
         # 之前的 ../ 是 bug，去掉
         cp -f "$COMMON_LOCAL_SRC_DIR/scripts"/*.py "$COMMON_WORK/scripts/" 2>/dev/null
+        # v2.0 修复（2026-07-18 · system-review 发现）：复制 _lib 目录
+        # render_plugins.py 依赖 _lib/json_io.py（红线 9 R5.2 单一真源），
+        # 但 `cp *.py` 不复制目录，导致 ModuleNotFoundError: No module named '_lib'。
+        # 修复：单独 rsync/cp -r scripts/_lib/ 到 clone 副本。
+        if [ -d "$COMMON_LOCAL_SRC_DIR/scripts/_lib" ]; then
+            mkdir -p "$COMMON_WORK/scripts/_lib"
+            cp -fr "$COMMON_LOCAL_SRC_DIR/scripts/_lib/." "$COMMON_WORK/scripts/_lib/" 2>/dev/null
+        fi
         # 覆盖 plugin manifest 关键 JSON
         if [ -f "$COMMON_LOCAL_SRC_DIR/.plugin-template.json" ]; then
             cp -f "$COMMON_LOCAL_SRC_DIR/.plugin-template.json" "$COMMON_WORK/.plugin-template.json"
