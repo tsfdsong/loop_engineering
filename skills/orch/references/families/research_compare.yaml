@@ -1,9 +1,0 @@
-family: research_compare
-goal_defaults: [plan]
-actions:
-  - research_evidence
-  - compare_options
-  - synthesize_findings
-  - plan_execution
-execution:
-  mode: serial
