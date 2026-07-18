@@ -1,0 +1,25 @@
+# 红线 marker 单一真源（clean-code 维度 4 · DRY 真义）
+# ────────────────────────────────────────────────────────────
+# 由以下 2 处派生（消除独立维护的漂移风险）：
+#   1. scripts/install/_common.sh::common_inject_red_lines managed_rules 数组
+#   2. scripts/audit_tools.py::REDLINE_MARKERS 列表
+#
+# 格式：每行一条记录，字段分隔符 |：
+#   <AGENTS.md 章节标题关键字>|<MARKER 名>
+# # 开头是注释行（跳过）
+#
+# 同步规则：新增红线时
+#   1. AGENTS.md 写完章节（标题含 🔴 + 关键字）
+#   2. 本文件追加一行
+#   3. _common.sh 与 audit_tools.py 自动派生
+# ────────────────────────────────────────────────────────────
+用户交互红线|INTERACTION-RULES
+MCP 红线规则|MCP-RULES
+事实优先硬规则|EVIDENCE-RULES
+摘要输出红线|SUMMARY-RULES
+完成前验证红线|VERIFICATION-RULES
+进度汇报红线|PROGRESS-RULES
+Subagent 边界红线|SUBAGENT-RULES
+一致性核对红线|CONSISTENCY-RULES
+工程实践红线|ENGINEERING-RULES
+验证 Gate 红线|VERIFICATION-GATE-RULES
