@@ -2,6 +2,7 @@
 
 > 方案 A（agent-browser MCP 全量替换 Playwright MCP）的安装、配置、预检规范。
 > loop/go 技能在执行前端验证（F1-F5）前，**必须**确保 agent-browser 环境就绪。
+> 本指南与具体 AI 编码工具无关（MCP 是标准协议）。各工具的配置路径见文末附录速查表。
 
 ---
 
@@ -31,25 +32,29 @@ agent-browser 通过 CDP 直连 Chrome，需要以下之一：
 
 ---
 
-## 二、ZCode MCP 配置
+## 二、MCP 配置（主推 `.mcp.json` + 工具速查）
 
-### 2.1 标准配置（方案 A 推荐）
+### 2.1 标准配置（方案 A 推荐 · 项目根 `.mcp.json`）
 
-编辑 `~/.zcode/cli/config.json`：
+agent-browser 是一个**标准 MCP server**，按 MCP 协议规范在任何支持 MCP 的宿主工具中均可加载。
+推荐使用项目级 `.mcp.json`（MCP 官方约定路径，跨工具通用，随项目仓库提交）。
+
+编辑项目根 `./.mcp.json`：
 
 ```json
 {
-  "mcp": {
-    "servers": {
-      "agent-browser": {
-        "type": "stdio",
-        "command": "agent-browser",
-        "args": ["mcp", "--tools", "core,network,debug,react"]
-      }
+  "mcpServers": {
+    "agent-browser": {
+      "type": "stdio",
+      "command": "agent-browser",
+      "args": ["mcp", "--tools", "core,network,debug,react"]
     }
   }
 }
 ```
+
+> 说明：字段名 `mcpServers` 是 MCP 规范定义的统一字段，不同工具（ZCode / Claude Code / Cursor 等）均遵循。
+> 字段大小写在某些工具中可能不同（如驼峰 vs 全小写），以附录速查表中该工具的规范为准。
 
 **`--tools` profile 说明**：
 
@@ -66,13 +71,18 @@ agent-browser 通过 CDP 直连 Chrome，需要以下之一：
 
 **推荐组合**：`core,network,debug,react`（覆盖 F1-F4 全维度，64 个工具）。
 
-### 2.2 Windows 注意事项
+### 2.2 用户级配置（替代方案）
 
-⚠️ **Windows subprocess 调用**：ZCode 通过 stdio 启动 MCP 服务器。`agent-browser` 是 npm 安装的 shim，Windows 上实际是 `agent-browser.cmd`。ZCode 的 MCP 客户端已处理此差异，**无需额外配置**。
+若不希望把 `.mcp.json` 提交进仓库（或希望全局生效），可改用宿主工具的用户级配置。
+各工具的用户级配置路径见文末**附录：已知兼容工具 MCP 配置速查**。配置 JSON 结构与 2.1 相同。
+
+### 2.3 Windows 注意事项
+
+⚠️ **Windows subprocess 调用**：MCP 客户端通过 stdio 启动 MCP 服务器。`agent-browser` 是 npm 安装的 shim，Windows 上实际是 `agent-browser.cmd`。主流 MCP 客户端已处理此差异，**无需额外配置**。
 
 若手动通过 Python subprocess 调用，需用 `shell=True` 或显式指定 `.cmd` 后缀。
 
-### 2.3 持久登录态（方案 C）
+### 2.4 持久登录态（方案 C）
 
 需要复用 Chrome 登录态时，在 `args` 中追加 `--profile`：
 
@@ -116,9 +126,9 @@ agent-browser doctor
 
 ### 3.3 MCP 连接验证
 
-ZCode 启动后，确认 agent-browser MCP 已连接：
+宿主工具启动后，确认 agent-browser MCP 已连接：
 
-1. 查看 ZCode 日志 `~/.zcode/cli/log/zcode-YYYY-MM-DD.jsonl`
+1. 查看宿主工具日志（路径见附录速查表）
 2. 搜索 `agent-browser`，确认 `toolCount > 0`
 3. 预期 `toolCount: 64`（core,network,debug,react 组合）
 
@@ -126,7 +136,7 @@ ZCode 启动后，确认 agent-browser MCP 已连接：
 
 若 agent-browser MCP 不可用，临时回退：
 
-1. 编辑 `~/.zcode/cli/config.json`，注释 `agent-browser` 配置
+1. 编辑宿主配置文件（`.mcp.json` 或对应工具的用户级配置，见附录），注释 `agent-browser` 配置
 2. 恢复 Playwright MCP 配置：
    ```json
    "playwright": {
@@ -191,11 +201,11 @@ agent-browser **无法替代** 的 Playwright MCP 能力：
 ### 5.1 MCP 未连接
 
 ```
-症状: ZCode 日志无 agent-browser 工具注册
+症状: 宿主工具日志无 agent-browser 工具注册
 排查:
   1. agent-browser --version  （确认已安装）
   2. agent-browser doctor     （确认环境就绪）
-  3. 检查 config.json 的 command/args 拼写
+  3. 检查配置文件的 command/args 拼写
   4. 手动启动测试: agent-browser mcp --tools core
 ```
 
@@ -223,7 +233,7 @@ agent-browser **无法替代** 的 Playwright MCP 能力：
   3. rm -f ~/.agent-browser/default.*    # 清理 pid/port/engine 状态文件
   4. sleep 3                             # 等待端口释放
   5. agent-browser doctor                # 触发 daemon 干净重建
-  6. 若仍卡住: 重启 ZCode 会话（MCP 连接会重建 daemon）
+  6. 若仍卡住: 重启宿主工具会话（MCP 连接会重建 daemon）
 预防:
   - 禁止手动 taskkill chrome.exe，一律用 agent-browser close --all
   - 长时间不用时主动 close，避免守护进程泄漏
@@ -276,9 +286,40 @@ agent-browser doctor --fix    # 自动清理过时缓存/守护进程
 
 ### 6.3 版本兼容性矩阵
 
-| agent-browser | Chrome | MCP protocol | ZCode |
-|:--:|:--:|:--:|:--:|
-| v0.29.x | v110+ | 2025-11-25 | 全版本 |
-| v0.30.x | v110+ | 2025-11-25 | 全版本 |
+| agent-browser | Chrome | MCP protocol |
+|:--:|:--:|:--:|
+| v0.29.x | v110+ | 2025-11-25 |
+| v0.30.x | v110+ | 2025-11-25 |
 
 > 升级后若 MCP 工具数变化，需同步更新本文件的「能力边界」章节。
+
+---
+
+## 附录：已知兼容工具 MCP 配置速查
+
+agent-browser 是标准 MCP server，可被任何符合 MCP 规范的宿主工具加载。
+以下为已测/常见工具的配置路径（**仅供速查**；以各工具最新官方文档为准）：
+
+| 工具 | 配置文件路径 | 优先级 | 格式 |
+|---|---|---|---|
+| **通用标准（推荐）** | `./.mcp.json`（项目根） | 最高 | `mcpServers` 字段 |
+| ZCode | `~/.zcode/cli/config.json` | 用户级 | `mcp.servers` 字段 |
+| Claude Code | `~/.claude/settings.json` 或 `.mcp.json` | 用户级 / 项目级 | `mcpServers` 字段 |
+| Cursor | `~/.cursor/mcp.json` 或 `.cursor/mcp.json` | 用户级 / 项目级 | `mcpServers` 字段 |
+| Codex | `~/.codex/config.toml` | 用户级 | `[mcp_servers]` 段 |
+| Gemini CLI | `~/.gemini/settings.json` | 用户级 | `mcpServers` 字段 |
+| TRAE | （v1.5 后补充） | — | — |
+
+**未列出的工具**：参考该工具的官方 MCP 配置文档。`agent-browser` 是标准 MCP server，
+按 2.1 节的 JSON 结构配置即可（若该工具的字段名/大小写有差异，以其规范为准）。
+
+**日志路径速查**（MCP 连接验证用）：
+
+| 工具 | 日志路径 |
+|---|---|
+| ZCode | `~/.zcode/cli/log/zcode-YYYY-MM-DD.jsonl` |
+| Claude Code | `~/.cache/claude-cli-nodejs/` 或项目 `.claude/logs/` |
+| Cursor | `~/Library/Application Support/Cursor/logs/`（macOS）/ `%APPDATA%\Cursor\logs\`（Windows） |
+| 其它 | 见对应工具文档 |
+
+> 本速查表仅作为已测工具示例。LoopEngine 不绑定具体工具。

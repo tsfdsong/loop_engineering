@@ -21,7 +21,7 @@
     "max_retries": 1
   },
   "runtime": {
-    "profile": "cursor",
+    "profile": "host-tool",
     "subagent_role": "general-purpose",
     "model_hint": "capable"
   }

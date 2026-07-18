@@ -80,28 +80,42 @@ else
     check warn "网络" "Chrome CDN 不可达（离线环境 Chrome for Testing 下载会失败）"
 fi
 
-# 6. ZCode MCP 配置检查
-ZCODE_CONFIG="${HOME}/.zcode/cli/config.json"
-if [ -f "$ZCODE_CONFIG" ]; then
-    if grep -q "agent-browser" "$ZCODE_CONFIG" 2>/dev/null; then
-        check pass "ZCode MCP" "已配置 agent-browser MCP 服务器"
-    else
-        check fail "ZCode MCP" "config.json 未配置 agent-browser MCP 服务器"
+# 6. MCP 配置检查（多候选路径检测 · 工具无关）
+# 候选配置文件（按优先级 · 与 agent-browser-setup.md 附录速查表一致）
+CANDIDATES=(
+  "./.mcp.json"                              # 项目级 MCP 标准（最优先）
+  "$HOME/.zcode/cli/config.json"             # ZCode
+  "$HOME/.claude/settings.json"              # Claude Code
+  "$HOME/.cursor/mcp.json"                   # Cursor
+  "$HOME/.codex/config.toml"                 # Codex
+  "$HOME/.gemini/settings.json"              # Gemini CLI
+  "$HOME/.trae/config.json"                  # TRAE
+)
+
+MCP_CONFIG=""
+for cfg in "${CANDIDATES[@]}"; do
+    if [ -f "$cfg" ] && grep -q "agent-browser" "$cfg" 2>/dev/null; then
+        MCP_CONFIG="$cfg"
+        check pass "MCP 配置" "在 $cfg 中检测到 agent-browser"
+        break
     fi
-    if grep -q '"playwright"' "$ZCODE_CONFIG" 2>/dev/null; then
-        check warn "Playwright残留" "config.json 仍有 playwright 配置（方案 A 应已移除）"
+done
+[ -z "$MCP_CONFIG" ] && check warn "MCP 配置" "未在候选路径检测到 agent-browser（候选: ./.mcp.json、~/.zcode、~/.claude、~/.cursor、~/.codex、~/.gemini、~/.trae）"
+
+# 7. Playwright 残留检查（针对命中的候选配置）
+if [ -n "$MCP_CONFIG" ]; then
+    if grep -q '"playwright"' "$MCP_CONFIG" 2>/dev/null; then
+        check warn "Playwright残留" "$MCP_CONFIG 仍有 playwright 配置（方案 A 应已移除）"
     else
-        check pass "Playwright移除" "config.json 已无 playwright 配置（方案 A 已生效）"
+        check pass "Playwright移除" "$MCP_CONFIG 已无 playwright 配置（方案 A 已生效）"
     fi
-else
-    check warn "ZCode MCP" "$ZCODE_CONFIG 不存在"
 fi
 
-# 7. MCP 工具配置校验（仅查配置文件，不做实际握手避免 stdio 管道挂起）
-if [ -f "$ZCODE_CONFIG" ]; then
-    if grep -q 'core,network,debug,react' "$ZCODE_CONFIG" 2>/dev/null; then
+# 8. MCP 工具配置校验（仅查配置文件，不做实际握手避免 stdio 管道挂起）
+if [ -n "$MCP_CONFIG" ]; then
+    if grep -q 'core,network,debug,react' "$MCP_CONFIG" 2>/dev/null; then
         check pass "MCP 工具配置" "--tools core,network,debug,react（预期 64 工具）"
-    elif grep -q '"--tools"' "$ZCODE_CONFIG" 2>/dev/null; then
+    elif grep -q '"--tools"' "$MCP_CONFIG" 2>/dev/null; then
         check warn "MCP 工具配置" "配置了 --tools 但非推荐组合（推荐 core,network,debug,react）"
     else
         check warn "MCP 工具配置" "未配置 --tools，将使用默认 core profile（仅基础工具）"
@@ -122,6 +136,6 @@ if [ "$FAIL_COUNT" -gt 0 ]; then
 else
     echo ""
     echo "✅ G0 门禁通过: agent-browser 环境就绪，可执行前端验证 (F1-F5)"
-    echo "   提示: 实际 MCP 工具数请查 ZCode 日志 toolCount 字段（预期 64）"
+    echo "   提示: 实际 MCP 工具数请查宿主工具日志的 toolCount 字段（预期 64，路径见 agent-browser-setup.md 附录）"
     exit 0
 fi

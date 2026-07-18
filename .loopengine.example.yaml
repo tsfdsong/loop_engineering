@@ -1,0 +1,42 @@
+# LoopEngine 运行时配置示例（v2.0 · 可选）
+#
+# 复制为 .loopengine.yaml 后按需修改。不配置则走宿主默认 + 无降级。
+# 字段说明详见 skills/go/references/runtime-config.md
+# 本配置与具体工具/模型无关：任何 MCP 兼容宿主均可使用。
+
+# ──────────────────────────────────────────────────────────────
+# fallback_chain · 降级链（三档抽象）
+# ──────────────────────────────────────────────────────────────
+# 任一档留空（或注释掉）= 跳过该档，直接进入下一档或 R4 上报。
+# 配额耗尽 / loop exhausted 时按 primary → secondary → tertiary → R4 顺序切换。
+fallback_chain:
+  primary:
+    description: "主力模型（宿主工具默认）"
+    # 例：zcode + GLM / cursor + Claude / trae + 豆包 / codex + GPT
+    # 留空 = 使用宿主工具默认模型，不强制切换
+    # model: ""        # 可选 · 显式指定模型 ID（留空走默认）
+    # tool: ""         # 可选 · 显式指定宿主工具（跨工具调度场景）
+  secondary:
+    description: "次选（主力配额耗尽时自动切换）"
+    # 留空 = 无次选，loop exhausted 直接 R4 上报
+    # model: ""
+    # tool: ""
+  tertiary:
+    description: "兜底（primary + secondary 均失败时使用）"
+    # 留空 = 无兜底，继续失败则 R4 上报
+    # model: ""
+    # tool: ""
+
+# ──────────────────────────────────────────────────────────────
+# supervisor · 监控进程参数
+# ──────────────────────────────────────────────────────────────
+# supervisor（编排层监控）在 L2/L3 任务启动，负责 R1-R4 渐进式干预。
+# 详见 skills/go/references/state-protocol.md（R1-R4 协议）。
+supervisor:
+  enabled_levels: [L2, L3]   # 哪些 L 级别启动 supervisor。L1（简单任务）默认不启动。
+                             # 可选值: [L1, L2, L3] / [L2, L3]（默认）/ [L3] 等。
+  r4_threshold: default      # R4（上报用户）触发阈值。
+                             # default = R1×2 + R2×1 ≈ 3-5 分钟渐进式干预后仍无进展。
+                             # 也可传具体数字（单位：次），如 3。
+  polling_interval: 30       # supervisor polling 间隔（秒）。默认 30。
+                             # 越短越敏感、token 开销越大；越长越省 token 但响应慢。

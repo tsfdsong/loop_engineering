@@ -70,7 +70,8 @@
       "properties": {
         "profile": {
           "type": "string",
-          "enum": ["cursor", "zcode"]
+          "enum": ["cursor", "zcode", "host-tool"],
+          "description": "Use 'host-tool' (recommended) for tool-agnostic reporting; legacy 'cursor'/'zcode' retained for backward compatibility."
         },
         "execution_mode": {
           "type": "string",

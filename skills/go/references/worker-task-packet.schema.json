@@ -123,7 +123,8 @@
       "properties": {
         "profile": {
           "type": "string",
-          "enum": ["cursor", "zcode"]
+          "enum": ["cursor", "zcode", "host-tool"],
+          "description": "Worker adapter profile. Use 'host-tool' (recommended) for tool-agnostic packets; legacy values 'cursor' / 'zcode' retained for backward compatibility."
         },
         "subagent_role": {
           "type": "string",
