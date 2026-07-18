@@ -127,32 +127,3 @@ NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 
 **降级**：core 调不到工具时 jcodemunch 报错后 AI 自然降级用 Read/Bash（不卡死）。用户可手动说"升到 full tier"立即全开。
 
----
-
-## 🛠️ 工具/模型双无关性（硬约束）
-
-本插件坚持**宿主工具无关** + **模型无关**：不预设特定工具或特定模型。SKILL.md 主流程用抽象词（"宿主工具"/"主 agent"），具体工具名只在附录速查表。降级链用三档抽象（Primary/Secondary/Tertiary），用户在 `.loopengine.yaml` 自配。能力较弱模型从冗余提示+fallback 路径受益；能力较强模型享受更轻量的决策分母。**附录速查表**（已测工具）：见 `skills/go/references/runtime-config.md` + `skills/loop/references/agent-browser-setup.md`。
-
----
-
-## 安装 / 更新
-
-**macOS / Linux / Windows Git Bash**：
-```bash
-curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
-```
-
-**Windows PowerShell**（纯 PS 无需 Git Bash）：
-```powershell
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$le = "$env:TEMP\le-install-$([DateTime]::UtcNow.Ticks).ps1"
-irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 -OutFile $le
-& $le; Remove-Item $le -Force
-```
-
-**更新**（v1.2.0 起 install.sh 智能合一：未装→安装 / 旧版→升级 / 同版→5 秒等待）：
-```bash
-bash <(curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh)
-```
-
-装完即用。详见 `docs/INSTALL.md`。
