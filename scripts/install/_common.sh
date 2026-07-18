@@ -481,6 +481,13 @@ common_clone_repo() {
             mkdir -p "$COMMON_WORK/scripts/_lib"
             cp -fr "$COMMON_LOCAL_SRC_DIR/scripts/_lib/." "$COMMON_WORK/scripts/_lib/" 2>/dev/null
         fi
+        # v2.0 修复（2026-07-18 · system-review 发现）：复制 AGENTS.md（权威源）
+        # common_inject_red_lines 用 $COMMON_WORK/AGENTS.md（clone 副本）提取红线段落。
+        # 如果不覆盖，clone 副本是从 GitHub 拉的（可能滞后于本地），
+        # 导致提取不到新版红线（如 v2.0 的 Core Instincts / Verbal Rules Index）。
+        if [ -f "$COMMON_LOCAL_SRC_DIR/AGENTS.md" ]; then
+            cp -f "$COMMON_LOCAL_SRC_DIR/AGENTS.md" "$COMMON_WORK/AGENTS.md"
+        fi
         # 覆盖 plugin manifest 关键 JSON
         if [ -f "$COMMON_LOCAL_SRC_DIR/.plugin-template.json" ]; then
             cp -f "$COMMON_LOCAL_SRC_DIR/.plugin-template.json" "$COMMON_WORK/.plugin-template.json"
