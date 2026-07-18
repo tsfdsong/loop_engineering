@@ -11,4 +11,17 @@ source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
 orch_content=$(load_orch_runtime_bundle "$PLUGIN_ROOT")
 lessons_content=$(load_recent_lessons "$PLUGIN_ROOT")
 session_context=$(build_session_context "$orch_content" "$lessons_content")
+
+# D1.5: 追加 [TIER HINT] 段（v2.0 MCP tier 机制）
+# 将 Tier 默认值与升降级触发场景注入到 session_context，
+# 引导模型在进入会话时主动 set_tool_tier 选择合适档位。
+session_context="${session_context}
+
+[TIER HINT · LoopEngine v2.0]
+本会话默认 tier='core'（~10 工具：Read/Edit/Write/Bash/Grep/Glob/TodoWrite/AskUserQuestion + get_file_outline + get_symbol_source）。
+遇到以下场景主动 set_tool_tier:
+- 'standard' (25 工具): 跨文件搜索 / 中等重构 / system-review
+- 'full' (70+ 工具): 调研 / go 编排 / S1 接入新代码库 / 大规模探索
+不确定时升 'standard'。"
+
 emit_session_start_json "$session_context"
