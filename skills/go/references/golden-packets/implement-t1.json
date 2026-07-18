@@ -22,7 +22,7 @@
     "max_retries": 2
   },
   "runtime": {
-    "profile": "zcode",
+    "profile": "host-tool",
     "subagent_role": "general-purpose",
     "model_hint": "standard"
   }

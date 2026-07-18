@@ -191,17 +191,20 @@ def dimension_b_skill_integrity(
 def _load_redline_markers() -> List[str]:
     markers_file = os.path.join(SCRIPTS_DIR, "_lib", "redline_markers.txt")
     if not os.path.isfile(markers_file):
-        # fallback：hardcode 9 条（向后兼容）
+        # fallback：hardcode 12 条（v2.0 · 与 markers.txt 一致）
         return [
-            "BEGIN LOOPENGINE-MANAGED INTERACTION-RULES",
-            "BEGIN LOOPENGINE-MANAGED MCP-RULES",
-            "BEGIN LOOPENGINE-MANAGED EVIDENCE-RULES",
-            "BEGIN LOOPENGINE-MANAGED SUMMARY-RULES",
             "BEGIN LOOPENGINE-MANAGED VERIFICATION-RULES",
-            "BEGIN LOOPENGINE-MANAGED PROGRESS-RULES",
+            "BEGIN LOOPENGINE-MANAGED INTERACTION-RULES",
+            "BEGIN LOOPENGINE-MANAGED EVIDENCE-RULES",
+            "BEGIN LOOPENGINE-MANAGED MCP-RULES",
+            "BEGIN LOOPENGINE-MANAGED TOKEN-RULES",
+            "BEGIN LOOPENGINE-MANAGED SUMMARY-RULES",
+            "BEGIN LOOPENGINE-MANAGED VERIFICATION-GATE-RULES",
             "BEGIN LOOPENGINE-MANAGED SUBAGENT-RULES",
+            "BEGIN LOOPENGINE-MANAGED WORKTREE-RULES",
+            "BEGIN LOOPENGINE-MANAGED PROGRESS-RULES",
             "BEGIN LOOPENGINE-MANAGED CONSISTENCY-RULES",
-            "BEGIN LOOPENGINE-MANAGED ENGINEERING-RULES",
+            "BEGIN LOOPENGINE-MANAGED VISUAL-RULES",
         ]
     markers: List[str] = []
     with open(markers_file, encoding="utf-8") as f:
@@ -222,7 +225,7 @@ REDLINE_MARKERS = _load_redline_markers()
 def dimension_c_redline_consistency(
     tool_filter: Optional[str] = None,
 ) -> List[AuditResult]:
-    """C 维度（info 级）：用户级指令文件含 9 条红线 marker。
+    """C 维度（info 级）：用户级指令文件含 12 条红线 marker。
 
     info 级：inject_rules.py 已保障安装，此处仅做哨兵。
     """
@@ -256,7 +259,7 @@ def dimension_c_redline_consistency(
             )
         else:
             results.append(
-                AuditResult("C", "ok", tid, "9 条红线 marker 齐全")
+                AuditResult("C", "ok", tid, "12 条红线 marker 齐全")
             )
     return results
 

@@ -1,6 +1,9 @@
 ---
 name: context-driven-development
-description: "Use when implementing or maintaining project context as a managed artifact (CLAUDE.md, AGENTS.md, structured docs). Triggers on 'AI 上下文', '项目文档', 'context management'. Do NOT use for: pure documentation (use writing-skills), or onboarding (use using-loopengine)."
+description: |
+  TRIGGER: 实施或维护项目上下文（CLAUDE.md / AGENTS.md / 结构化文档）/ 'AI 上下文' / '项目文档' / 'context management'（不用于：纯文档用 writing-skills，onboarding 用 using-loopengine）
+  RULE: no specific rule（方法论 skill · 上下文管理方法论）
+  DETAIL: 本 SKILL.md + 与 writing-skills 配合
 risk: unknown
 source: community
 date_added: '2026-02-27'

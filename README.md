@@ -1,11 +1,11 @@
 # LoopEngine — 循环工程全家桶
 
-> **loop** 闭环编码 + **go** 全自动编排 + **orch** 多技能编排（v1.0 单职责化），一站式 AI 编程引擎插件。
+> **v2.0**（2026-07-18）：**go** 全自动编排（含 family 识别 · orch 已合并）+ **loop** 闭环编码（门禁按 L 分级）+ **supervisor** 监控看门狗 + **32 skills + 12 红线**（5 Core Instincts + 7 Verbal）+ 工具/模型双无关化。
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.3.2-blue)](package.json)
-[![orch](https://img.shields.io/badge/orch-v2.0.0-blue)](skills/orch/SKILL.md)
-[![skills](https://img.shields.io/badge/skills-38-green)](skills/)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue)](AGENTS.md)
+[![skills](https://img.shields.io/badge/skills-32-green)](skills/)
+[![redlines](https://img.shields.io/badge/redlines-12-red)](AGENTS.md)
 
 ---
 

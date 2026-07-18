@@ -1,131 +1,64 @@
-# 降级兜底机制(DeepSeek · 自动无缝)
+# Fallback Chain（降级兜底机制 · v2.0 工具/模型无关化）
 
-> 配额耗尽时自动切 DeepSeek,执行不打断用户,验收时透明化告知。
+> 配额耗尽 / loop exhausted 时自动切换。**本插件不绑定任何特定工具或模型**。
+> 用户在项目根 `.loopengine.yaml` 自配（可选 · 不配则无降级）。
 
----
-
-## 触发方式
-
-**决策**: 自动无缝降级(A方案),执行时不打断,验收时透明化标记。
-
-捕获以下错误自动触发降级:
-- `429` (rate limit)
-- `quota_exceeded` / `insufficient_quota` (配额耗尽)
-- `model_overloaded` (模型过载)
-
----
-
-## 降级链
-
-**决策**: 直接跳 DeepSeek,不做三级降级链(简单,且 ZCode Coding Plan 不含 DeepSeek,切换零成本)。
+## 三档抽象降级链
 
 ```
-正常态: ZCode 用主力模型 (deepseek-v4-pro / GLM-5.2)
-        │
-   捕获 429/quota_exceeded/model_overloaded
-        │
-        ▼
-降级1: ZCode CLI 直连 (无 loop 门禁, 快速)
-        │
-   仍失败?
-        │
-        ▼
-降级2: DeepSeek API (deepseek-chat)
-        │
-   执行任务(不打断用户)
-        │
-   状态文件标记 degraded: true
-        │
-        ▼
-验收时: 报告高亮"⚠️ 本任务降级执行,建议人工复核"
-        │
-   DeepSeek 也限流?
-        │
-        ▼
-暂停 + 人工介入(保存状态,等待配额恢复,支持断点续跑)
+Primary Tier（主力 · 用户配置或宿主默认）
+   ↓ 配额耗尽 / loop exhausted
+Secondary Tier（次选 · 用户可配）
+   ↓ 仍失败
+Tertiary Tier（兜底 · 用户可配）
+   ↓ 仍失败
+R4 上报用户（必走 AskUserQuestion · 不静默放弃）
 ```
 
----
+## 配置（`.loopengine.yaml` · 项目根 · 可选）
 
-## 双通道接入(A+C 组合)
+用户在项目根创建 `.loopengine.yaml`（可选 · 不配则无降级）：
 
-**决策**: A+C 组合,按场景选择。
-
-### 方案A: ZCode config 切换(保留 ZCode 工具能力)
-
-**适用**: 子任务需要 ZCode 的工具能力(文件读写/MCP/代码执行)。
-
-**流程**:
-```
-1. 备份当前 config: cp config.json config.json.bak
-2. 写入 DeepSeek config:
-   {
-     "provider": {
-       "deepseek": {
-         "kind": "openai-compatible",
-         "options": {"baseURL": "https://api.deepseek.com", "apiKey": "sk-xxx"}
-       }
-     },
-     "model": {"main": "deepseek/deepseek-chat"}
-   }
-3. 执行任务: node zcode.cjs --prompt "..." --cwd {project}
-4. 恢复 config: mv config.json.bak config.json
+```yaml
+fallback_chain:
+  primary:
+    description: "主力模型（宿主工具默认）"
+    # 例：zcode + GLM / cursor + Claude / trae + 豆包 / codex + GPT
+    # 留空 = 使用宿主工具默认模型
+  secondary:
+    description: "次选（主力配额耗尽时）"
+    # 留空 = 无次选，直接 R4 上报
+  tertiary:
+    description: "兜底（全部失败时）"
+    # 留空 = 无兜底
 ```
 
-**⚠️ 副作用**: 降级期间 ZCode GUI 会话也会切到 DeepSeek,所以方案A适合**短时任务**(单子任务级),执行完立即恢复。
+## 示例场景（不限于特定工具/模型）
 
-### 方案C: DeepSeek API 直连(零干扰)
+| 场景 | primary | secondary | tertiary |
+|---|---|---|---|
+| 单工具用户 | 宿主默认 | （留空）| （留空）|
+| 多 API 用户 | API-A | API-B | API-C |
+| 多工具用户 | 工具-X | 工具-Y | 工具-Z |
+| 单模型用户 | 模型-α | （留空）| （留空）|
 
-**适用**: 编排层自身逻辑需要 LLM(如结果摘要、复杂度判断),且不想干扰任何工具会话。
+## 不配置时的行为
 
-**流程**:
-```bash
-curl -s https://api.deepseek.com/chat/completions \
-  -H "Authorization: Bearer sk-xxx" \
-  -H "content-type: application/json" \
-  -d '{"model":"deepseek-chat","messages":[{"role":"user","content":"..."}]}'
-```
+`.loopengine.yaml` 不存在或 fallback_chain 留空 → 无降级 · loop exhausted 直接 R4 上报（AskUserQuestion 问用户）。
 
-**✓ 优点**: 完全不碰 ZCode 环境,零干扰。
+## 与 supervisor 的协同
 
----
+supervisor 监控到 loop exhausted 时：
+1. 读 `.loopengine.yaml` 的 fallback_chain
+2. 按配置决定 R2 降级到哪个 tier
+3. 记录到 `.supervisor-state.json` 的 interventions 字段
+4. 多次失败后进 R4 上报
 
-## 透明化标记
+详见 `skills/supervisor/SKILL.md`。
 
-降级执行的任务在状态文件标记:
-```json
-{
-  "degraded": true,
-  "degraded_reason": "quota_exhausted",
-  "original_model": "glm-5.2",
-  "actual_model": "deepseek-chat"
-}
-```
+## v2.0 工具/模型双无关性原则
 
-**验收报告高亮**:
-```
-⚠️ 降级任务提示(建议人工复核):
-  [T2] 积分累积API — 因配额耗尽从 GLM-5.2 降级到 DeepSeek 执行
-```
-
-**核心逻辑**: 执行时不打断(保效率),验收时必告知(保安全)。
-
----
-
-## 实测验证(2026-06-26)
-
-| 测试项 | 结果 |
-|--------|------|
-| DeepSeek Anthropic 兼容接口 | ✅ 连通 |
-| DeepSeek OpenAI 兼容接口 | ✅ 连通 |
-| ZCode config 切换 DeepSeek | ✅ 成功响应 |
-| config 格式 | `model.main` = `"deepseek/deepseek-chat"` 字符串格式 |
-
----
-
-## DeepSeek API key 说明
-
-- **来源**: 用户自行配置(非 ZCode Coding Plan 包含)
-- **成本**: 按量自费(deepseek-v4-pro/flash)
-- **角色**: 终极兜底——所有主力模型都挂了,DeepSeek 接管
-- **可行性**: 研究表明小模型+语义缓存组合,准确率仍能保持 96%,成本只增加 4%
+本机制严格遵循 v2.0 双无关性硬约束：
+- 不预设特定工具（适配 ZCode/Cursor/Claude Code/TRAE 等所有宿主）
+- 不预设特定模型（适配能力较弱到较强的各种模型）
+- 用户自配 fallback_chain · 插件只提供框架

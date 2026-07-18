@@ -1,6 +1,9 @@
 ---
 name: brainstorming
-description: "Use when creating features, building components, adding functionality, or modifying behavior. Triggers when the user wants to design something new or is unsure what they want. Do NOT use for: pure research (use deep-research), debugging (use systematic-debugging), or code review (use code-reviewer)."
+description: |
+  TRIGGER: 创建功能 / 构建组件 / 添加能力 / 修改行为 / 用户想设计新东西但不确定要什么（不用于：纯研究用 deep-research，调试用 systematic-debugging，代码审查用 code-reviewer）
+  RULE: no specific rule（方法论 skill · 创意发散方法论）
+  DETAIL: 本 SKILL.md（头脑风暴方法论）
 ---
 
 # Brainstorming Ideas Into Designs
@@ -176,3 +179,26 @@ If they agree to the companion, read the detailed guide before proceeding:
 
 > **红线触发场景**：任何 AI 推荐方案 / 设计新功能 / 探索未知问题时，必须遵循 R1.1/R1.2 + R5.3/R5.7；本技能提供方法论落地路径。
 > **同步版本**：AGENTS.md v1.0.4（2026-07-03）
+
+---
+
+## §N. 小步快跑原则（v2.0 强化 · 吸收 v1.0.4 §9 R5.1/R5.3）
+
+### KISS 红线（吸收 R5.1）
+- 禁止为"优雅 / 通用 / 扩展性"增加不必要的抽象层 / 装饰器 / 元编程
+- 新增 ≥5 行代码前先问：能不能不写？能不能复用现有？
+
+### Tracer Bullet 红线（吸收 R5.3）
+- 新功能先打通**端到端骨架**（walking skeleton）· 再补血肉
+- 禁止"完整设计 + 完整实现"一气呵成
+- 骨架 = 最小可运行的垂直切片（入口→处理→出口）
+
+### 与 brainstorming 流程的关系
+- 小步快跑是 brainstorming 的**实施约束**
+- brainstorming 探索"做什么" · 小步快跑约束"怎么做到最小"
+- 两者协同：先想清楚再最小化实施
+
+### 反模式（禁止）
+- 过度设计：为未来可能用到的功能提前抽象
+- 完美主义：一次实施到位（应该先 work 再优化）
+- 复制粘贴：不复用现有代码（违反 DRY）

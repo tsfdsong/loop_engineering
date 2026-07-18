@@ -1,6 +1,9 @@
 ---
 name: systematic-debugging
-description: "Use when investigating bugs, errors, test failures, unexpected behavior, or 'X doesn't work'. Triggers on 'bug', '报错', '不工作', 'debug', '排查', '修'. Do NOT use for: new features (use brainstorming), or system architecture issues (use system-review)."
+description: |
+  TRIGGER: 调查 bug / 错误 / 测试失败 / 异常行为 / 'X 不工作' / 'bug' / '报错' / '不工作' / 'debug' / '排查' / '修'（不用于：新功能用 brainstorming，系统架构问题用 system-review）
+  RULE: C3 辅承载 — 调试结论必须有复现证据，禁臆测归因
+  DETAIL: 本 SKILL.md（系统化调试方法论）
 ---
 
 # Systematic Debugging

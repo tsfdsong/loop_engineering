@@ -1,6 +1,9 @@
 ---
 name: subagent-driven-development
-description: "Use when executing implementation plans with independent tasks in the current session. **前置条件：必须有现成 writing-plans 计划**（每个任务派发独立 subagent + spec/quality 两阶段审查）。**无现成 plan → dispatching-parallel-agents**。**不在 plan 内 / 临时多问题域并行 → dispatching-parallel-agents**。"
+description: |
+  TRIGGER: 当前 session 内执行有独立任务的实施计划（前置：必须有现成 writing-plans 计划；每任务派独立 subagent + spec/quality 两阶段审查）。无现成 plan 或临时多问题域并行 → dispatching-parallel-agents
+  RULE: V3 + V4 主承载 — subagent 边界清晰 + worktree 隔离
+  DETAIL: 本 SKILL.md（subagent 派发 + 两阶段审查）+ AGENTS.md §V3 §V4
 metadata:
   version: "1.0"  # v6.1 增强：新增 bridgeable 能力
   type: skill
@@ -339,3 +342,44 @@ LOOPENGINE_BRIDGES=alpha /loop --reviewer=subagent-dd 实现分页功能
 - ✅ **默认（disabled）行为 100% 不变**——任务循环 + 双阶段审查照常运行
 - ✅ **桥接失败自动降级**到原 G9/G10，不报错中断
 - ✅ v5.4 / v6.0 完全兼容
+
+---
+
+## §N. V3 Subagent 边界详规（吸收原 AGENTS.md §7.5 / §7.7 · v2.0 迁移）
+
+> **来源**：原 AGENTS.md §7 Subagent 边界红线（v1.0.6+ · 909 行结构）。
+> v2.0 AGENTS.md 精简为 V3 一句话铁律（"派 subagent 必须传 5 类输入；主 agent 不得仅转述，必须独立验证"），"4 不派发硬条件"和"已知边界表"作为补充规则迁入本节，与本 SKILL.md 既有的 "Red Flags Never 清单"（L245-260）互补——前者管"是否派"，后者管"派了之后怎么用"。
+> 归档溯源：`docs/legacy/red-lines-history.md` §5.7。
+
+### N.1 4 不派发硬条件（原 §7.5）
+
+满足以下任一条件时**不得派发 subagent**（即使本 SKILL.md "The Process" 流程已就绪，也必须留在主 agent 单步执行）：
+
+| # | 不派发条件 | 原因 | 替代做法 |
+|---|-----------|------|---------|
+| 1 | **问题之间共享状态**（需协调而非并行） | subagent 上下文隔离 → 状态不同步 → 互相覆盖 | 主 agent 串行处理，状态保留在同一上下文 |
+| 2 | **需全 session 上下文** | subagent **never inherit session context**（本 SKILL.md L19 原则）→ 缺失历史 → 误判 | 主 agent 自己做，或先抽取足够上下文再派（成本可能高于自做） |
+| 3 | **探索性调试**（结果不确定） | 结果不确定 → 单步更可控；subagent 走偏后主 agent 难以纠偏 | 主 agent 单步 systematic-debugging |
+| 4 | **顺序依赖**（前一步输出决定后一步输入） | 前步未出后步无法启动 → 并行无意义 → 派了也是串行 | 主 agent 直接串行，避免 handoff 开销 |
+
+**违规判定**：违反 4 不派发条件强行并行 = 🔴 红线违规（与"派发时不传 5 类输入"、"subagent 返回未经独立验证即宣称完成"同级）。
+
+**与 Red Flags Never 清单（L245-260）的边界**：
+- Red Flags 管**派发之后**的流程违规（跳过 review / 并行 implementer / 让 subagent 读 plan 文件 / 忽略 subagent 提问 等）
+- 本节管**派发之前**的决策违规（不该派却派了）
+- 两者叠加覆盖 subagent 生命周期的全部违规模式
+
+### N.2 已知边界（v1.0.2 暂未实现 · 原 §7.7）
+
+下列 4 项能力在原 AGENTS.md §7.7 已标注为"已知缺失"，v2.0 迁移时保留登记，作为本 SKILL.md 的"已知技术债"——不影响当前派发流程，但使用者应知道这些保护尚未到位：
+
+| # | 缺失能力 | 影响 | 计划 |
+|---|---------|------|------|
+| 1 | **工具白名单**（subagent 工具权限收敛） | subagent 理论上可调用主 agent 全部工具，无强制权限隔离 | 后续 v6.x 桥接层完成（`bridges/contract.py` 已提供 opt-in 入口） |
+| 2 | **token 预算**（限制 subagent 读大文件全量） | subagent 可能 Read 全量大文件 → 上下文爆炸 → quality 下降 | 待立项；当前靠 implementer-prompt.md 的 "context snippets" 约束 |
+| 3 | **递归派发禁令**（subagent 再派 subagent） | 理论上 subagent 可再调 Agent 工具 → 递归失控 | 待立项；当前靠 prompt 显式禁止 |
+| 4 | **commit 签名审计**（subagent ID 嵌入 commit） | subagent 提交的 commit 无法追溯是哪个派发轮次 | 待立项；当前靠 TodoWrite + handoff JSON 记录 |
+
+> **使用建议**：已知边界 1/2 是"可能影响 quality"的软限制，使用本 skill 时**应**在 implementer-prompt.md 中显式声明"仅使用以下工具"和"单文件 ≤ N 行"；3/4 是"审计追溯"类限制，对生产代码 quality 无直接影响，但 PR review 时需人工补追溯信息。
+
+> **与 V3 红线的协同**：本节是 V3 一句话铁律（"传 5 类输入 + 独立验证"）的**前置决策层**和**已知盲区登记**——5 类输入决定"怎么派"，4 不派发决定"是否派"，已知边界决定"派了之后还缺什么保护"。

@@ -1,6 +1,9 @@
 ---
 name: refactoring
-description: "Use when improving existing code structure, fixing code smells, reducing complexity, or applying design patterns. Triggers on '重构', '坏味道', '太长', '重复代码', 'refactor', 'legacy code'. Do NOT use for: new features (use brainstorming), or debugging (use systematic-debugging)."
+description: |
+  TRIGGER: 改进现有代码结构 / 修复坏味道 / 降低复杂度 / 应用设计模式 / '重构' / '坏味道' / '太长' / '重复代码' / 'refactor' / 'legacy code'（不用于：新功能用 brainstorming，调试用 systematic-debugging）
+  RULE: no specific rule（方法论 skill · 重构全流程）
+  DETAIL: 本 SKILL.md（识别 → 计划 → 小步 → 验证）
 metadata:
   version: "2.1"
   type: skill

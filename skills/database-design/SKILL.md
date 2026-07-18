@@ -1,6 +1,9 @@
 ---
 name: database-design
-description: "Use when designing database schemas, indexes, migrations, or choosing between SQL/NoSQL/ORM/serverless. Triggers on '数据库', 'SQL', '表设计', '索引', 'schema', 'migration'. Do NOT use for: application code (use python-web-development), or pure architecture (use software-architecture)."
+description: |
+  TRIGGER: 设计数据库 schema / 索引 / 迁移 / 选 SQL/NoSQL/ORM/serverless / '数据库' / 'SQL' / '表设计' / '索引' / 'schema' / 'migration'（不用于：应用代码用 python-web-development，纯架构用 software-architecture）
+  RULE: no specific rule（方法论 skill · 数据库设计方法论）
+  DETAIL: 本 SKILL.md（schema/索引/迁移/选型）
 risk: safe
 source: community
 date_added: "2026-02-27"

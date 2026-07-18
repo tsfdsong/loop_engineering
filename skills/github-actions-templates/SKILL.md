@@ -1,6 +1,9 @@
 ---
 name: github-actions-templates
-description: "Use when setting up CI/CD pipelines, GitHub Actions workflows, automated testing/building/deploying. Triggers on CI/CD, 部署, 流水线, GitHub Actions, workflow. Do NOT use for: pure deployment strategy (use production-readiness), or non-CI automation."
+description: |
+  TRIGGER: 设置 CI/CD pipeline / GitHub Actions workflow / 自动化测试构建部署 / 'CI/CD' / '部署' / '流水线' / 'GitHub Actions' / 'workflow'（不用于：纯部署策略用 production-readiness，非 CI 自动化）
+  RULE: no specific rule（方法论 skill · CI/CD 模板库）
+  DETAIL: 本 SKILL.md（GitHub Actions 模板）
 risk: critical
 source: community
 date_added: "2026-02-27"

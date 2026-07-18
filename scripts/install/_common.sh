@@ -748,13 +748,13 @@ common_deploy_cursor_mcp() {
 }
 
 # ── inject_red_lines ──────────────────────────────────────
-# Step 5：注入 9 条红线到 7 工具用户级 AGENTS.md
+# Step 5：注入 12 条红线到 7 工具用户级 AGENTS.md
 # 调用：common_inject_red_lines
 common_inject_red_lines() {
     local src="$COMMON_WORK/AGENTS.md"
     [ ! -f "$src" ] && { echo -e "  ${_YELLOW}⚠${_RESET}  $src 不存在，跳过"; return 0; }
 
-    # 9+1 条红线（与 AGENTS.md v1.0.6+ 同步）
+    # 12 条红线（与 AGENTS.md v2.0+ 同步）
     # 单一真源（clean-code 维度 4 · DRY 真义）：从 scripts/_lib/redline_markers.txt 派生
     # 修复 v1.0.6+ 引入的第 10 条（验证 Gate 红线）漏注入 bug
     local markers_file="$COMMON_SCRIPT_DIR/scripts/_lib/redline_markers.txt"
@@ -766,18 +766,21 @@ common_inject_red_lines() {
             managed_rules+=("${title}:${marker}")
         done < "$markers_file"
     else
-        # fallback：文件不存在时用 hardcode 9 条（向后兼容旧 install 包）
-        echo -e "  ${_YELLOW}⚠${_RESET}  $markers_file 不存在，fallback 到 hardcode 9 条"
+        # fallback：文件不存在时用 hardcode 12 条（与 redline_markers.txt / AGENTS.md v2.0+ 同步）
+        echo -e "  ${_YELLOW}⚠${_RESET}  $markers_file 不存在，fallback 到 hardcode 12 条"
         managed_rules=(
-            "用户交互红线:INTERACTION-RULES"
-            "MCP 红线规则:MCP-RULES"
-            "事实优先硬规则:EVIDENCE-RULES"
-            "摘要输出红线:SUMMARY-RULES"
-            "完成前验证红线:VERIFICATION-RULES"
-            "进度汇报红线:PROGRESS-RULES"
-            "Subagent 边界红线:SUBAGENT-RULES"
-            "一致性核对红线:CONSISTENCY-RULES"
-            "工程实践红线:ENGINEERING-RULES"
+            "完成前验证:VERIFICATION-RULES"
+            "用户交互:INTERACTION-RULES"
+            "事实优先:EVIDENCE-RULES"
+            "MCP:MCP-RULES"
+            "Token 感知:TOKEN-RULES"
+            "摘要输出:SUMMARY-RULES"
+            "验证 Gate:VERIFICATION-GATE-RULES"
+            "Subagent:SUBAGENT-RULES"
+            "Worktree 隔离:WORKTREE-RULES"
+            "进度汇报:PROGRESS-RULES"
+            "一致性核对:CONSISTENCY-RULES"
+            "视觉上下文:VISUAL-RULES"
         )
     fi
 
@@ -823,7 +826,7 @@ common_inject_red_lines() {
 common_extract_rule_block() {
     local src="$1" title="$2" marker="$3" block_dir="$4"
     local begin_line
-    begin_line=$(awk -v t="^## .*🔴.*$title" '$0 ~ t { print NR; exit }' "$src")
+    begin_line=$(awk -v t="^#+ .*${title}" '$0 ~ t { print NR; exit }' "$src")
     if [ -z "$begin_line" ]; then
         echo -e "  ${_YELLOW}⚠${_RESET}  AGENTS.md 中未找到 '$title' 章节，跳过"
         return 1

@@ -1,6 +1,9 @@
 ---
 name: clean-code
-description: "Use when applying code quality principles, naming conventions, commit standards, DRY/YAGNI, or general code craftsmanship questions. Triggers on '代码规范', '可读', '命名', 'commit 规范', 'DRY', 'YAGNI'. Do NOT use for: large refactors (use refactoring), or architecture (use software-architecture)."
+description: |
+  TRIGGER: 代码质量原则 / 命名规范 / commit 规范 / DRY / YAGNI / 通用代码工艺 / '代码规范' / '可读' / '命名'（不用于：大型重构用 refactoring，架构用 software-architecture）
+  RULE: no specific rule（方法论 skill · 代码质量知识库）
+  DETAIL: 本 SKILL.md（4 源 4 维度：Martin 原则 / McConnell 清单 / self 规范 / Pragmatic 决策）
 metadata:
   version: "2.1"
   type: skill

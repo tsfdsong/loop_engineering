@@ -1,6 +1,9 @@
 ---
 name: testing
-description: "Use when writing tests, setting up TDD, adding test coverage, or designing test strategies. Triggers on '测试', 'TDD', '单元测试', '端到端', 'mock', 'test'. Covers the general test pyramid methodology (unit/integration/E2E patterns, POM, fixtures, selectors). For web-project E2E scaffolding + CI integration (generating e2e/ directory, auth fixtures, CI workflows), use web-regression-e2e instead. Do NOT use for: fixing test failures (use systematic-debugging), or code review (use code-reviewer)."
+description: |
+  TRIGGER: 写测试 / TDD / 加测试覆盖 / 设计测试策略 / '测试' / 'TDD' / '单元测试' / '端到端' / 'mock' / 'test'（通用测试金字塔方法论：unit/integration/E2E + POM + fixtures + selectors；web 项目 E2E 脚手架 + CI 集成用 web-regression-e2e；不用于：修测试失败用 systematic-debugging，代码审查用 code-reviewer）
+  RULE: no specific rule（方法论 skill · 测试金字塔方法论）
+  DETAIL: 本 SKILL.md（unit 70% / integration 20% / e2e 10% + TDD 横切）
 metadata:
   version: "2.1"
   type: skill

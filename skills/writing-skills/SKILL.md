@@ -1,6 +1,9 @@
 ---
 name: writing-skills
-description: Use when creating new skills, editing existing skills, or verifying skills work before deployment
+description: |
+  TRIGGER: 创建新 skill / 编辑现有 skill / 部署前验证 skill 可用性
+  RULE: no specific rule（方法论 skill · skill 编写方法论）
+  DETAIL: 本 SKILL.md（skill 结构 + 元数据 + 验证流程）
 ---
 
 # Writing Skills

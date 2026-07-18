@@ -1,6 +1,9 @@
 ---
 name: executing-plans
-description: Use when you have a written implementation plan to execute in a separate session with review checkpoints
+description: |
+  TRIGGER: 有书面实施计划需要在独立 session 执行（含审查检查点）
+  RULE: no specific rule（方法论 skill · 计划执行方法论）
+  DETAIL: 本 SKILL.md（计划执行 + 审查检查点）
 ---
 
 # Executing Plans

@@ -1,6 +1,9 @@
 ---
 name: verification-before-completion
-description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
+description: |
+  TRIGGER: 即将声称工作完成/已修复/测试通过 / 提交前 / 创建 PR 前（必须先跑验证命令并确认输出，evidence before assertions）
+  RULE: C1 + C5 + V1 主承载 — 完成前必跑验证命令 + Token 感知 + 摘要式输出
+  DETAIL: 本 SKILL.md（验证清单）+ AGENTS.md §C1 §C5 §V1
 ---
 
 # Verification Before Completion
@@ -207,3 +210,22 @@ AI 改代码（Edit/Write）
 - **两者互补**：文化层管 AI 的意图，机器层管 AI 的行为。即使 AI 想跳过验证，Stop hook 也会阻断
 
 > 详见 `hooks/verify-gate.sh` + `skills/verification-officer/SKILL.md`
+
+---
+
+## §N. 长会话 Token 管理（v2.0 强化 · C5 主承载）
+
+### 触发条件
+- 长会话（>20 轮）
+- 单次任务 >10 文件改动
+- 单次工具输出累积 >500 行
+
+### 必须动作（任一）
+- 用 `headroom_compress` 压缩大段内容
+- 主动总结前文（输出 `## 📌 阶段小结` 结构化摘要）
+- 用 TodoWrite 清理已完成项（保持上下文聚焦）
+
+### 避免上下文爆炸
+- 长会话不压缩 → 输出质量下降（各种能力模型均如此）
+- 能力较弱模型尤其敏感（决策分母过大）
+- 与 C5 Token 感知红线协同：本 skill 提供"何时压缩+如何压缩"的方法论

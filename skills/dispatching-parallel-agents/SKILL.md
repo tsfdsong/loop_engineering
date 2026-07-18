@@ -1,6 +1,9 @@
 ---
 name: dispatching-parallel-agents
-description: "Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies. **前置条件：无现成 plan，临时多问题域并行调研**（每问题域派一个 agent，无强顺序、无双阶段审查）。**有现成 writing-plans 计划 → subagent-driven-development**。"
+description: |
+  TRIGGER: 2+ 独立任务无共享状态/无顺序依赖 / 临时多问题域并行调研（前置：无现成 plan，每问题域派一个 agent，无强顺序、无双阶段审查）。有现成 writing-plans 计划 → subagent-driven-development
+  RULE: V3 辅承载 + V5 辅承载 — 临时并行派发需边界清晰 + 各 agent 完成后汇报结果
+  DETAIL: 本 SKILL.md（临时并行派发）
 ---
 
 # Dispatching Parallel Agents

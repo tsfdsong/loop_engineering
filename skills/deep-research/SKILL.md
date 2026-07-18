@@ -1,7 +1,10 @@
 ---
 name: deep-research
 display_name: 深度调研
-description: "Use when conducting data-driven research: 调研/对比/选型/综述/报告/市场分析/竞品分析. Triggers on 调研, 对比, 选型, review, survey, research. Do NOT use for: brainstorming new features (use brainstorming), implementation plans (use writing-plans), or architecture review (use system-review)."
+description: |
+  TRIGGER: 数据驱动调研 / 对比 / 选型 / 综述 / 报告 / 市场分析 / 竞品分析 / '调研' / '对比' / '选型' / 'review' / 'survey' / 'research'（不用于：brainstorming 新功能用 brainstorming，实施计划用 writing-plans，架构审查用 system-review）
+  RULE: C3 辅承载 — 调研结论必须有数据/来源支撑，禁臆测
+  DETAIL: 本 SKILL.md（调研方法论）
 ---
 
 # Deep Research（深度调研）— 4 阶段本地化调研闭环
