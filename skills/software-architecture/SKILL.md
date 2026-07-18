@@ -325,3 +325,110 @@ Step 3: Layer 3 引入
 
 > **红线触发场景**：任何 AI 做技术选型 / 架构决策 / 不可逆设计时，必须遵循 R1.4 + R2.4 + R6.2；本技能提供方法论落地路径。
 > **同步版本**：AGENTS.md v1.0.4（2026-07-03）
+
+---
+
+## §M. Domain-Driven Design 战术建模（吸收原 domain-driven-design · v2.0 合并 · D2.0）
+
+> **来源**：`ciembor/agent-rules-books`（3 本 DDD 书）+ self（1 战术 patterns）· D2.0 合并于此。
+> **合并自**：ddd-distilled / domain-driven-design / implementing-ddd / ddd-tactical-patterns（v6.1.1 已先行合并为单 skill，D2.0 再并入 software-architecture）。
+> **使用场景**：复杂业务领域建模、限界上下文设计、战术编码（实体/值对象/聚合/资源库/领域事件）、DDD 落地实战。
+
+### DDD 核心定位（在三层架构中的位置）
+
+DDD 是 Layer 1（Clean Arch）领域层的深化方法。当业务规则复杂到事务脚本（POEAA）无法承载时，用 DDD 战术模式（实体/值对象/聚合/资源库/领域事件）组织领域层。简单 CRUD 不需要 DDD。
+
+### 来源与定位
+
+| 部分 | 来源 | 用途 |
+|------|------|------|
+| **ddd-distilled**（Vernon 入门） | Vernon《DDD Distilled》 | DDD 快速入门、事件风暴、聚合设计原则 |
+| **domain-driven-design**（Evans 原书） | Eric Evans《DDD》 | 复杂业务领域建模、限界上下文、聚合、实体、值对象 |
+| **ddd-tactical-patterns**（self 战术） | self | 战术编码模式（实体/值对象/聚合/资源库/领域事件） |
+| **implementing-ddd**（Vernon 落地） | Vernon《Implementing DDD》 | DDD 落地实战、事件溯源、CQRS、Saga |
+
+### 触发关键词
+
+DDD、领域驱动、限界上下文、聚合、实体、值对象、聚合根、通用语言、领域服务、资源库、领域事件、事件风暴、事件溯源、CQRS、Saga、战术模式
+
+### 规则概览
+
+#### 来自 ddd-distilled（Vernon 入门）
+
+- DDD 核心概念精要
+- 限界上下文与子域
+- 事件风暴（Event Storming）
+- 聚合设计原则
+- 领域事件
+
+#### 来自 domain-driven-design（Evans 原书）
+
+- **通用语言（Ubiquitous Language）** 贯穿对话、模型和代码
+- **限界上下文（Bounded Context）** 明确定义模型边界
+- 实体由标识定义，值对象由属性定义
+- 聚合是一致性边界，通过聚合根访问
+- 领域服务处理无自然归属的领域逻辑
+- **资源库（Repository）** 封装持久化，模拟内存集合
+- 工厂封装复杂创建逻辑
+- 分层架构：接口层、应用层、领域层、基础设施层
+- 战略设计指导大尺度结构
+
+#### 来自 ddd-tactical-patterns（self 战术 · 已内联）
+
+**适用场景**：
+- 将领域规则转化为代码结构
+- 设计聚合边界与不变式
+- 把贫血模型重构为富含行为的领域对象
+- 定义资源库契约与领域事件边界
+
+**不适用场景**：
+- 仍在定义战略边界
+- 任务仅为 API 文档或 UI 布局
+- 不需要 DDD 全复杂度
+
+**Instructions（步骤式指令）**：
+1. 先识别不变式，再围绕不变式设计聚合
+2. 为已校验概念建模为不可变值对象
+3. 领域行为保留在领域对象内，不放在控制器
+4. 为有意义的状态转换发布领域事件
+5. 资源库保持在聚合根边界
+
+**示例**：
+```typescript
+class Order {
+  private status: "draft" | "submitted" = "draft";
+
+  submit(itemsCount: number): void {
+    if (itemsCount === 0) throw new Error("Order cannot be submitted empty");
+    if (this.status !== "draft") throw new Error("Order already submitted");
+    this.status = "submitted";
+  }
+}
+```
+
+**局限性**：
+- 不定义部署架构
+- 不选择数据库或传输协议
+- 应与 testing 配合以覆盖不变式
+
+#### 来自 implementing-ddd（Vernon 落地）
+
+- 领域模型实现模式
+- 聚合与并发
+- 领域事件实现
+- 事件溯源与 CQRS
+- Saga 与流程管理
+- 资源库实现
+- 集成限界上下文
+
+### 选择哪个源？
+
+> **使用顺序建议**：首次接触 DDD → 入门（ddd-distilled）→ 战略/建模（Evans）→ 战术编码（self）→ 落地实战（Vernon）。
+> ⚠️ **不要一上来就读"落地实战"** —— 会被劝退。落地实战假设你已经掌握前 3 个源的基础。
+
+| 场景 | 推荐源 |
+|------|--------|
+| **首次接触 DDD / 概念入门** | ddd-distilled（Vernon 入门） |
+| **复杂业务建模 / 战略设计** | domain-driven-design（Evans 原书） |
+| **代码层战术编码** | ddd-tactical-patterns（self） |
+| **DDD 落地 / 实战 / 高级模式** | implementing-ddd（Vernon 落地） |
