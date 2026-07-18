@@ -1,9 +1,14 @@
 ---
-name: writing-plans
-description: "Use when you have an approved design and need to break it into implementable tasks. Triggers on '写计划', 'plan', '拆分任务', '实现方案'. Do NOT use for: brainstorming design (use brainstorming), or executing existing plans (use executing-plans)."
+name: spec-driven-development
+description: |
+  TRIGGER: 有批准的设计需要拆任务 / 写实施计划 / "spec → plan → task" / 实施计划 / 任务清单
+  RULE: V6 一致性 — 架构级改动后必查需求↔实现一致性
+  DETAIL: 本 SKILL.md（OpenSpec 三段式）+ AGENTS.md §V6
 ---
 
-# Writing Plans
+# spec-driven-development — 规格驱动开发（v2.0 · writing-plans 升级）
+
+> v2.0 升级自 writing-plans，引入 OpenSpec 三段式（requirements → design → tasks）+ 跨工具 handoff 提示
 
 ## Overview
 
@@ -11,12 +16,28 @@ Write comprehensive implementation plans assuming the engineer has zero context 
 
 Assume they are a skilled developer, but know almost nothing about our toolset or problem domain. Assume they don't know good test design very well.
 
-**Announce at start:** "I'm using the writing-plans skill to create the implementation plan."
+**Announce at start:** "I'm using the spec-driven-development skill to create the implementation plan."
 
 **Context:** If working in an isolated worktree, it should have been created via the `superpowers:using-git-worktrees` skill at execution time.
 
 **Save plans to:** `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
 - (User preferences for plan location override this default)
+
+## OpenSpec 三段式（核心方法论）
+
+The OpenSpec three-phase method structures spec-driven work as three artifacts that flow into each other. Before writing the task-by-task plan, make sure the upstream two phases exist (from brainstorming or prior design work); if only the requirements are known, fill the design gap before decomposing tasks.
+
+### 1. requirements.md（需求规格）
+- 用户目标 + 约束 + 验收标准
+- 不含技术实现
+
+### 2. design.md（设计决策）
+- 架构选型 + 关键决策 + trade-off
+- 含反选项清单（v2.0 工程实践红线 R1.1 · 已回归到 brainstorming skill）
+
+### 3. tasks.md（任务清单）
+- 拆分为可独立执行的任务（bite-sized · 2-5 分钟）
+- 每任务含验收条件 + commit 指令
 
 ## Scope Check
 
@@ -118,6 +139,30 @@ Every step must contain the actual content an engineer needs. These are **plan f
 - Complete code in every step — if a step changes code, show the code
 - Exact commands with expected output
 - DRY, YAGNI, TDD, frequent commits
+
+## 与其他 skill 的衔接
+
+### 上游：brainstorming
+- brainstorming 产出 spec → spec-driven-development 接收为 requirements.md 输入
+
+### 下游：executing-plans / subagent-driven-development
+- spec-driven-development 产出 tasks.md → executing-plans 按 task 执行
+- 或 subagent-driven-development 按 task 派 subagent
+
+## §N. 跨工具 handoff 提示（v2.0 借鉴 ECC/ORCH · 深度 1.5）
+
+### 何时建议切换工具
+| 场景 | 目标工具 | 触发信号 |
+|---|---|---|
+| UI 视觉验证 | Cursor | 涉及 .tsx/.vue 改动 |
+| 深度推理 | Claude Code | 架构问题卡住 / 复杂 debug |
+| 中文场景 | TRAE | 需求含大量中文上下文 |
+| 终端批处理 | ZCode | 多文件脚本化改动 |
+
+### handoff 协议（深度 1.5 · 用户手动复制）
+生成简短"上下文摘要 JSON"（goal / completed / pending / key_files / decisions / blockers），用户复制到目标工具首条消息。
+
+完整跨工具协议设计（含双向回传 + 冲突检测）见 spec-D（v2.0 完成后启动）。
 
 ## Self-Review
 
