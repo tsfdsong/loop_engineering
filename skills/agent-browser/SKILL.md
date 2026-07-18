@@ -1,6 +1,9 @@
 ---
 name: agent-browser
-description: "Use when interacting with websites, automating browser tasks, taking screenshots, filling forms, scraping web pages, or testing web apps. Triggers on '浏览器', '网页', '截图', '打开', '登录', '抓取', 'open website'. Do NOT use for: reading project code (use Read/MCP), or generating documentation (use writing-skills)."
+description: |
+  TRIGGER: 与网站交互 / 浏览器自动化 / 截图 / 填表 / 抓取网页 / 测试 web app / '浏览器' / '网页' / '截图' / '打开' / '登录' / '抓取' / 'open website'（不用于：读项目代码用 Read/MCP，生成文档用 writing-skills）
+  RULE: V7 视觉上下文 — UI/前端问题前必须打开页面截图取证，改后对比验证
+  DETAIL: 本 SKILL.md（CLI 命令）+ 与 ui-design-system / web-quality 配合
 allowed-tools: Bash(agent-browser:*), Bash(npx agent-browser:*)
 hidden: true
 ---

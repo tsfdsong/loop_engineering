@@ -1,6 +1,9 @@
 ---
 name: agent-skill-architecture
-description: "Use when designing or reviewing Agent skills, or when creating/editing skill architecture. Triggers on '技能设计', '技能架构', 'SKILL.md 设计'. Do NOT use for: using skills (just call Skill tool), or pure code (use refactoring)."
+description: |
+  TRIGGER: 设计或评审 Agent skill / 创建/编辑 skill 架构 / '技能设计' / '技能架构' / 'SKILL.md 设计'（不用于：使用技能直接调 Skill tool，纯代码重构用 refactoring）
+  RULE: no specific rule（方法论 skill · skill 设计元方法论）
+  DETAIL: 本 SKILL.md + 与 writing-skills / context-driven-development 配合
 metadata:
   version: "1.0"
   type: rule

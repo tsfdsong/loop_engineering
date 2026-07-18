@@ -1,7 +1,10 @@
 ---
 name: drawio-skill
 version: 1.14.0
-description: "Use when requesting or creating diagrams: flowcharts, architecture diagrams, ER/UML/sequence diagrams, network topology, ML model figures, mind maps. Triggers on 画图, 流程图, 架构图, 时序图, diagram, flowchart. Do NOT use for: text-based explanations, or generating code (use python-web-development)."
+description: |
+  TRIGGER: 创建图表 / 流程图 / 架构图 / ER / UML / 时序图 / 网络拓扑 / ML 模型图 / 思维导图 / '画图' / '流程图' / '架构图' / '时序图' / 'diagram' / 'flowchart'（不用于：文本解释，生成代码用 python-web-development）
+  RULE: no specific rule（方法论 skill · 制图工具）
+  DETAIL: 本 SKILL.md（drawio CLI + 自检 + 可选自动布局）
 license: MIT
 homepage: https://github.com/Agents365-ai/drawio-skill
 compatibility: Requires draw.io desktop app CLI on PATH (macOS/Linux/Windows). Self-check step requires a vision-enabled model (e.g., Claude Sonnet/Opus); gracefully skipped if unavailable. Optional auto-layout (scripts/autolayout.py) needs Graphviz (dot).

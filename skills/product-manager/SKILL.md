@@ -1,6 +1,9 @@
 ---
 name: product-manager
-description: "Use when creating PRDs, product specs, requirements docs, RICE/Kano/MoSCoW prioritization, or user stories. Triggers on PRD, 需求, RICE, Kano, 用户故事, product spec. Do NOT use for: pure brainstorming (use brainstorming), or technical implementation (use writing-plans)."
+description: |
+  TRIGGER: 创建 PRD / 产品规格 / 需求文档 / RICE/Kano/MoSCoW 优先级 / 用户故事 / 'PRD' / '需求' / 'RICE' / 'Kano' / '用户故事' / 'product spec'（不用于：纯头脑风暴用 brainstorming，技术实施用 writing-plans）
+  RULE: no specific rule（方法论 skill · 产品方法论）
+  DETAIL: 本 SKILL.md（PRD + 优先级框架）
 risk: safe
 version: "1.0.0"
 author: "Digidai"

@@ -1,6 +1,9 @@
 ---
 name: code-reviewer
-description: "Use when reviewing code, requesting review, or processing review feedback. Triggers on 'CR', 'review', '审查', '代码审查', 'code review'. Do NOT use for: system-wide architecture review (use system-review), or improving code quality (use refactoring)."
+description: |
+  TRIGGER: 审查代码 / 请求审查 / 处理审查反馈 / 'CR' / 'review' / '审查' / '代码审查' / 'code review'（不用于：系统级架构审查用 system-review，提升代码质量用 refactoring）
+  RULE: no specific rule（方法论 skill · CR 4 阶段工作流）
+  DETAIL: 本 SKILL.md（提交前自查 → 请求审查 → 接收反馈 → 闭环修复）
 metadata:
   version: "2.0"
   type: skill

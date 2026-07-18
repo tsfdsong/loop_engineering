@@ -1,6 +1,9 @@
 ---
 name: subagent-driven-development
-description: "Use when executing implementation plans with independent tasks in the current session. **前置条件：必须有现成 writing-plans 计划**（每个任务派发独立 subagent + spec/quality 两阶段审查）。**无现成 plan → dispatching-parallel-agents**。**不在 plan 内 / 临时多问题域并行 → dispatching-parallel-agents**。"
+description: |
+  TRIGGER: 当前 session 内执行有独立任务的实施计划（前置：必须有现成 writing-plans 计划；每任务派独立 subagent + spec/quality 两阶段审查）。无现成 plan 或临时多问题域并行 → dispatching-parallel-agents
+  RULE: V3 + V4 主承载 — subagent 边界清晰 + worktree 隔离
+  DETAIL: 本 SKILL.md（subagent 派发 + 两阶段审查）+ AGENTS.md §V3 §V4
 metadata:
   version: "1.0"  # v6.1 增强：新增 bridgeable 能力
   type: skill

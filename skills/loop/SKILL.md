@@ -1,6 +1,9 @@
 ---
 name: loop
-description: "Use when executing single-task closed-loop coding with automatic gates and self-healing. Triggers on '/loop', '闭环编码', '单任务'. Do NOT use for: multi-task parallel (use go or subagent-driven-development), or pure research (use deep-research)."
+description: |
+  TRIGGER: 单任务闭环编码 / 自动 gates + 自愈 / '/loop' / '闭环编码' / '单任务'（不用于：多任务并行用 go/subagent-driven-development，纯研究用 deep-research）
+  RULE: V2 + V5 主承载 — 闭环内必经验证 Gate（G1-G9）+ 按阶段汇报进度
+  DETAIL: 本 SKILL.md（闭环 + gates 流程）+ references/
 metadata:
   version: "4.1"
   type: slash-command

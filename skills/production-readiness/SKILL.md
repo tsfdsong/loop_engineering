@@ -1,6 +1,9 @@
 ---
 name: production-readiness
-description: "Use when preparing for production deployment, doing pre-launch audits, designing stability patterns (circuit breaker, retry, timeout), or planning release strategy (blue-green, canary). Triggers on 上线, 生产, 部署, 断路器, 金丝雀, production. Do NOT use for: CI setup (use github-actions-templates), or local dev (use testing)."
+description: |
+  TRIGGER: 准备生产部署 / 上线前审计 / 稳定性模式（断路器/重试/超时）/ 发布策略（蓝绿/金丝雀）/ '上线' / '生产' / '部署' / '断路器' / '金丝雀' / 'production'（不用于：CI 设置用 github-actions-templates，本地开发用 testing）
+  RULE: no specific rule（方法论 skill · 上线 3 阶段流程）
+  DETAIL: 本 SKILL.md（审计 → 稳定 → 发布）
 metadata:
   version: "2.1"
   type: skill

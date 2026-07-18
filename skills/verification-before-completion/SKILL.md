@@ -1,6 +1,9 @@
 ---
 name: verification-before-completion
-description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
+description: |
+  TRIGGER: 即将声称工作完成/已修复/测试通过 / 提交前 / 创建 PR 前（必须先跑验证命令并确认输出，evidence before assertions）
+  RULE: C1 + C5 + V1 主承载 — 完成前必跑验证命令 + Token 感知 + 摘要式输出
+  DETAIL: 本 SKILL.md（验证清单）+ AGENTS.md §C1 §C5 §V1
 ---
 
 # Verification Before Completion

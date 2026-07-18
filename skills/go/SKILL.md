@@ -1,6 +1,9 @@
 ---
 name: go
-description: "Use when executing cross-module engineering tasks with worktree isolation, automatic splitting, and system review. Triggers on '/go', '编排', 'worktree 并发', '多模块'. Do NOT use for: single-task closed-loop (use loop), or pure research (use deep-research)."
+description: |
+  TRIGGER: 跨模块工程任务 / worktree 隔离 / 自动拆分 + 系统审查 / '/go' / '编排' / 'worktree 并发' / '多模块'（不用于：单任务闭环用 loop，纯研究用 deep-research）
+  RULE: V4 + V5 主承载 — worktree 隔离 + 派发后按进度汇报
+  DETAIL: 本 SKILL.md（编排流程）+ references/
 metadata:
   version: "4.0"
   type: slash-command

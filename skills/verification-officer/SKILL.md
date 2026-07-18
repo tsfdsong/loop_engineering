@@ -1,6 +1,9 @@
 ---
 name: verification-officer
-description: "Use as an independent verification subagent to validate completed work before a completion claim is trusted. Triggers on '/verify', '验证官', '独立验证', or when dispatched by loop/go after coding. Writes verdict.json that the Stop hook reads. Do NOT use for: self-verification by the implementer (conflict of interest), or pure research."
+description: |
+  TRIGGER: 作为独立验证 subagent 验证已完成工作 / '/verify' / '验证官' / '独立验证' / 被 loop/go 在编码后派发（写 verdict.json 供 Stop hook 读取；不用于：实施者自验证有利益冲突，纯研究）
+  RULE: V2 主承载 — 独立验证 Gate，完成声明前必经第三方裁定
+  DETAIL: 本 SKILL.md（验证官流程 + verdict.json）+ AGENTS.md §V2
 metadata:
   version: "1.0"
   type: slash-command

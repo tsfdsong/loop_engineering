@@ -1,6 +1,9 @@
 ---
 name: system-review
-description: "Use when reviewing entire system/architecture/project, checking consistency across modules, or doing ATAM-style architectural evaluation. Triggers on '审查系统', '审查架构', '系统审计', 'system review', 'architecture review'. Do NOT use for: single-file PR review (use code-reviewer), or code-level issues (use refactoring)."
+description: |
+  TRIGGER: 审查整个系统/架构/项目 / 跨模块一致性检查 / ATAM 式架构评估 / '审查系统' / '审查架构' / '系统审计' / 'system review' / 'architecture review'（不用于：单文件 PR 审查用 code-reviewer，代码级问题用 refactoring）
+  RULE: V6 主承载 — 系统级交付前必查需求↔实现↔架构一致性
+  DETAIL: 本 SKILL.md（横向一致性 + 纵向架构深度 + 持续改进）+ AGENTS.md §V6
 metadata:
   version: "1.1"
   type: methodology

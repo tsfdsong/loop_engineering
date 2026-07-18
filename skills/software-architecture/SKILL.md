@@ -1,6 +1,9 @@
 ---
 name: software-architecture
-description: "Use when designing system architecture, choosing patterns (MVC, microservices, event-driven), or making distributed systems decisions (replication, partitioning, consistency). Triggers on 架构, 分层, 企业模式, 分布式, 微服务, architecture, distributed. Do NOT use for: DDD modeling (use domain-driven-design), or code quality (use clean-code)."
+description: |
+  TRIGGER: 设计系统架构 / 选模式（MVC/微服务/事件驱动）/ 分布式决策（复制/分区/一致性）/ '架构' / '分层' / '企业模式' / '分布式' / '微服务' / 'architecture' / 'distributed'（不用于：DDD 建模用 domain-driven-design，代码质量用 clean-code）
+  RULE: no specific rule（方法论 skill · 架构递进方法论）
+  DETAIL: 本 SKILL.md（单进程分层 → 企业模式 → 分布式）
 metadata:
   version: "2.1"
   type: skill

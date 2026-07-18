@@ -1,6 +1,9 @@
 ---
 name: using-loopengine
-description: Use when users are new to LoopEngine or need guidance on how the loop/go/orch ecosystem works. Provides a quick tour of the three core skills and the multi-skill orchestration system.
+description: |
+  TRIGGER: 用户初次接触 LoopEngine / 需要 loop/go/orch 生态指引 / 多 skill 编排系统导览
+  RULE: no specific rule（方法论 skill · 入门导览）
+  DETAIL: 本 SKILL.md（三大核心 skill + 编排系统导览）
 ---
 
 # Using LoopEngine — 循环工程全家桶

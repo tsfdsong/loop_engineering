@@ -1,6 +1,9 @@
 ---
 name: evidence-first
-description: "Use when comparing options, evaluating designs, making architectural decisions, or any 'X vs Y' / 'should I' / 'why' question. Triggers on '分析', '比较', '评估', '选型', '为什么'. Do NOT use for: pure implementation (use refactoring/testing), or brainstorming new ideas (use brainstorming)."
+description: |
+  TRIGGER: 比较选项 / 评估设计 / 架构决策 / 'X vs Y' / 'should I' / '为什么' / '分析' / '比较' / '评估' / '选型' / '该不该' / '应不应该'（不用于：纯实现用 refactoring/testing，头脑风暴用 brainstorming）
+  RULE: C3 + C4 主承载 — 任何长篇论述（>5 段）前必须先给证据/数据/引用；MCP 工具优先
+  DETAIL: 本 SKILL.md（证据优先方法论）+ AGENTS.md §C3 §C4
 metadata:
   version: "1.0"
   type: skill
