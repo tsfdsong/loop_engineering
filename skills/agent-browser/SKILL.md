@@ -53,3 +53,28 @@ installed version.
 ## Observability Dashboard
 
 The dashboard runs independently of browser sessions on port 4848 and can also be opened through a proxied or forwarded URL such as `https://dashboard.agent-browser.localhost`. Agents should stay on the dashboard origin: session tabs, status, and stream traffic are proxied internally, so session ports do not need to be exposed.
+
+---
+
+## §N. 前端改动截图对比闭环（v2.0 强化 · V7 主承载）
+
+### 工作流（5 步）
+1. **改动前**：截当前页面图（baseline · agent-browser snapshot）
+2. **改动**：实施 UI 改动（CSS / 组件 / 路由）
+3. **改动后**：截同一页面图（after · 同 viewport）
+4. **对比**：用 `web-quality/references/visual-diff.md` 做 diff
+5. **验证**：间距 / 响应式 / 视觉一致性 / 暗色模式
+
+### 禁止行为（V7 红线）
+- ❌ 纯靠 code review 判断 UI 效果（肉眼不可见的像素回归 / 布局偏移 / z-index 层级）
+- ❌ 改完不截图就宣称"已完成"
+
+### 与 ui-design-system 协作
+- ui-design-system 提供设计 token 规范（baseline 对照）
+- agent-browser 提供截图能力
+- web-quality 提供 diff 工具
+
+### 多 viewport 场景
+- 桌面（1920x1080）/ 平板（768x1024）/ 手机（375x667）
+- 每 viewport 都截 baseline + after
+- 响应式问题专用此法发现

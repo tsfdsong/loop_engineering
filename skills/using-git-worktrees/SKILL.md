@@ -428,3 +428,23 @@ WORKTREE_PATH=$(git rev-parse --show-toplevel)
 - 只对 Option 1 和 4 清理 worktree
 - worktree 移除前 `cd` 到主 repo 根
 - 移除后 `git worktree prune`
+
+---
+
+## §N. 多会话并发隔离工作流（v2.0 强化 · V4 主承载）
+
+### worktree 创建 SOP
+1. 每个并发会话用独立 worktree：`git worktree add ../wt-<task-slug> -b feat/<task-slug>`
+2. 命名规范：`wt-<日期>-<任务缩写>`（如 `wt-20260718-ui-card`）
+3. 任务完成后清理：`git worktree remove ../wt-<task-slug>`
+
+### 多会话场景
+- **subagent 派发**（go / dispatching-parallel-agents）：每 subagent 一个 worktree（V4 红线硬要求）
+- **跨工具协作**（spec-D）：每工具一个 worktree（避免 ~/.zcode / ~/.cursor 等的会话污染主分支）
+- **断点续跑**（loop 状态恢复）：worktree 隔离保证状态文件不冲突
+
+### 禁止行为（V4 红线）
+- ❌ 多 subagent 改同一 working directory（冲突 / git status 污染 / commit 互相覆盖）
+- ❌ 跨工具会话共享同一 worktree（除非显式协调）
+
+与 V4 Worktree 隔离红线协同：本 skill 提供"如何做到 worktree 隔离"的方法论。
