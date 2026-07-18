@@ -188,23 +188,14 @@ def dimension_b_skill_integrity(
 
 # 单一真源（clean-code 维度 4 · DRY 真义）：从 scripts/_lib/redline_markers.txt 派生
 # 消除与 _common.sh::managed_rules 的漂移；修复 v1.0.6+ 第 10 条漏校验 bug
+# v2.0 · 2026-07-18 system-review 修复：markers.txt 改为 2 条（按 H2 标题切块）
 def _load_redline_markers() -> List[str]:
     markers_file = os.path.join(SCRIPTS_DIR, "_lib", "redline_markers.txt")
     if not os.path.isfile(markers_file):
-        # fallback：hardcode 12 条（v2.0 · 与 markers.txt 一致）
+        # fallback：hardcode 2 条（v2.0 · 与 markers.txt 一致 · 按 AGENTS.md H2 标题）
         return [
-            "BEGIN LOOPENGINE-MANAGED VERIFICATION-RULES",
-            "BEGIN LOOPENGINE-MANAGED INTERACTION-RULES",
-            "BEGIN LOOPENGINE-MANAGED EVIDENCE-RULES",
-            "BEGIN LOOPENGINE-MANAGED MCP-RULES",
-            "BEGIN LOOPENGINE-MANAGED TOKEN-RULES",
-            "BEGIN LOOPENGINE-MANAGED SUMMARY-RULES",
-            "BEGIN LOOPENGINE-MANAGED VERIFICATION-GATE-RULES",
-            "BEGIN LOOPENGINE-MANAGED SUBAGENT-RULES",
-            "BEGIN LOOPENGINE-MANAGED WORKTREE-RULES",
-            "BEGIN LOOPENGINE-MANAGED PROGRESS-RULES",
-            "BEGIN LOOPENGINE-MANAGED CONSISTENCY-RULES",
-            "BEGIN LOOPENGINE-MANAGED VISUAL-RULES",
+            "BEGIN LOOPENGINE-MANAGED CORE-INSTINCTS-RULES",
+            "BEGIN LOOPENGINE-MANAGED VERBAL-RULES",
         ]
     markers: List[str] = []
     with open(markers_file, encoding="utf-8") as f:

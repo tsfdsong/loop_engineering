@@ -9,21 +9,17 @@
 #   # 开头是注释行（跳过）
 #
 # 同步规则：新增红线时
-#   1. AGENTS.md 写完章节（标题含 🔴 + 关键字）
-#   2. 本文件追加一行
+#   1. AGENTS.md 写完章节（H2 标题含关键字）
+#   2. 本文件追加一行（关键字匹配 H2 标题）
 #   3. _common.sh 与 audit_tools.py 自动派生
 #
-# v2.0 · 2026-07-18：10 → 12 条（+TOKEN/WORKTREE/VISUAL · -ENGINEERING）
+# v2.0 · 2026-07-18 system-review 修复：
+#   原 12 条（按红线编号）→ 2 条（按 AGENTS.md H2 标题）
+#   原因：common_extract_rule_block 按 H2 标题切块（不读 marker 注释）。
+#   AGENTS.md 只有 2 个 H2 承载红线：
+#     - Core Instincts H2（含 C1-C5 · 5 条）
+#     - Verbal Rules Index H2（含 V1-V7 · 7 条）
+#   所以 markers.txt 必须是 2 条与之对齐。
 # ────────────────────────────────────────────────────────────
-完成前验证|VERIFICATION-RULES
-用户交互|INTERACTION-RULES
-事实优先|EVIDENCE-RULES
-MCP|MCP-RULES
-Token 感知|TOKEN-RULES
-摘要输出|SUMMARY-RULES
-验证 Gate|VERIFICATION-GATE-RULES
-Subagent|SUBAGENT-RULES
-Worktree 隔离|WORKTREE-RULES
-进度汇报|PROGRESS-RULES
-一致性核对|CONSISTENCY-RULES
-视觉上下文|VISUAL-RULES
+Core Instincts|CORE-INSTINCTS-RULES
+Verbal Rules Index|VERBAL-RULES

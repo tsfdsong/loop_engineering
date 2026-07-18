@@ -774,21 +774,11 @@ common_inject_red_lines() {
             managed_rules+=("${title}:${marker}")
         done < "$markers_file"
     else
-        # fallback：文件不存在时用 hardcode 12 条（与 redline_markers.txt / AGENTS.md v2.0+ 同步）
-        echo -e "  ${_YELLOW}⚠${_RESET}  $markers_file 不存在，fallback 到 hardcode 12 条"
+        # fallback：文件不存在时用 hardcode 2 条（v2.0 · 按 AGENTS.md H2 标题切块 · 与 redline_markers.txt 同步）
+        echo -e "  ${_YELLOW}⚠${_RESET}  $markers_file 不存在，fallback 到 hardcode 2 条"
         managed_rules=(
-            "完成前验证:VERIFICATION-RULES"
-            "用户交互:INTERACTION-RULES"
-            "事实优先:EVIDENCE-RULES"
-            "MCP:MCP-RULES"
-            "Token 感知:TOKEN-RULES"
-            "摘要输出:SUMMARY-RULES"
-            "验证 Gate:VERIFICATION-GATE-RULES"
-            "Subagent:SUBAGENT-RULES"
-            "Worktree 隔离:WORKTREE-RULES"
-            "进度汇报:PROGRESS-RULES"
-            "一致性核对:CONSISTENCY-RULES"
-            "视觉上下文:VISUAL-RULES"
+            "Core Instincts:CORE-INSTINCTS-RULES"
+            "Verbal Rules Index:VERBAL-RULES"
         )
     fi
 
