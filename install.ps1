@@ -498,15 +498,19 @@ function Write-ZCodeDesktopConfig {
 # Step 5: Inject-RedLines（对齐 _common.sh:753-849）
 # 9 条红线 × 7 目标文件，调 inject_rules.py 幂等合并
 # ════════════════════════════════════════════════════════════
-function Extract-RuleBlock($srcLines, $title, $marker) {
-    # 找 begin: ^## .*🔴.*<title>
+function Extract-RuleBlock($srcLines, $marker) {
+    # v2.0 AGENTS.md 结构：所有红线（5 Core Instincts）都集中在单个 `## ⚡ Core Instincts` 二级标题下。
+    # 老逻辑（v1.x：9 条二级标题如 `## 🔴 1. MCP 红线规则`）已被 v2.0 重构移除，强行匹配会 9/9 失败。
+    # 新策略：定位 `## ⚡ Core Instincts` 作为 begin，下一个 `## ` 作为 end，包成单一 marker block 注入。
+    # 兼容性：万一老仓库还是 v1.x，begin 匹配改为 `^## .*Core Instincts|^## .*🔴` 双格式 — 但若用 v1.x，
+    # 实际导出的是单块（非 9 块），inject_rules.py 仍可工作（替代替换）。
     $beginIdx = -1
     for ($i = 0; $i -lt $srcLines.Count; $i++) {
-        if ($srcLines[$i] -match "^## .*🔴.*$([regex]::Escape($title))") { $beginIdx = $i; break }
+        if ($srcLines[$i] -match '^## .*(⚡\s*Core Instincts|🔴\s*\d+\.\s*[一-龥])') { $beginIdx = $i; break }
     }
     if ($beginIdx -lt 0) { return $null }
 
-    # 找 next section: 跳过 ``` 代码块（含带语言标识如 ```bash ```markdown），找下一个 ^## (两个#)
+    # 找下一个二级标题为 end（跳过 ``` 代码块内的 `## `）
     $inCode = $false
     $nextIdx = $srcLines.Count
     for ($i = $beginIdx + 1; $i -lt $srcLines.Count; $i++) {
@@ -523,18 +527,9 @@ function Inject-RedLines {
     $src = Join-Path $script:Work "AGENTS.md"
     if (-not (Test-Path $src)) { Write-Warn "$src 不存在，跳过"; return }
 
-    # 9 条红线 title:marker（对齐 _common.sh:758-768）
-    $rules = @(
-        @{Title="用户交互红线";    Marker="INTERACTION-RULES"}
-        @{Title="MCP 红线规则";    Marker="MCP-RULES"}
-        @{Title="事实优先硬规则";  Marker="EVIDENCE-RULES"}
-        @{Title="摘要输出红线";    Marker="SUMMARY-RULES"}
-        @{Title="完成前验证红线";  Marker="VERIFICATION-RULES"}
-        @{Title="进度汇报红线";    Marker="PROGRESS-RULES"}
-        @{Title="Subagent 边界红线"; Marker="SUBAGENT-RULES"}
-        @{Title="一致性核对红线";  Marker="CONSISTENCY-RULES"}
-        @{Title="工程实践红线";    Marker="ENGINEERING-RULES"}
-    )
+    # v2.0: 单一 marker 块 — Core Instincts（C1-C5）作为整体注入。
+    # 老 9 marker 设计在 v2.0 AGENTS.md 删除二级标题后已失效，全部归并到 CORE-INSTINCTS。
+    $marker = "CORE-INSTINCTS"
     # 7 个目标文件（对齐 _common.sh:769-777，无 filter 全注入）
     $targets = @(
         @{Label="ZCode";          Path=(Join-Path $env:USERPROFILE ".zcode\AGENTS.md")}
@@ -552,19 +547,15 @@ function Inject-RedLines {
     if (Test-Path $blockDir) { Remove-Item $blockDir -Recurse -Force }
     New-Item -ItemType Directory -Path $blockDir | Out-Null
 
-    $extracted = 0
-    foreach ($r in $rules) {
-        $wrapped = Extract-RuleBlock $srcLines $r.Title $r.Marker
-        if ($wrapped) {
-            # UTF-8 无 BOM 写入（inject_rules.py 用 UTF-8 读）
-            [System.IO.File]::WriteAllText((Join-Path $blockDir $r.Marker), $wrapped + "`n", (New-Object System.Text.UTF8Encoding $false))
-            $extracted++
-            Write-Ok "提取: $($r.Title) → $($r.Marker)"
-        } else {
-            Write-Warn "AGENTS.md 中未找到 '$($r.Title)' 章节，跳过"
-        }
+    # 单一提取
+    $wrapped = Extract-RuleBlock $srcLines $marker
+    if (-not $wrapped) {
+        Write-Err "AGENTS.md 中未找到 '## ⚡ Core Instincts' 二级标题（v2.0 必备），跳过红线注入"
+        return
     }
-    if ($extracted -eq 0) { Write-Err "未提取到任何规则章节，退出"; return }
+    # UTF-8 无 BOM 写入（inject_rules.py 用 UTF-8 读）
+    [System.IO.File]::WriteAllText((Join-Path $blockDir $marker), $wrapped + "`n", (New-Object System.Text.UTF8Encoding $false))
+    Write-Ok "提取: Core Instincts (C1-C5) → $marker"
 
     foreach ($t in $targets) {
         New-Item -ItemType Directory -Path (Split-Path $t.Path) -Force | Out-Null
