@@ -1,61 +1,84 @@
-# Plugin-Shaped Install Implementation Plan
+# Plugin-Shaped Install v2.1 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `subagent-driven-development` (recommended) or `executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make `install.sh` / `install.ps1` deploy LoopEngine as a Superpowers-style plugin bundle (central package + per-tool adapters) with install/upgrade/uninstall, ending Cursor flat skills and registering Claude in `installed_plugins.json`.
+**Goal:** Replace Bash/PS install with a single `install.py` that deploys LoopEngine as official-style plugins (skills/hooks/MCP/AGENTS) with install/upgrade/uninstall for Tier-1 agents first.
 
-**Architecture:** Single content root at `~/.loopengine/plugins/loopengine/<version>/`; adapters sync/link into each tool’s plugin root and write registries; `~/.loopengine/install-manifest.json` is the sole source of truth for upgrade/uninstall. P0 spikes gate Cursor `plugins/local` and Claude registry before P1+.
+**Architecture:** Central package under `~/.loopengine/plugins/loopengine/`; per-tool Adapters implement four methods (`sync_plugin`, `activate_registry`, `merge_mcp`, `inject_agents`); `install-manifest.json` records reversible `operations[]`. User CLI is only install / uninstall / upgrade(alias).
 
-**Tech Stack:** Bash (`install.sh`, `scripts/install/_common.sh`), PowerShell (`install.ps1`), Python 3 helpers (`scripts/_lib/json_io.py`, new manifest/registry modules), unittest.
+**Tech Stack:** Python ≥3.10 (stdlib + existing `scripts/_lib/json_io.py`), unittest, JSON Schema (stdlib `json` + lightweight validation or `jsonschema` if already available—prefer stdlib subset checks in tests).
 
-**Spec:** `docs/2026-07-20-plugin-shaped-install-design.md` (approved 2026-07-20)
+**Spec:** `docs/2026-07-20-plugin-shaped-install-design-v2.md` (Approved 2026-07-20 · v2.1)
+
+**Replaces:** Previous Bash-centric plan content in this file.
 
 ---
 
-## File map (create / modify)
+## File map
 
 | Path | Responsibility |
 |------|----------------|
-| `scripts/_lib/install_manifest.py` | Read/write/validate `install-manifest.json` |
-| `scripts/_lib/plugin_sync.py` | Symlink-or-copy central → tool plugin_root; list skill names |
-| `scripts/register_claude_marketplace.py` | Upsert Claude `known_marketplaces.json` + marketplace dir |
-| `scripts/register_claude_plugin.py` | Upsert/remove Claude `installed_plugins.json` entry |
-| `scripts/uninstall_loopengine.py` | Manifest-driven uninstall (packages + registries + redlines + MCP keys) |
-| `scripts/install/_common.sh` | Central package build; remove flat Cursor copy; call adapters; `--uninstall`/`--upgrade` |
-| `install.sh` / `install.ps1` | Parse new flags; dispatch uninstall |
-| `tests/test_install_manifest.py` | Manifest schema + round-trip |
-| `tests/test_register_claude_plugin.py` | Claude registry write/remove |
-| `tests/test_plugin_sync.py` | Symlink/copy + skill name list |
-| `tests/test_cursor_no_flat_deploy.py` | Assert deploy path logic does not flat-copy (unit against extracted functions or dry fixtures) |
-| `docs/INSTALL.md` / `README.md` | Document new layout + flags |
-| `scripts/audit_tools.py` | Optional P3: registry consistency check |
+| `install.py` | Sole user entry: version check, clone/update, dispatch CLI |
+| `scripts/loopengine_install/__init__.py` | Package marker |
+| `scripts/loopengine_install/__main__.py` | `python -m loopengine_install` |
+| `scripts/loopengine_install/cli.py` | Argparse: install/uninstall/upgrade + flags |
+| `scripts/loopengine_install/lifecycle.py` | Orchestrate package + adapters + manifest |
+| `scripts/loopengine_install/ops.py` | Operation apply/revert, manifest load/save/validate |
+| `scripts/loopengine_install/package.py` | Build central package, switch `current` |
+| `scripts/loopengine_install/detect.py` | Detect installed agents + MCP binaries |
+| `scripts/loopengine_install/adapters/base.py` | Adapter ABC + Operation builders |
+| `scripts/loopengine_install/adapters/cursor.py` | Tier-1 Cursor |
+| `scripts/loopengine_install/adapters/claude.py` | Tier-1 Claude |
+| `scripts/loopengine_install/adapters/zcode.py` | Tier-1 ZCode |
+| `scripts/loopengine_install/adapters/codex.py` / `gemini.py` | Tier-2 |
+| `scripts/loopengine_install/adapters/copilot.py` / `pi.py` | Tier-3 |
+| `schemas/install-manifest.schema.json` | Manifest schema |
+| `docs/spikes/2026-07-20-cursor-plugins-local.md` | P0 Cursor spike log |
+| `docs/spikes/2026-07-20-claude-installed-plugins.md` | P0 Claude spike log |
+| `tests/test_loopengine_install_ops.py` | ops + manifest |
+| `tests/test_loopengine_install_cursor.py` | Cursor adapter (tmp dirs) |
+| `tests/test_loopengine_install_claude.py` | Claude registry |
+| `tests/test_loopengine_install_lifecycle.py` | install/uninstall dry fixtures |
+| Delete after P2 | `install.sh`, `install.ps1`, `scripts/install/*.sh` |
+
+**Reuse (call, do not fork blindly):** `scripts/render_plugins.py`, `scripts/merge_mcp_config.py`, `scripts/inject_rules.py`, `scripts/register_zcode_*.py`, `scripts/_lib/json_io.py`.
+
+**Locked plan defaults (spec §14):**
+
+- Claude `installPath`: `~/.claude/plugins/cache/loopengine-local/loopengine/<version>/` (adjust only if P0 proves otherwise).
+- Central package: versioned dir + `current` as **junction/symlink on Unix**, **directory rename swap on Windows** if symlink fails.
+- Helpers: **call** existing scripts as libraries where possible; relocate into package only if import path is painful.
 
 ---
 
-### Task 0: Mark spec approved + branch
+### Task 0: Mark approved + branch
 
 **Files:**
-- Modify: `docs/2026-07-20-plugin-shaped-install-design.md` (status line only)
+- Modify: `docs/2026-07-20-plugin-shaped-install-design-v2.md` (status—already Approved if committed)
+- Create branch: `go-plugin-shaped-install-py`
 
-- [ ] **Step 1: Update status**
+- [ ] **Step 1: Confirm spec header says Approved**
 
-Change header status from `Draft · 待用户审阅…` to `Approved · 2026-07-20`.
-
-- [ ] **Step 2: Create feature branch**
+- [ ] **Step 2: Create branch**
 
 ```bash
-git checkout -b go-plugin-shaped-install
-git add docs/2026-07-20-plugin-shaped-install-design.md
-git commit -m "docs(spec): mark plugin-shaped install design approved"
+git checkout -b go-plugin-shaped-install-py
+git status
+```
+
+- [ ] **Step 3: Commit plan + approved spec if dirty**
+
+```bash
+git add docs/2026-07-20-plugin-shaped-install-design-v2.md docs/2026-07-20-plugin-shaped-install-plan.md
+git commit -m "docs: approve plugin-shaped install v2.1 spec and Python plan"
 ```
 
 ---
 
-### Task 1: P0 Spike — Cursor `plugins/local` loads skills
+### Task 1: P0 Spike — Cursor `plugins/local`
 
 **Files:**
-- Create (temporary, do not commit unless useful): `/tmp/le-cursor-spike/` notes in spike log
-- Create: `docs/spikes/2026-07-20-cursor-plugins-local.md` (commit result)
+- Create: `docs/spikes/2026-07-20-cursor-plugins-local.md`
 
 - [ ] **Step 1: Build minimal plugin tree**
 
@@ -63,636 +86,433 @@ git commit -m "docs(spec): mark plugin-shaped install design approved"
 SPIKE="$HOME/.cursor/plugins/local/loopengine-spike"
 rm -rf "$SPIKE"
 mkdir -p "$SPIKE/.cursor-plugin" "$SPIKE/skills/using-loopengine"
-cp .cursor-plugin/plugin.json "$SPIKE/.cursor-plugin/plugin.json" 2>/dev/null || \
-  printf '%s\n' '{"name":"loopengine-spike","version":"0.0.1","description":"spike"}' > "$SPIKE/.cursor-plugin/plugin.json"
+printf '%s\n' '{"name":"loopengine-spike","version":"0.0.1","description":"P0 spike"}' \
+  > "$SPIKE/.cursor-plugin/plugin.json"
 cp skills/using-loopengine/SKILL.md "$SPIKE/skills/using-loopengine/SKILL.md"
-# optional: copy one hook stub if hooks.json exists
+# If hooks-cursor.json exists, copy a minimal hooks stub into spike
 ```
 
 - [ ] **Step 2: Manual verify in Cursor**
 
-Open a **new** Cursor Agent chat. Ask: “Load using-loopengine and summarize LoopEngine cores.”  
-Record PASS/FAIL in `docs/spikes/2026-07-20-cursor-plugins-local.md` with date and Cursor version if known.
+New Agent chat: ask to load `using-loopengine` and summarize LoopEngine cores.  
+Record PASS/FAIL, Cursor version, date in spike doc.
 
 - [ ] **Step 3: Gate**
 
-If FAIL → **stop entire plan**; do not implement P1 flat-removal. Report to user.  
-If PASS → commit spike notes and continue.
+If FAIL → **stop entire plan**; report to user; do not remove flat deploy.  
+If PASS → commit spike doc.
 
 ```bash
 git add docs/spikes/2026-07-20-cursor-plugins-local.md
-git commit -m "docs(spike): Cursor plugins/local skill load result"
+git commit -m "docs(spike): Cursor plugins/local loads skills (P0)"
 ```
 
 ---
 
-### Task 2: P0 Spike — Claude local marketplace + `installed_plugins.json`
+### Task 2: P0 Spike — Claude `installed_plugins.json`
 
 **Files:**
 - Create: `docs/spikes/2026-07-20-claude-installed-plugins.md`
-- Reference existing: `~/.claude/plugins/known_marketplaces.json`, `installed_plugins.json`
 
-- [ ] **Step 1: Inspect live schema**
+- [ ] **Step 1: Inspect an existing official plugin entry**
 
 ```bash
 python3 - <<'PY'
-import json
-from pathlib import Path
-home = Path.home()
-for name in ["known_marketplaces.json", "installed_plugins.json"]:
-    p = home / ".claude/plugins" / name
-    print("===", name, "===")
-    print(p.read_text()[:2000] if p.exists() else "MISSING")
+import json, pathlib
+p = pathlib.Path.home() / ".claude/plugins/installed_plugins.json"
+print(p.exists(), p)
+if p.exists():
+    data = json.loads(p.read_text())
+    print(list(data.get("plugins", data).keys())[:5] if isinstance(data, dict) else type(data))
 PY
 ```
 
-- [ ] **Step 2: Hand-register minimal loopengine-local**
+- [ ] **Step 2: Write minimal local marketplace + one LE test key**
 
-Create:
+Follow Claude’s on-disk schema from Step 1 (do not invent fields). Document exact JSON shape in the spike file. Prefer:
 
-```
-~/.claude/plugins/marketplaces/loopengine-local/.claude-plugin/marketplace.json
-~/.claude/plugins/cache/loopengine-local/loopengine/<version>/   # copy skills/go + .claude-plugin/plugin.json
-```
+- marketplace id: `loopengine-local`
+- plugin key: `loopengine@loopengine-local`
+- installPath under `~/.claude/plugins/cache/loopengine-local/loopengine/<ver>/` with one skill copied
 
-Upsert `known_marketplaces.json` entry with `installLocation` pointing at the marketplace dir.  
-Upsert `installed_plugins.json` key `loopengine@loopengine-local` with `installPath` = cache plugin root.
+- [ ] **Step 3: Verify Claude Code sees the plugin** (restart / new session if needed)
 
-Exact JSON shape must match the sample entries already on the machine (map of plugin→list of records, `scope: user`).
-
-- [ ] **Step 3: Verify in Claude Code**
-
-New session: confirm plugin appears / skill loadable. Document PASS/FAIL and **lock** `installPath` choice (`cache/...` vs `skills/loopengine`) in the spike doc.
+Record PASS/FAIL. If FAIL, try alternate installPath (`~/.claude/skills/loopengine`) and document winner.
 
 - [ ] **Step 4: Gate + commit**
 
-FAIL → stop. PASS → commit spike doc; P2 Claude tasks must use the locked path.
-
 ```bash
 git add docs/spikes/2026-07-20-claude-installed-plugins.md
-git commit -m "docs(spike): Claude installed_plugins local marketplace result"
+git commit -m "docs(spike): Claude installed_plugins local registration (P0)"
 ```
 
 ---
 
-### Task 3: `install_manifest.py` (TDD)
+### Task 3: Manifest schema + ops (TDD)
 
 **Files:**
-- Create: `scripts/_lib/install_manifest.py`
-- Create: `tests/test_install_manifest.py`
+- Create: `schemas/install-manifest.schema.json`
+- Create: `scripts/loopengine_install/__init__.py`
+- Create: `scripts/loopengine_install/ops.py`
+- Create: `tests/test_loopengine_install_ops.py`
 
 - [ ] **Step 1: Write failing tests**
 
 ```python
-# tests/test_install_manifest.py
+# tests/test_loopengine_install_ops.py
 import json
 import tempfile
 import unittest
 from pathlib import Path
-import sys
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "scripts"))
-
-from _lib.install_manifest import (
+from loopengine_install.ops import (
     Manifest,
+    Operation,
+    apply_operation,
+    revert_operation,
     load_manifest,
     save_manifest,
     validate_manifest,
 )
 
 
-class TestInstallManifest(unittest.TestCase):
-    def test_round_trip(self):
+class OpsTest(unittest.TestCase):
+    def test_link_or_copy_and_revert(self):
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            src, dst = td / "src", td / "dst"
+            src.mkdir()
+            (src / "a.txt").write_text("x")
+            op = Operation(
+                id="op-1",
+                kind="link-or-copy",
+                ownership="managed",
+                source=str(src),
+                destination=str(dst),
+            )
+            apply_operation(op)
+            self.assertTrue(dst.exists())
+            revert_operation(op)
+            self.assertFalse(dst.exists())
+
+    def test_manifest_roundtrip(self):
         with tempfile.TemporaryDirectory() as td:
             path = Path(td) / "install-manifest.json"
             m = Manifest(
-                schema_version=1,
+                schema_version=2,
                 product="loopengine",
                 version="1.3.2",
+                installed_at="2026-07-20T00:00:00Z",
                 central_root="/tmp/central",
                 skill_names=["go", "loop"],
-                components={
-                    "cursor": {
-                        "plugin_root": "/tmp/cursor-plugin",
-                        "link_mode": "symlink",
-                    }
-                },
-                extras={"redlines": [], "mcp": {"cursor": "", "keys": []}},
+                components={},
+                operations=[],
             )
             save_manifest(path, m)
-            loaded = load_manifest(path)
-            self.assertEqual(loaded.version, "1.3.2")
-            self.assertEqual(loaded.skill_names, ["go", "loop"])
-            self.assertEqual(loaded.components["cursor"]["link_mode"], "symlink")
+            m2 = load_manifest(path)
+            self.assertEqual(m2.version, "1.3.2")
+            validate_manifest(m2)
 
-    def test_validate_rejects_missing_version(self):
-        bad = {"schema_version": 1, "product": "loopengine"}
-        with self.assertRaises(ValueError):
-            validate_manifest(bad)
+
+if __name__ == "__main__":
+    unittest.main()
 ```
 
-- [ ] **Step 2: Run — expect FAIL**
+- [ ] **Step 2: Run — expect FAIL (import error)**
 
 ```bash
-python3 -m pytest tests/test_install_manifest.py -v
+cd "$(git rev-parse --show-toplevel)"
+PYTHONPATH=scripts python3 -m unittest tests.test_loopengine_install_ops -v
 ```
 
-Expected: import error or missing module.
+- [ ] **Step 3: Implement schema + ops**
 
-- [ ] **Step 3: Implement minimal module**
+`schemas/install-manifest.schema.json` — require `schema_version`, `product`, `version`, `central_root`, `skill_names`, `operations` (array of objects with `id`, `kind`, `ownership`).
 
-```python
-# scripts/_lib/install_manifest.py
-from __future__ import annotations
+`ops.py` — dataclasses; `link-or-copy` tries `os.symlink` then `shutil.copytree`; `merge-json` / `registry-write` / `inject-markers` stubs that raise `NotImplementedError` until adapter tasks fill them (or implement merge-json using `json_io` now).
 
-import json
-from dataclasses import asdict, dataclass, field
-from pathlib import Path
-from typing import Any
+Minimal `validate_manifest`: check required fields + `kind in ALLOWED_KINDS`.
 
-
-REQUIRED = ("schema_version", "product", "version", "central_root", "skill_names", "components")
-
-
-@dataclass
-class Manifest:
-    schema_version: int
-    product: str
-    version: str
-    central_root: str
-    skill_names: list[str]
-    components: dict[str, Any]
-    extras: dict[str, Any] = field(default_factory=dict)
-    installed_at: str = ""
-
-
-def validate_manifest(data: dict[str, Any]) -> None:
-    for key in REQUIRED:
-        if key not in data:
-            raise ValueError(f"missing required field: {key}")
-    if not isinstance(data["skill_names"], list):
-        raise ValueError("skill_names must be a list")
-    if not isinstance(data["components"], dict):
-        raise ValueError("components must be a dict")
-
-
-def load_manifest(path: Path) -> Manifest:
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
-    validate_manifest(data)
-    return Manifest(
-        schema_version=int(data["schema_version"]),
-        product=str(data["product"]),
-        version=str(data["version"]),
-        central_root=str(data["central_root"]),
-        skill_names=list(data["skill_names"]),
-        components=dict(data["components"]),
-        extras=dict(data.get("extras") or {}),
-        installed_at=str(data.get("installed_at") or ""),
-    )
-
-
-def save_manifest(path: Path, manifest: Manifest) -> None:
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    payload = asdict(manifest)
-    validate_manifest(payload)
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-```
-
-- [ ] **Step 4: Run — expect PASS**
+- [ ] **Step 4: Run tests — expect PASS**
 
 ```bash
-python3 -m pytest tests/test_install_manifest.py -v
+PYTHONPATH=scripts python3 -m unittest tests.test_loopengine_install_ops -v
 ```
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add scripts/_lib/install_manifest.py tests/test_install_manifest.py
-git commit -m "feat(install): add install-manifest read/write helper"
+git add schemas/install-manifest.schema.json scripts/loopengine_install/ tests/test_loopengine_install_ops.py
+git commit -m "feat(install): manifest ops apply/revert foundation"
 ```
 
 ---
 
-### Task 4: `plugin_sync.py` (symlink-or-copy + skill names)
+### Task 4: Central package builder
 
 **Files:**
-- Create: `scripts/_lib/plugin_sync.py`
-- Create: `tests/test_plugin_sync.py`
+- Create: `scripts/loopengine_install/package.py`
+- Create: `tests/test_loopengine_install_package.py`
+- Reuse: `scripts/render_plugins.py`
 
-- [ ] **Step 1: Failing tests**
+- [ ] **Step 1: Failing test** — `build_central_package(repo_root, home, version)` creates `home/plugins/loopengine/<ver>/skills` with at least one skill and rendered `.cursor-plugin/plugin.json`.
+
+- [ ] **Step 2: Implement `package.py`**
 
 ```python
-# tests/test_plugin_sync.py
-import os
-import tempfile
-import unittest
-from pathlib import Path
+# Sketch — fill using render_plugins + copy skills/hooks/commands/AGENTS.md
+def build_central_package(repo_root: Path, loopengine_home: Path, version: str) -> Path:
+    dest = loopengine_home / "plugins" / "loopengine" / version
+    # copy skills, hooks, commands; run render_plugins into dest overlays
+    # write/update `current` pointer (symlink or marker file current.json)
+    return dest
+```
+
+- [ ] **Step 3: Tests PASS + commit**
+
+```bash
+git commit -m "feat(install): build central plugin package"
+```
+
+---
+
+### Task 5: CLI + install.py bootstrap
+
+**Files:**
+- Create: `install.py`
+- Create: `scripts/loopengine_install/cli.py`
+- Create: `scripts/loopengine_install/__main__.py`
+- Create: `scripts/loopengine_install/detect.py`
+- Create: `tests/test_loopengine_install_cli.py`
+
+- [ ] **Step 1: CLI tests** — parse `[]` → command install; `["uninstall"]`; `["--dry-run","--json"]`; `["--only=cursor,zcode"]`.
+
+- [ ] **Step 2: Implement argparse in `cli.py`**
+
+Commands: `install` (default), `uninstall`, `upgrade`→install.  
+Flags: `--dry-run`, `--json`, `--force`, `--all`, `--only`, `--check` (optional stub returning 0).
+
+- [ ] **Step 3: `install.py`**
+
+```python
+#!/usr/bin/env python3
+"""LoopEngine one-click installer entry (macOS / Windows / Linux)."""
 import sys
-
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "scripts"))
-
-from _lib.plugin_sync import list_skill_names, sync_plugin_root
-
-
-class TestPluginSync(unittest.TestCase):
-    def test_list_skill_names(self):
-        with tempfile.TemporaryDirectory() as td:
-            root = Path(td)
-            (root / "skills" / "go").mkdir(parents=True)
-            (root / "skills" / "loop").mkdir()
-            (root / "skills" / "go" / "SKILL.md").write_text("x")
-            (root / "skills" / "loop" / "SKILL.md").write_text("x")
-            names = list_skill_names(root)
-            self.assertEqual(names, ["go", "loop"])
-
-    def test_sync_copy_mode(self):
-        with tempfile.TemporaryDirectory() as td:
-            td = Path(td)
-            src = td / "central"
-            dst = td / "tool"
-            (src / "skills" / "go").mkdir(parents=True)
-            (src / "skills" / "go" / "SKILL.md").write_text("go")
-            mode = sync_plugin_root(src, dst, prefer_symlink=False)
-            self.assertEqual(mode, "copy")
-            self.assertTrue((dst / "skills" / "go" / "SKILL.md").is_file())
-            self.assertFalse(dst.is_symlink())
-```
-
-- [ ] **Step 2: Implement**
-
-```python
-# scripts/_lib/plugin_sync.py
-from __future__ import annotations
-
-import os
-import shutil
 from pathlib import Path
 
+MIN = (3, 10)
 
-def list_skill_names(central_root: Path) -> list[str]:
-    skills = Path(central_root) / "skills"
-    if not skills.is_dir():
-        return []
-    names = []
-    for child in sorted(skills.iterdir()):
-        if child.is_dir() and (child / "SKILL.md").is_file():
-            names.append(child.name)
-    return names
+def main(argv=None):
+    if sys.version_info < MIN:
+        print("LoopEngine requires Python >= 3.10", file=sys.stderr)
+        return 1
+    # If running from curl pipe: download/clone repo to ~/.loopengine/src then dispatch
+    # If __file__ is inside a git checkout: use that repo root
+    repo = Path(__file__).resolve().parent
+    sys.path.insert(0, str(repo / "scripts"))
+    from loopengine_install.cli import main as cli_main
+    return cli_main(argv)
 
-
-def sync_plugin_root(src: Path, dst: Path, prefer_symlink: bool = True) -> str:
-    """Replace dst with src contents. Returns 'symlink' or 'copy'."""
-    src = Path(src).resolve()
-    dst = Path(dst)
-    if dst.exists() or dst.is_symlink():
-        if dst.is_symlink() or dst.is_file():
-            dst.unlink()
-        else:
-            shutil.rmtree(dst)
-    dst.parent.mkdir(parents=True, exist_ok=True)
-    if prefer_symlink:
-        try:
-            os.symlink(src, dst, target_is_directory=True)
-            return "symlink"
-        except OSError:
-            pass
-    shutil.copytree(src, dst)
-    return "copy"
+if __name__ == "__main__":
+    raise SystemExit(main())
 ```
 
-- [ ] **Step 3: pytest PASS + commit**
-
-```bash
-python3 -m pytest tests/test_plugin_sync.py -v
-git add scripts/_lib/plugin_sync.py tests/test_plugin_sync.py
-git commit -m "feat(install): add plugin_sync symlink-or-copy helper"
-```
-
----
-
-### Task 5: Claude registry scripts (TDD)
-
-**Files:**
-- Create: `scripts/register_claude_marketplace.py`
-- Create: `scripts/register_claude_plugin.py`
-- Create: `tests/test_register_claude_plugin.py`
-- Pattern: mirror `scripts/register_zcode_plugin.py` + `_lib/json_io.py`
-
-- [ ] **Step 1: Failing test for plugin upsert/remove**
-
-```python
-# tests/test_register_claude_plugin.py
-import json
-import tempfile
-import unittest
-from pathlib import Path
-import sys
-
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "scripts"))
-
-from register_claude_plugin import upsert_plugin, remove_plugin
-
-
-class TestRegisterClaudePlugin(unittest.TestCase):
-    def test_upsert_and_remove(self):
-        with tempfile.TemporaryDirectory() as td:
-            path = Path(td) / "installed_plugins.json"
-            path.write_text(json.dumps({"version": 2, "plugins": {}}), encoding="utf-8")
-            upsert_plugin(
-                path,
-                plugin_key="loopengine@loopengine-local",
-                install_path="/tmp/le",
-                version="1.3.2",
-            )
-            data = json.loads(path.read_text(encoding="utf-8"))
-            self.assertIn("loopengine@loopengine-local", data["plugins"])
-            rec = data["plugins"]["loopengine@loopengine-local"][0]
-            self.assertEqual(rec["installPath"], "/tmp/le")
-            self.assertEqual(rec["scope"], "user")
-            remove_plugin(path, "loopengine@loopengine-local")
-            data = json.loads(path.read_text(encoding="utf-8"))
-            self.assertNotIn("loopengine@loopengine-local", data["plugins"])
-```
-
-- [ ] **Step 2: Implement `register_claude_plugin.py`**
-
-Export `upsert_plugin` / `remove_plugin` for tests; CLI:  
-`python register_claude_plugin.py <installed_plugins.json> upsert|remove <plugin_key> [install_path] [version]`
-
-Use `_lib.json_io.read_json` / `write_json`. Record shape:
-
-```python
-{
-  "scope": "user",
-  "installPath": install_path,
-  "version": version,
-  "installedAt": iso_now,
-  "lastUpdated": iso_now,
-}
-```
-
-If key exists, update first list element’s `installPath`/`version`/`lastUpdated`.
-
-- [ ] **Step 3: Implement `register_claude_marketplace.py`**
-
-CLI: `python register_claude_marketplace.py <known_marketplaces.json> <marketplace_id> <install_location>`
-
-Upsert dict entry (Claude schema is object map, not ZCode list). Ensure marketplace directory exists with rendered `marketplace.json` (caller may copy).
-
-- [ ] **Step 4: pytest + commit**
-
-```bash
-python3 -m pytest tests/test_register_claude_plugin.py -v
-git add scripts/register_claude_*.py tests/test_register_claude_plugin.py
-git commit -m "feat(install): Claude marketplace + installed_plugins registration"
-```
-
----
-
-### Task 6: P1 — Build central package in `_common.sh`
-
-**Files:**
-- Modify: `scripts/install/_common.sh`
-- Modify: `install.sh` (expose version path vars)
-
-- [ ] **Step 1: Add globals**
-
-```bash
-COMMON_CENTRAL_ROOT="$HOME/.loopengine/plugins/loopengine/$COMMON_VERSION"
-COMMON_MANIFEST_FILE="$HOME/.loopengine/install-manifest.json"
-```
-
-- [ ] **Step 2: Add `common_build_central_package`**
-
-After render_plugins + having `$COMMON_WORK`:
-
-1. `rm -rf` then `mkdir -p "$COMMON_CENTRAL_ROOT"`
-2. Copy `skills/`, `hooks/`, `commands/` from `$COMMON_WORK`
-3. Copy rendered manifests into `.claude-plugin/`, `.zcode-plugin/`, `.cursor-plugin/`, `.codex-plugin/` as applicable
-4. Copy `AGENTS.md`, `README.md`
-5. Echo skill count
-
-- [ ] **Step 3: Wire into main install path** before per-tool deploy; commit.
-
-```bash
-git add scripts/install/_common.sh install.sh
-git commit -m "feat(install): build versioned central plugin package"
-```
-
----
-
-### Task 7: P1 — Cursor Adapter (no flat copy) + legacy cleanup
-
-**Files:**
-- Modify: `scripts/install/_common.sh` (`common_copy_skills_for`, deploy Cursor branch)
-- Create: `tests/test_cursor_no_flat_deploy.py` (document contract; or bash-level fixture if extracting is hard)
-
-- [ ] **Step 1: Replace Cursor branch in `common_copy_skills_for`**
-
-For label `Cursor`:
-
-- **Do not** copy into `dirname(root_dir)` flat skills.
-- Instead: `python scripts/_lib` via small CLI or inline call:
-
-```bash
-# preferred
-python "$COMMON_SCRIPT_DIR/scripts/_lib_plugin_sync_cli.py" \
-  sync "$COMMON_CENTRAL_ROOT" "$HOME/.cursor/plugins/local/loopengine"
-```
-
-Or embed in `_common.sh`:
-
-```bash
-common_sync_cursor_plugin() {
-  local dst="$HOME/.cursor/plugins/local/loopengine"
-  python - <<PY
-from pathlib import Path
-import sys
-sys.path.insert(0, "$COMMON_SCRIPT_DIR/scripts")
-from _lib.plugin_sync import sync_plugin_root, list_skill_names
-mode = sync_plugin_root(Path("$COMMON_CENTRAL_ROOT"), Path("$dst"), prefer_symlink=True)
-print(mode)
-PY
-}
-```
-
-- [ ] **Step 2: `common_cleanup_cursor_flat_skills`**
-
-```bash
-# for each name in skill_names from central package:
-#   rm -rf "$HOME/.cursor/skills/$name"
-# also: if "$HOME/.cursor/skills/loopengine" exists and has no skills/ subdir with SKILL.md children matching, remove or leave hooks-only dir per spec (remove whole loopengine under skills/)
-```
-
-- [ ] **Step 3: Manual smoke on macOS**
-
-```bash
-bash install.sh --only=cursor --force
-test -d "$HOME/.cursor/plugins/local/loopengine/skills/go"
-test ! -d "$HOME/.cursor/skills/go"   # after cleanup
-```
+Implement clone path carefully: when stdin is a pipe, `__file__` may be `<stdin>` — detect and clone `https://github.com/tsfdsong/loop_engineering.git` to `~/.loopengine/src`.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add scripts/install/_common.sh
-git commit -m "feat(install): Cursor adapter uses plugins/local, remove flat skills"
+git commit -m "feat(install): install.py CLI entry and detect stubs"
 ```
 
 ---
 
-### Task 8: P2 — Route all tools through central package sync
+### Task 6: Cursor Adapter four-pack (tracer bullet)
 
 **Files:**
-- Modify: `scripts/install/_common.sh` (`common_deploy_to_9_tools`, copy_skills/hooks)
+- Create: `scripts/loopengine_install/adapters/base.py`
+- Create: `scripts/loopengine_install/adapters/cursor.py`
+- Create: `scripts/loopengine_install/adapters/__init__.py`
+- Create: `tests/test_loopengine_install_cursor.py`
+- Reuse: `merge_mcp_config.merge_cursor`, `inject_rules`
 
-- [ ] **Step 1: Change deploy model**
+- [ ] **Step 1: Failing tests with tmp HOME**
 
-For each tool root (ZCode, Claude, Codex, …):
+Cover: `sync_plugin` creates `plugins/local/loopengine`; does **not** write flat `skills/go`; `merge_mcp` adds jcodemunch key; `inject_agents` writes LOOPENGINE markers; uninstall reverts.
 
-1. `sync_plugin_root(CENTRAL, plugin_root)` (copy preferred for non-Cursor if symlink confusing; Cursor symlink OK)
-2. Ensure tool-specific overlay files from rendered dir still present inside synced tree (if sync replaces whole tree, re-copy manifests after sync OR include manifests inside central package — prefer **manifests already in central** from Task 6)
-3. Stop separately copying skills into `root/skills` from WORK when central already has them
+- [ ] **Step 2: Implement Cursor adapter**
 
-- [ ] **Step 2: Claude activate**
-
-After Claude sync:
-
-```bash
-python "$COMMON_SCRIPT_DIR/scripts/register_claude_marketplace.py" \
-  "$HOME/.claude/plugins/known_marketplaces.json" \
-  loopengine-local \
-  "$HOME/.claude/plugins/marketplaces/loopengine-local"
-
-python "$COMMON_SCRIPT_DIR/scripts/register_claude_plugin.py" \
-  "$HOME/.claude/plugins/installed_plugins.json" \
-  upsert \
-  loopengine@loopengine-local \
-  "$CLAUDE_INSTALL_PATH" \
-  "$COMMON_VERSION"
+```python
+class CursorAdapter:
+    name = "cursor"
+    def sync_plugin(self, central: Path, dry_run=False) -> list[Operation]: ...
+    def activate_registry(self, ...) -> list[Operation]:
+        return []  # local folder discovery; no registry file unless spike found one
+    def merge_mcp(self, ...) -> list[Operation]: ...
+    def inject_agents(self, ...) -> list[Operation]: ...
 ```
 
-`$CLAUDE_INSTALL_PATH` = path locked in Task 2 spike.
+Also: `cleanup_flat_skills(skill_names)` as install pre-step generating `remove-path` ops or delete then record.
 
-Ensure marketplace dir contains marketplace.json (copy from central `.claude-plugin/marketplace.json`).
+- [ ] **Step 3: Wire into lifecycle install `--only=cursor --dry-run`**
 
-- [ ] **Step 3: Write manifest at end of successful install**
-
-Call `save_manifest` via Python with all components + skill_names + extras (redline targets, mcp keys).
-
-- [ ] **Step 4: Commit**
+- [ ] **Step 4: Manual smoke on real machine (optional but recommended)**
 
 ```bash
-git commit -m "feat(install): sync all tool roots from central package + Claude registry"
+PYTHONPATH=scripts python3 install.py install --only=cursor --dry-run --json
+PYTHONPATH=scripts python3 install.py install --only=cursor
+```
+
+- [ ] **Step 5: Commit**
+
+```bash
+git commit -m "feat(install): Cursor adapter four-pack + flat skill cleanup"
 ```
 
 ---
 
-### Task 9: Uninstall + CLI flags
+### Task 7: Claude Adapter (registry required)
 
 **Files:**
-- Create: `scripts/uninstall_loopengine.py`
-- Modify: `install.sh`, `install.ps1`, `scripts/install/_common.sh`
-- Create: `tests/test_uninstall_loopengine.py`
+- Create: `scripts/loopengine_install/adapters/claude.py`
+- Create: `tests/test_loopengine_install_claude.py`
+- Use shapes from P0 spike doc
 
-- [ ] **Step 1: Failing test — uninstall removes plugin_root and registry key from temp fixtures**
+- [ ] **Step 1: Tests** — write/remove `installed_plugins` key; marketplace upsert; sync to cache installPath.
 
-Use tempfile copies of manifest + fake plugin dirs + fake installed_plugins.json; run uninstall; assert paths gone and key removed.
-
-- [ ] **Step 2: Implement `uninstall_loopengine.py`**
-
-Behavior:
-
-1. Load `~/.loopengine/install-manifest.json` (if missing → exit 2 with message to run heuristic or reinstall once)
-2. For each `components.*.plugin_root` → delete
-3. Delete `central_root` and parent empty version dirs as needed
-4. Cursor: delete flat `skill_names` under `~/.cursor/skills/`
-5. Claude: `remove_plugin` + remove marketplace id if dedicated
-6. ZCode: disable enabledPlugins key if present (optional call existing register script inverse)
-7. Strip redline sentinels via existing inject inverse if available; else document manual
-8. MCP: remove only `extras.mcp.keys` from cursor mcp.json
-9. Delete manifest + `.installed_version`
-
-- [ ] **Step 3: Wire flags**
-
-```bash
-# install.sh
---uninstall) COMMON_UNINSTALL=true ;;
---upgrade)   COMMON_FORCE=true ;;  # or dedicated path that always rebuilds central
-```
-
-If `COMMON_UNINSTALL`: call python uninstall and exit 0 (skip clone).
-
-PowerShell: `-Uninstall`, `-Upgrade`.
-
-- [ ] **Step 4: pytest + manual uninstall smoke + commit**
-
-```bash
-python3 -m pytest tests/test_uninstall_loopengine.py -v
-git commit -m "feat(install): add manifest-driven uninstall and CLI flags"
-```
-
----
-
-### Task 10: P3 — Docs + audit + self-check
-
-**Files:**
-- Modify: `docs/INSTALL.md`, `README.md`
-- Modify: `scripts/install/_common.sh` dry-run summary + post-install verify message
-- Modify: `scripts/audit_tools.py` (add registry check if cheap)
-
-- [ ] **Step 1: Update INSTALL verification block**
-
-Replace orch/flat checks with:
-
-```bash
-ls ~/.cursor/plugins/local/loopengine/skills/go
-test ! -d ~/.cursor/skills/go
-python3 -c "import json;print('loopengine' in json.load(open('$HOME/.claude/plugins/installed_plugins.json'))['plugins'])"
-bash install.sh --uninstall   # document only; don't run in CI casually
-```
-
-- [ ] **Step 2: README project structure** — Cursor plugins/local, no flat
+- [ ] **Step 2: Implement** — mirror ZCode register scripts’ style with atomic JSON writes via `json_io`.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git commit -m "docs(install): document plugin-shaped install and uninstall"
+git commit -m "feat(install): Claude marketplace + installed_plugins adapter"
 ```
 
 ---
 
-### Task 11: Integration gate (human)
+### Task 8: ZCode Adapter
 
-- [ ] **Step 1: Full install on macOS** (`--all` or detect)
+**Files:**
+- Create: `scripts/loopengine_install/adapters/zcode.py`
+- Create: `tests/test_loopengine_install_zcode.py`
+- Call: `register_zcode_marketplace`, `register_zcode_plugin`, `merge_mcp_config.merge_zcode`, `inject_rules`
 
-- [ ] **Step 2: Confirm Cursor + Claude + ZCode sessions load `go`/`loop`**
+- [ ] **Step 1–3:** Same TDD pattern as Cursor; ensure uninstall removes enabledPlugins entry and LE MCP keys only.
 
-- [ ] **Step 3: Upgrade path** — bump `COMMON_VERSION` in a local test or `--force`; confirm old central version removed
-
-- [ ] **Step 4: Uninstall** — confirm clean; reinstall once
-
-- [ ] **Step 5: Run full unittest**
+- [ ] **Step 4: Commit**
 
 ```bash
-python3 -m pytest tests/ -q
+git commit -m "feat(install): ZCode adapter four-pack"
 ```
 
-Expected: no new failures in install-related tests; pre-existing sandbox-only failures noted in report.
+---
+
+### Task 9: Lifecycle install / uninstall
+
+**Files:**
+- Create: `scripts/loopengine_install/lifecycle.py`
+- Create: `tests/test_loopengine_install_lifecycle.py`
+
+- [ ] **Step 1: Tests** — temp home: install cursor+zcode dry fixtures → manifest has operations → uninstall empties plugin roots and clears managed keys.
+
+- [ ] **Step 2: Implement**
+
+```text
+install:
+  detect targets
+  maybe heuristic cleanup if no manifest
+  build_central_package
+  for each adapter: four-pack; collect ops
+  save_manifest
+uninstall:
+  load_manifest; reverse ops; delete manifest (and current package)
+upgrade:
+  same as install with force semantics for version bump
+```
+
+- [ ] **Step 3: Commit**
+
+```bash
+git commit -m "feat(install): lifecycle install/uninstall with manifest"
+```
+
+---
+
+### Task 10: Tier-2 / Tier-3 adapters
+
+**Files:**
+- Create: `adapters/codex.py`, `gemini.py`, `copilot.py`, `pi.py`
+- Tests: lightweight tmp-dir sync + inject only where applicable
+
+- [ ] **Step 1: Implement degraded four-pack** (registry no-op where N/A).
+
+- [ ] **Step 2: Register in detect + adapter registry map**.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git commit -m "feat(install): Tier-2/3 adapters (semi-plugin / inject)"
+```
+
+---
+
+### Task 11: Retire Shell install + docs
+
+**Files:**
+- Delete: `install.sh`, `install.ps1`, `scripts/install/_common.sh`, `scripts/install/macos.sh`, `scripts/install/linux.sh`, `scripts/install/windows.sh`
+- Modify: `docs/INSTALL.md`, `README.md`, `CLAUDE.md` (install one-liner)
+- Modify: `scripts/audit_tools.py` — note new paths / fail if old flat cursor skills present for LE names
+
+- [ ] **Step 1: Update INSTALL.md**
+
+Document:
+
+```bash
+curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.py | python3
+python3 install.py uninstall
+```
+
+Tier table (one section). Fallback `-o install.py`. Python ≥3.10.
+
+- [ ] **Step 2: Delete shell assets; fix any CI/docs references**
+
+```bash
+rg -n 'install\.sh|install\.ps1|_common\.sh' --glob '!docs/2026-07-20-plugin-shaped-install-design.md' .
+```
+
+- [ ] **Step 3: Full unittest**
+
+```bash
+PYTHONPATH=scripts python3 -m unittest discover -s tests -p 'test_loopengine_install*.py' -v
+```
+
+- [ ] **Step 4: Commit**
+
+```bash
+git commit -m "feat(install): retire Bash/PS install; document install.py"
+```
+
+---
+
+### Task 12: P3 optional (non-blocking)
+
+- [ ] `--check` compares manifest ops vs disk (mini-doctor)
+- [ ] `audit_tools.py` registry dimension for Claude/ZCode/Cursor paths
+- [ ] Commit if done: `feat(install): install --check and audit registry dimension`
 
 ---
 
 ## Execution notes
 
-1. **Do not skip P0.** Flat-skill removal without Cursor spike = user-visible breakage.  
-2. Prefer shared Python helpers over duplicating JSON logic in bash/ps1.  
-3. Heuristic uninstall (no manifest) is **out of P1**; if needed, add Task 9b after P2.  
-4. Previous session’s orch→go doc fixes and untracked `skills/go/references/*` assets are **orthogonal**; keep on separate commits if still uncommitted.
+- **Stop** if Task 1 or 2 FAIL.
+- Prefer `PYTHONPATH=scripts` in all commands until/unless a tiny `pyproject.toml` is added (out of scope unless needed).
+- Do not add `plan`/`doctor`/`repair`/`list` subcommands before Task 12.
+- Windows: test `link-or-copy` fallback in CI or manual once before declaring Task 11 done.
 
-## Plan approval
+## Self-review checklist (author)
 
-After this plan is written, ask the user whether to proceed with `/executing-plans` or `subagent-driven-development` starting at Task 0/1.
+- [x] Spec §0 acceptance mapped to Tasks 6–11  
+- [x] No Bash install business logic remaining after Task 11  
+- [x] Tier-1 before Tier-2/3  
+- [x] Four-pack includes MCP + AGENTS  
+- [x] P0 gates explicit  

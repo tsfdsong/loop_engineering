@@ -1,7 +1,7 @@
 # Design: Plugin-Shaped Install v2.1（简化修订）
 
 > **日期**: 2026-07-20  
-> **状态**: Draft · 待用户审阅后 Approved  
+> **状态**: **Approved** · 2026-07-20 · 实施计划见 `docs/2026-07-20-plugin-shaped-install-plan.md`  
 > **取代**: v2 原稿同路径（本文件即为现行真源）；v1 见 `docs/2026-07-20-plugin-shaped-install-design.md`  
 > **修订动机**: 对照核心目的审查后全面简化——抬一键生命周期与官方插件四件套，砍 ECC 运维表面积  
 > **路径说明**: 落在 `docs/` 以便主仓版本化。
