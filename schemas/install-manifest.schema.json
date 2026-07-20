@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tsfdsong/loop_engineering/schemas/install-manifest.schema.json",
+  "title": "LoopEngine install-manifest",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "product",
+    "version",
+    "central_root",
+    "skill_names",
+    "operations"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 2 },
+    "product": { "type": "string", "const": "loopengine" },
+    "version": { "type": "string", "minLength": 1 },
+    "installed_at": { "type": "string" },
+    "central_root": { "type": "string", "minLength": 1 },
+    "skill_names": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "components": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "operations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/operation" }
+    },
+    "extras": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "operation": {
+      "type": "object",
+      "required": ["id", "kind", "ownership"],
+      "properties": {
+        "id": { "type": "string" },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "link-or-copy",
+            "registry-write",
+            "merge-json",
+            "inject-markers"
+          ]
+        },
+        "ownership": {
+          "type": "string",
+          "enum": ["managed", "user"]
+        },
+        "source": { "type": "string" },
+        "destination": { "type": "string" },
+        "merge_keys": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "registry": { "type": "string" },
+        "key": { "type": "string" },
+        "payload": {}
+      },
+      "additionalProperties": true
+    }
+  }
+}
