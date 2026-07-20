@@ -1,0 +1,21 @@
+{
+  "input": "帮我审查这个项目，并自动化测试它的网站",
+  "detected_families": ["review", "web_qa"],
+  "primary_family": null,
+  "task_shape": "multi_skill",
+  "scenario_family": null,
+  "actions": [],
+  "expected_behavior": "clarify_no_merge",
+  "orch_role": "ask_user_question",
+  "rationale": "Two primary scenario families detected (review + web_qa). Per spec §3 decision 3 (Single family v1) and G0 (multi_family → clarify, 不混编), orch MUST NOT auto-merge. Must invoke AskUserQuestion to let user pick one primary family. See spec §15.4 acceptance.",
+  "ask_user_question_template": {
+    "header": "Primary family",
+    "options_min": 2,
+    "options_max": 2,
+    "options": [
+      {"label": "review（推荐当用户更关心代码）", "family": "review", "rationale": "审查项目架构/代码质量/可精简点"},
+      {"label": "web_qa（推荐当用户更关心站点运行）", "family": "web_qa", "rationale": "浏览器自动化测试 + 视觉回归 + 性能审计"}
+    ]
+  },
+  "acceptance_criteria_ref": "spec §15.4"
+}

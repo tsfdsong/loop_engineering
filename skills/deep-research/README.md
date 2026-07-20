@@ -30,7 +30,7 @@
 /deep-research（深度调研） 调研 <题目>
 ```
 
-或自然语言（orch 自动调度）：
+或自然语言（由 `/go` family-first 调度）：
 ```
 调研一下 FastAPI 框架的依赖注入机制
 对比 A vs B 哪个更适合我的场景

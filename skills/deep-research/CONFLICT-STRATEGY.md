@@ -70,7 +70,7 @@ handoff:
 
 | 限制 | 严重度 | 缓解 |
 |------|------|------|
-| **orch 默认不自动触发复合编排** | 🟡 中 | v1.0 设计为**显式 `/orch`** 触发；如需自动识别"调研+设计"连串意图，用户需自行 `/orch 1 ...` 或 `/orch 4 ...` |
+| **orch 默认不自动触发复合编排** | 🟡 中 | v1.0 设计为显式 `/orch`；v2.0 起请用 `/go`（family-first）|
 | **description 无法精确抢"做 X"中文短语** | 🟡 中 | A1 用例 BM25 score = 0 是已知问题 |
 | **接力棒机制无自动化** | 🟡 中 | 用户需手动 "继续 .workflow/<slug>/" 触发下一阶段 |
 | **冲突场景 C1/C2/C3 全部被 BM25 路由到 deep-research** | 🟠 较高 | description 中文"调研"权重高于英文"design" |
@@ -131,7 +131,7 @@ handoff:
 
 ## 5. orch 现状与未来扩展
 
-**当前状态（v2.0）**：orch 已升级为意图驱动 family-first 编排器，自然语言优先，`/orch` 仅作显式强制入口（不再用编号）：
+**当前状态（v2.0）**：原 orch 已合并进 go Step 0（family-first）。自然语言优先，显式入口为 `/go`（`/orch` 命令已移除）：
 
 - 自动识别场景家族：review / debug_fix / design_build / research_compare / web_qa / parallel_investigation / refactor / test
 - 在 family 内抽取 actions，按 rule-first 组装串行/并行 DAG

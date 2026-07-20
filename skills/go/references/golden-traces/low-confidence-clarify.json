@@ -1,0 +1,17 @@
+{
+  "input": "帮我看看那个东西",
+  "task_shape": "single_skill",
+  "scenario_family": null,
+  "actions": [],
+  "confidence": 0.42,
+  "expected_behavior": "clarify_low_confidence",
+  "orch_role": "ask_user_question",
+  "rationale": "Vague user intent produces confidence < 0.70. Per spec §3 decision 6 (confidence gate < 0.70 → AskUserQuestion 澄清), orch MUST ask the user to clarify scope/family/goal rather than guess. See spec §15.5 acceptance.",
+  "ask_user_question_template": {
+    "header": "Clarify intent",
+    "options_min": 2,
+    "options_max": 4,
+    "must_include": ["family_explanation", "top2_families"]
+  },
+  "acceptance_criteria_ref": "spec §15.5"
+}

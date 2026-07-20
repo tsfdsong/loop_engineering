@@ -56,7 +56,7 @@ python3 install.py install --check
 | 清单 | `~/.loopengine/install-manifest.json` |
 | Cursor | **仅** `~/.cursor/plugins/local/loopengine`（真实拷贝；**禁止** LE 平铺到 `~/.cursor/skills/`） |
 | Claude | cache + marketplace **各自真实拷贝** + `installed_plugins.json` 键 `loopengine@loopengine-local` |
-| ZCode | `~/.zcode/skills/loopengine`（真实拷贝，禁止软链中央包）+ enabledPlugins |
+| ZCode | 官方 cache `…/plugins/cache/zcode-plugins-official/loopengine/<ver>/` + marketplace.json + enabledPlugins（清理遗留 `~/.zcode/skills/loopengine`） |
 | Cursor MCP | `~/.cursor/mcp.json`（仅 LE 管理的 jcodemunch/repomix/headroom） |
 
 ## 自检

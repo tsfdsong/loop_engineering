@@ -1,0 +1,10 @@
+family: design_build
+goal_defaults: [execute]
+actions:
+  - design_solution
+  - plan_execution
+  - execute_plan
+execution:
+  mode: serial
+  executor_bridge:
+    execute_nodes: go

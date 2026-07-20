@@ -49,7 +49,7 @@
 
 ### Phase 1: Project self-check (orch-side, before invoking this skill)
 
-When invoked via `/orch 6`, orch first runs these checks:
+When invoked via `/go` (family `web_qa` / regression), go first runs these checks:
 - `package.json` dependencies → detect Antd/MUI/Tailwind
 - Routes table (React Router/Vue Router) → list pages to test
 - Existing `e2e/` directory → skip scaffold if present

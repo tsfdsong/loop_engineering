@@ -4,7 +4,7 @@
 
 你拥有 LoopEngine —— 一个包含 **32** 个技能的开发引擎全家桶（**v2.0**：原 `orch` 已合并进 `go` Step 0 · family-first 路由）。
 
-**Below is the full content of your 'loopengine:go' skill —— 你的全自动编排器（v2.0 · family-first · worktree 并发）。单技能任务由原生 description 匹配自动处理；跨模块/多步工程目标用 `/go`。`/orch` 仅为兼容别名。**
+**Below is the full content of your 'loopengine:go' skill —— 你的全自动编排器（v2.0 · family-first · worktree 并发）。单技能任务由原生 description 匹配自动处理；跨模块/多步工程目标用 `/go`。**
 
 go 在 Step 0 识别主 `scenario family`（review / debug_fix / design_build / research_compare / web_qa / parallel_investigation / refactor / test），组装 DAG，按 side-effect-first 委托 direct_skill / loop / go 自身。
 

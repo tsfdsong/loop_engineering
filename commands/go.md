@@ -9,7 +9,7 @@ allowed-tools: Bash, Read, Edit, Write, Agent, TodoWrite
 
 ## 触发词
 
-`/go`、编排、worktree 并发、多模块
+`/go`、编排、worktree 并发、多模块、多技能编排、2+ 技能组合、family 路由
 
 ## 不适用
 

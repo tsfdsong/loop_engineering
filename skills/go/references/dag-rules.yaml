@@ -1,0 +1,82 @@
+global:
+  multi_family: clarify
+  single_skill: exit_orch
+  executor_policy: side_effect_first
+  confidence_bands:
+    auto_execute_min: 0.85
+    confirm_min: 0.70
+  # v2.1 组合白名单：允许高频共现的 family 组合（替代"single family v1"硬约束）
+  # 未列入的组合 → 触发 multi_family=clarify
+  allowed_combinations:
+    - [refactor, test]          # 重构后补测试（最常见）
+    - [review, refactor]        # 审查后重构
+    - [debug_fix, test]         # 修复后加回归测试
+    - [design_build, test]      # 新功能带测试
+    - [web_qa, debug_fix]       # web 审计发现 bug → 修复
+    - [web_qa, refactor]        # web 审计后重构改进
+
+review:
+  order: [system_review, code_review, code_quality_simplify]
+  append:
+    report: [synthesize_findings]
+    plan: [synthesize_findings, plan_execution]
+
+debug_fix:
+  order: [debug_root_cause, fix_issue, verify_result]
+
+design_build:
+  order: [design_solution, plan_execution, execute_plan]
+
+research_compare:
+  order: [research_evidence, compare_options]
+  append:
+    report: [synthesize_findings]
+    plan: [synthesize_findings, plan_execution]
+
+web_qa:
+  bootstrap: [browser_explore]
+  parallel:
+    - browser_regression_test
+    - browser_visual_diff
+    - browser_accessibility_audit
+    - browser_perf_audit
+  append:
+    report: [synthesize_findings]
+    plan: [synthesize_findings, plan_execution]
+
+parallel_investigation:
+  bootstrap: [parallel_probe]
+  append:
+    report: [synthesize_findings]
+    plan: [synthesize_findings, plan_execution]
+
+refactor:
+  order: [assess_refactor_scope, refactor_apply, verify_behavior_preserved]
+  append:
+    report: [synthesize_findings]
+
+test:
+  order: [assess_test_gaps, write_tests, run_and_verify]
+  append:
+    report: [synthesize_findings]
+
+# 组合 family 规则：按白名单顺序串接（前置 family 输出作为后置输入）
+combination_rules:
+  refactor_then_test:
+    sequence: [refactor, test]
+    bridge: handoff.refactored_modules   # refactor 输出模块清单 → test 在其中补测
+  review_then_refactor:
+    sequence: [review, refactor]
+    bridge: handoff.review_findings
+  debug_fix_then_test:
+    sequence: [debug_fix, test]
+    bridge: handoff.fixed_modules
+  design_build_then_test:
+    sequence: [design_build, test]
+    bridge: handoff.built_modules
+  web_qa_then_debug_fix:
+    sequence: [web_qa, debug_fix]
+    bridge: handoff.web_qa_findings   # web 审计 4 路输出（e2e/a11y/visual/perf）→ debug_fix 修复
+  web_qa_then_refactor:
+    sequence: [web_qa, refactor]
+    bridge: handoff.review_findings   # web 审计发现 → refactor 改进

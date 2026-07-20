@@ -67,7 +67,7 @@ Key points:
 - For single-task closed-loop coding: use loop skill (/loop).
 - For multi-module parallel orchestration with worktree isolation: use go (/go).
 - For cross-cutting concerns: see degradation.md (fallback chain) and runtime-config.md (.loopengine.yaml).
-- The orchestration layer absorbed orch v1 (family recognition + DAG assembly). /orch remains only as explicit force-orchestrate.
+- The orchestration layer absorbed orch v1 (family recognition + DAG assembly). Use /go for multi-skill orchestration.
 - This bootstrap is host-tool agnostic and works with any MCP-compatible AI coding tool.
 </EXTREMELY_IMPORTANT>"
 

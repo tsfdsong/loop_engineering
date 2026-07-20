@@ -80,7 +80,7 @@ jcodemunch-mcp index_folder .
 | **所有平台** | `curl …/install.py \| python3`（detect 本机工具） | ✅ |
 | **Cursor** | `~/.cursor/plugins/local/loopengine`（官方 plugins，非平铺） | ✅ |
 | **Claude Code** | `installed_plugins.json` + local marketplace | ✅ |
-| **ZCode** | `~/.zcode/skills/loopengine` + enabledPlugins | ✅ |
+| **ZCode** | 官方 cache `~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/<ver>/` + marketplace.json + enabledPlugins | ✅ |
 | **Codex / Gemini** | Tier-2 整包 + 规则注入 | ✅ |
 | **Copilot / Pi** | Tier-3 skills + AGENTS 注入 | ✅ |
 
@@ -117,7 +117,7 @@ jcodemunch-mcp index_folder .
 ```
 自动：意图识别（8 family）→ 6 维需求分析 → 拆分子任务 → worktree 并发 → 回归 → 系统审查 → 交付。
 
-> **v2.0**：原独立 `orch` 技能已合并进 go Step 0。`/orch` 保留为兼容别名，行为委托 `/go`。
+> **v2.0**：原独立 `orch` 技能已合并进 go Step 0。跨模块/多技能编排请用 `/go`（不再提供 `/orch` 命令别名）。
 
 #### family 路由示例（由 go 承担）
 
@@ -185,9 +185,8 @@ loopengine/
 │   └── ...                  # 其余技能
 ├── commands/                # Slash commands（plugin 包组件）
 │   ├── audit.md             # /audit 6 维度部署审计
-│   ├── orch.md              # /orch 兼容别名（委托 /go）
-│   ├── loop.md              # /loop 闭环编码
-│   └── go.md                # /go 工程化执行
+│   ├── go.md                # /go 全自动编排（含原 orch family 路由）
+│   └── loop.md              # /loop 闭环编码
 ├── hooks/                   # 会话启动钩子
 │   ├── session-start        # 启动引导脚本（注入 go runtime bundle）
 │   ├── run-hook.cmd         # 跨平台 polyglot 包装器

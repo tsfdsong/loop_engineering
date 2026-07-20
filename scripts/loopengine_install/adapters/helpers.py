@@ -231,6 +231,15 @@ def revert_registry_write(op: Operation) -> None:
         data["plugins"].pop(op.key, None)
         json_io.atomic_write_json(str(path), data)
         return
+    # ZCode marketplace.json plugins[] by name
+    if op.registry == "zcode.marketplace.plugins" and isinstance(data.get("plugins"), list):
+        data["plugins"] = [
+            p
+            for p in data["plugins"]
+            if not (isinstance(p, dict) and p.get("name") == op.key)
+        ]
+        json_io.atomic_write_json(str(path), data)
+        return
     # known_marketplaces top-level key (Claude)
     if op.key in data and op.registry and "marketplace" in (op.registry or ""):
         data.pop(op.key, None)

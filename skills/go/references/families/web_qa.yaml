@@ -1,0 +1,25 @@
+family: web_qa
+goal_defaults: [report]
+actions:
+  - browser_explore
+  - browser_regression_test
+  - browser_visual_diff
+  - browser_accessibility_audit
+  - browser_perf_audit
+  - synthesize_findings
+  - plan_execution
+execution:
+  mode: parallel
+  bootstrap:
+    - browser_explore
+  # bootstrap precondition: browser_explore 依赖 agent-browser CLI 已安装 + Chrome/Chromium 可用。
+  # orch 在调度前应校验 `agent-browser --version` 可执行；失败时降级：跳过 browser_explore，
+  # 直接进入 fan_out 4 项（它们各自含独立安装检查），不应整条 family 失败。
+  fan_out:
+    - browser_regression_test
+    - browser_visual_diff
+    - browser_accessibility_audit
+    - browser_perf_audit
+  goal_append:
+    report: [synthesize_findings]
+    plan: [synthesize_findings, plan_execution]

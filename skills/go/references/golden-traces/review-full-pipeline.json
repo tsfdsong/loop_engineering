@@ -1,0 +1,19 @@
+{
+  "input": "帮我全面审查这个项目，看看架构、代码问题和可精简点，然后出计划",
+  "scenario_family": "review",
+  "actions": [
+    "system_review",
+    "code_review",
+    "code_quality_simplify",
+    "synthesize_findings",
+    "plan_execution"
+  ],
+  "expected_dag": [
+    "system-review",
+    "code-reviewer",
+    "clean-code",
+    "brainstorming",
+    "writing-plans"
+  ],
+  "acceptance_criteria_ref": "spec §15.1"
+}

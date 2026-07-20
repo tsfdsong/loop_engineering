@@ -1,0 +1,24 @@
+{
+  "executor": "loop",
+  "required_fields": [
+    "executor",
+    "family",
+    "action",
+    "goal",
+    "task_summary",
+    "scope",
+    "acceptance_criteria",
+    "handoff_inputs",
+    "expected_outputs"
+  ],
+  "expected_outputs": [
+    "files_changed",
+    "gate_result",
+    "artifacts",
+    "next_task_hint"
+  ],
+  "notes": [
+    "Use for side_effects=write nodes with single-task scope.",
+    "loop receives a single closed-loop task package, not a multi-node DAG."
+  ]
+}

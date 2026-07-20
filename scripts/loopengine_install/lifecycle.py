@@ -387,14 +387,23 @@ def _check_operation(op, home: Path) -> dict | None:
         except json.JSONDecodeError as exc:
             return {"id": op.id, "message": f"registry invalid JSON: {exc}"}
         key = op.key
-        if isinstance(data.get("plugins"), dict) and key in data["plugins"]:
+        plugins = data.get("plugins")
+        # Claude installed_plugins: plugins is a dict of keys
+        if isinstance(plugins, dict) and key in plugins:
             return None
-        enabled = (data.get("plugins") or {}).get("enabledPlugins")
-        if isinstance(enabled, dict) and enabled.get(key) is True:
+        # ZCode marketplace.json: plugins is a list of {name,...}
+        if isinstance(plugins, list) and any(
+            isinstance(x, dict) and x.get("name") == key for x in plugins
+        ):
             return None
+        # ZCode config: plugins.enabledPlugins
+        if isinstance(plugins, dict):
+            enabled = plugins.get("enabledPlugins")
+            if isinstance(enabled, dict) and enabled.get(key) is True:
+                return None
         if key in data:
             return None
-        # zcode marketplaces list by id
+        # zcode known_marketplaces list by id
         mps = data.get("marketplaces")
         if isinstance(mps, list) and any(
             isinstance(x, dict) and x.get("id") == key for x in mps

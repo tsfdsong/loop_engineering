@@ -1,8 +1,9 @@
-# Plugin-Shaped Install v2.1 Implementation Plan
+# Plugin-Shaped Install v2.3 Implementation Plan
 
 > **Storage (D13 · design v2.3):** No symlinks. Central `current` is a pointer file.
 > Each tool gets its own real `copy-tree`. Cursor is **plugin-only** (no LE flat skills).
-> Spec truth: `docs/2026-07-20-plugin-shaped-install-design-v2.md`.
+> ZCode uses official plugin cache (not `~/.zcode/skills/loopengine`).
+> Spec truth: `docs/2026-07-20-plugin-shaped-install-design-v2.md` (v2.3).
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `subagent-driven-development` (recommended) or `executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -12,7 +13,7 @@
 
 **Tech Stack:** Python ≥3.10 (stdlib + existing `scripts/_lib/json_io.py`), unittest, JSON Schema (stdlib `json` + lightweight validation or `jsonschema` if already available—prefer stdlib subset checks in tests).
 
-**Spec:** `docs/2026-07-20-plugin-shaped-install-design-v2.md` (Approved 2026-07-20 · v2.1)
+**Spec:** `docs/2026-07-20-plugin-shaped-install-design-v2.md` (Approved · **v2.3**)
 
 **Replaces:** Previous Bash-centric plan content in this file.
 
@@ -41,8 +42,9 @@
 | `docs/spikes/2026-07-20-claude-installed-plugins.md` | P0 Claude spike log |
 | `tests/test_loopengine_install_ops.py` | ops + manifest |
 | `tests/test_loopengine_install_cursor.py` | Cursor adapter (tmp dirs) |
-| `tests/test_loopengine_install_claude.py` | Claude registry |
-| `tests/test_loopengine_install_lifecycle.py` | install/uninstall dry fixtures |
+| `tests/test_loopengine_install_zcode.py` | ZCode official cache + marketplace |
+| `tests/test_loopengine_install_check.py` | `install --check` mini-doctor |
+| `tests/test_loopengine_install_cli.py` / `package.py` / `tier23.py` | CLI / central package / Tier-2·3 |
 | Delete after P2 | `install.sh`, `install.ps1`, `scripts/install/*.sh` |
 
 **Reuse (call, do not fork blindly):** `scripts/render_plugins.py`, `scripts/merge_mcp_config.py`, `scripts/inject_rules.py`, `scripts/register_zcode_*.py`, `scripts/_lib/json_io.py`.

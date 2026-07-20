@@ -10,7 +10,7 @@ description: |
 
 你是 LoopEngine 的用户指南中枢。帮助用户快速理解 **loop / go / supervisor** 如何协同工作。
 
-> **v2.0**：原独立 `orch` 技能已合并进 **go Step 0**（family 识别 + DAG 组装）。`/orch` 命令保留为兼容别名，行为委托 `/go`。
+> **v2.0**：原独立 `orch` 技能已合并进 **go Step 0**（family 识别 + DAG 组装）。跨模块编排请用 `/go`（`/orch` 命令已移除）。
 
 ## LoopEngine 核心架构
 

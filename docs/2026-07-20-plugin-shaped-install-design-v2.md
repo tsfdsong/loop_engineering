@@ -179,7 +179,7 @@ write_manifest()
 |------|-----------------------------------------------|
 | Cursor | **仅** `~/.cursor/plugins/local/loopengine`（真实目录；禁止软链；禁止 LE 平铺） |
 | Claude | cache `…/plugins/cache/loopengine-local/loopengine/<ver>/` + marketplace `…/marketplaces/loopengine-local/plugins/loopengine/` |
-| ZCode | `~/.zcode/skills/loopengine` |
+| ZCode | cache `~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/<ver>/` + `marketplaces/.../marketplace.json` + enabledPlugins（**禁止**仅写 `~/.zcode/skills/loopengine`） |
 | Codex / Gemini / Copilot / Pi | 各 Adapter 约定的本工具目录（同样 copy-tree） |
 
 磁盘占用 = 中央包 ×1 + 已选工具各 ×1（可接受；正确性优先于去重）。
@@ -201,9 +201,12 @@ write_manifest()
 
 ### 8.3 ZCode（Tier-1）
 
-- `~/.zcode/skills/loopengine` **真实整包拷贝**（禁止软链到中央包）
-- 复用/迁入现有 marketplace + enabledPlugins 注册逻辑
-- MCP + AGENTS 注入纳入同一 uninstall 路径
+- **官方插件 cache（唯一 skills 真源）**：`~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/<version>/` 真实拷贝（含 `skills/`、`hooks/`、`.zcode-plugin/plugin.json`、`.zcode-plugin-seed.json`）。
+- **marketplace.json**：写入 `plugins[]` 条目（`name=loopengine`、`cachePath`、`version`）。
+- **enabledPlugins**：`loopengine@zcode-plugins-official=true`。
+- **禁止**仅部署 `~/.zcode/skills/loopengine`（技能树旁路；安装时清理该遗留路径）。
+- MCP + AGENTS 注入纳入同一 uninstall 路径。
+- 参考：`scripts/install_zcode_plugin.py`（zcode.cjs 逆向：scanOfficialCache 只认 cache 三件套）。
 
 ### 8.4 Tier-2 / Tier-3
 
@@ -235,7 +238,7 @@ uninstall = 对 `ownership=managed` **逆序** revert。
 2. `curl | python3` 完成装或升；`install.py uninstall` 干净卸载。  
 3. Cursor：`plugins/local/loopengine` 为真实目录（非 symlink），含全部 skills/hooks；**无** LE 平铺于 `~/.cursor/skills/`；会话可从 plugin 加载。  
 4. Claude：`installed_plugins.json` 含 LE 且 installPath 为真实可读目录。  
-5. ZCode：真实整包 + registry 一致；卸载可逆；plugin_root 非 symlink。  
+5. ZCode：官方 cache 整包 + marketplace.json 含 loopengine + enabledPlugins；卸载可逆；plugin_root 非 symlink；无遗留 `~/.zcode/skills/loopengine`。  
 6. MCP / AGENTS：安装写入、卸载剥离；用户非 LE 内容保留。  
 7. Tier-1 默认 detect 安装；`--only` 可用。  
 8. `--dry-run --json` 可机器解析；manifest 通过 schema。  

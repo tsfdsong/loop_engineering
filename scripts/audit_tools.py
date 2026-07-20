@@ -52,7 +52,7 @@ class AuditResult:
 # 推导规则：adapter.id → 用户级部署根（~/.{id}/skills/loopengine 或 ~/.{id}/）
 _DEPLOY_ROOT_BY_ID = {
     "claude-code": "~/.claude/plugins/cache/loopengine-local/loopengine",
-    "zcode": "~/.zcode/skills/loopengine",
+    "zcode": "~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine",
     "cursor": "~/.cursor/plugins/local/loopengine",
     "codex": "~/.codex/skills/loopengine",
     "gemini-cli": "~/.gemini/extensions/loopengine",
@@ -496,7 +496,7 @@ def dimension_g_registry_namespace(
                 )
             )
 
-    # ZCode enabledPlugins
+    # ZCode: enabledPlugins + official cache + marketplace entry
     if not tool_filter or tool_filter in ("zcode", "all"):
         cfg = os.path.join(home, ".zcode", "cli", "config.json")
         key = "loopengine@zcode-plugins-official"
@@ -523,6 +523,88 @@ def dimension_g_registry_namespace(
         else:
             results.append(
                 AuditResult("G", "info", "zcode", "无 zcode cli config（未装？）")
+            )
+
+        cache_base = os.path.join(
+            home,
+            ".zcode",
+            "cli",
+            "plugins",
+            "cache",
+            "zcode-plugins-official",
+            "loopengine",
+        )
+        version_dirs = []
+        if os.path.isdir(cache_base):
+            version_dirs = [
+                d
+                for d in os.listdir(cache_base)
+                if os.path.isdir(os.path.join(cache_base, d))
+                and os.path.isfile(
+                    os.path.join(cache_base, d, ".zcode-plugin", "plugin.json")
+                )
+            ]
+        if version_dirs:
+            results.append(
+                AuditResult(
+                    "G",
+                    "ok",
+                    "zcode",
+                    f"官方 cache 含 loopengine/{version_dirs[0]}",
+                )
+            )
+        else:
+            results.append(
+                AuditResult(
+                    "G",
+                    "error",
+                    "zcode",
+                    "官方 cache 缺 loopengine/<ver>（仅 skills 树不算插件）",
+                )
+            )
+
+        mp = os.path.join(
+            home,
+            ".zcode",
+            "cli",
+            "plugins",
+            "marketplaces",
+            "zcode-plugins-official",
+            "marketplace.json",
+        )
+        if os.path.isfile(mp):
+            try:
+                with open(mp, encoding="utf-8") as f:
+                    plugins = json.load(f).get("plugins") or []
+                has_le = any(
+                    isinstance(p, dict) and p.get("name") == "loopengine" for p in plugins
+                )
+                results.append(
+                    AuditResult(
+                        "G",
+                        "ok" if has_le else "error",
+                        "zcode",
+                        (
+                            "marketplace.json 含 loopengine"
+                            if has_le
+                            else "marketplace.json 缺 loopengine 条目"
+                        ),
+                    )
+                )
+            except (json.JSONDecodeError, OSError) as exc:
+                results.append(
+                    AuditResult("G", "warning", "zcode", f"无法读 marketplace: {exc}")
+                )
+
+        legacy = os.path.join(home, ".zcode", "skills", "loopengine")
+        if os.path.exists(legacy):
+            results.append(
+                AuditResult(
+                    "G",
+                    "warning",
+                    "zcode",
+                    "遗留 ~/.zcode/skills/loopengine 仍在（应清，改走官方 cache）",
+                )
             )
 
     # Manifest presence
