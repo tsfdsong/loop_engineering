@@ -1,12 +1,41 @@
 # LoopEngine 安装指南
 
+> **v2.1 安装（Python 统一入口 · 分支 `go-plugin-shaped-install-py`）**：一行 `install.py` 覆盖 macOS / Windows / Linux；按官方插件路径部署 skills/hooks，并写入 MCP / AGENTS / 注册表。旧 `install.sh` / `install.ps1` 将在本改造完成后删除。
+
+## 一行安装（推荐）
+
+```bash
+# 已有本仓库 clone：
+python3 install.py install
+# 或指定工具：
+python3 install.py install --only=cursor,claude,zcode
+
+# 卸载（按 manifest 可逆）：
+python3 install.py uninstall
+
+# 远程一行（需本机 Python ≥ 3.10）：
+curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/go-plugin-shaped-install-py/install.py | python3
+# Windows 可用 python；fallback：curl -o install.py … && python install.py
+```
+
+安装后检查：
+
+- Cursor：`~/.cursor/plugins/local/loopengine`（不再平铺 `~/.cursor/skills/<le-skill>/`）
+- Claude：`installed_plugins.json` 含 `loopengine@loopengine-local`
+- ZCode：`~/.zcode/skills/loopengine` + enabledPlugins
+- 清单：`~/.loopengine/install-manifest.json`
+
+---
+
+## 旧版说明（Bash / PowerShell · 过渡期仍保留）
+
 > v1.3.2（2026-07-03）— 新增 `install.ps1`（Windows PowerShell 兄弟脚本，纯 PS 无需 Git Bash）；修复 3 个 install.sh bug（filter 分隔符 / Cursor 路径扁平 / macOS MCP fallback）；merge_mcp_config.py headroom 改可选。**v1.3.2+ 单模式：每次执行都强制覆盖所有文件，无 dry-run/无版本等待**。
 > v1.3.1 三平台 install 脚本合一（3 平台从 ~145 → ~18 行），merge_mcp_config.py 合并 ZCode + Cursor 双 schema。
 > v1.3.0 OS + AI Agent 全自动感知。
 
-## 一行安装
+### 一行安装（旧）
 
-### macOS / Linux / Windows Git Bash
+#### macOS / Linux / Windows Git Bash
 
 ```bash
 curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash

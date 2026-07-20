@@ -6,6 +6,7 @@ import argparse
 import json
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass
@@ -17,6 +18,7 @@ class CliArgs:
     all_tools: bool = False
     only: list[str] | None = None
     check: bool = False
+    repo_root: Path | None = None
 
 
 def parse_args(argv: list[str] | None = None) -> CliArgs:
@@ -39,7 +41,11 @@ def parse_args(argv: list[str] | None = None) -> CliArgs:
     )
     parser.add_argument("--target", default="", help="Alias for --only")
     parser.add_argument("--check", action="store_true")
-    # Compat: install.py --uninstall
+    parser.add_argument(
+        "--repo",
+        default="",
+        help="Override repo root (default: discover from install.py / cwd)",
+    )
     if "--uninstall" in argv:
         argv = [a for a in argv if a != "--uninstall"]
         if not argv or argv[0] not in ("install", "uninstall", "upgrade"):
@@ -51,6 +57,7 @@ def parse_args(argv: list[str] | None = None) -> CliArgs:
     cmd = ns.command
     if cmd == "upgrade":
         cmd = "install"
+    repo = Path(ns.repo).resolve() if ns.repo else None
     return CliArgs(
         command=cmd,
         dry_run=ns.dry_run,
@@ -59,31 +66,51 @@ def parse_args(argv: list[str] | None = None) -> CliArgs:
         all_tools=ns.all_tools,
         only=only or None,
         check=ns.check,
+        repo_root=repo,
     )
+
+
+def _discover_repo(explicit: Path | None) -> Path:
+    if explicit and explicit.is_dir():
+        return explicit
+    # Prefer parent of scripts/ when imported from package
+    here = Path(__file__).resolve()
+    candidate = here.parents[2]  # scripts/loopengine_install/cli.py → repo root
+    if (candidate / "package.json").is_file() and (candidate / "skills").is_dir():
+        return candidate
+    cwd = Path.cwd()
+    if (cwd / "package.json").is_file():
+        return cwd
+    raise SystemExit("Cannot locate LoopEngine repo root (pass --repo)")
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     if args.check and args.command == "install":
-        # P3 stub
-        if args.json_out:
-            print(json.dumps({"ok": True, "check": "stub"}))
-        else:
-            print("check: stub (ok)")
+        path = Path.home() / ".loopengine" / "install-manifest.json"
+        ok = path.is_file()
+        payload = {"ok": ok, "manifest": str(path)}
+        print(json.dumps(payload) if args.json_out else f"check: {'ok' if ok else 'missing manifest'}")
+        return 0 if ok else 1
+
+    from loopengine_install import lifecycle
+
+    if args.command == "uninstall":
+        lifecycle.do_uninstall(
+            dry_run=args.dry_run,
+            json_out=args.json_out,
+        )
         return 0
 
-    # Lifecycle wired in later tasks; for now report parsed plan
-    payload = {
-        "command": args.command,
-        "dry_run": args.dry_run,
-        "force": args.force,
-        "all": args.all_tools,
-        "only": args.only,
-    }
-    if args.json_out:
-        print(json.dumps(payload, ensure_ascii=False))
-    else:
-        print(f"loopengine_install: {args.command} (lifecycle pending)")
+    repo = _discover_repo(args.repo_root)
+    lifecycle.do_install(
+        repo_root=repo,
+        only=args.only,
+        all_tools=args.all_tools,
+        dry_run=args.dry_run,
+        force=args.force,
+        json_out=args.json_out,
+    )
     return 0
 
 

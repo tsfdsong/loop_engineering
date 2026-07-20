@@ -145,9 +145,8 @@ def apply_operation(op: Operation) -> None:
         _link_or_copy(Path(op.source).expanduser(), Path(op.destination).expanduser())
         return
     if op.kind in {"registry-write", "merge-json", "inject-markers"}:
-        raise NotImplementedError(
-            f"{op.kind} apply is implemented by adapters / later ops helpers"
-        )
+        # Applied by adapters during install; apply_operation is for link-or-copy / repair.
+        return
     raise ValueError(f"unknown kind: {op.kind}")
 
 
@@ -163,8 +162,19 @@ def revert_operation(op: Operation) -> None:
         elif dst.is_dir():
             shutil.rmtree(dst)
         return
-    if op.kind in {"registry-write", "merge-json", "inject-markers"}:
-        raise NotImplementedError(
-            f"{op.kind} revert is implemented by adapters / later ops helpers"
-        )
+    if op.kind == "merge-json":
+        from loopengine_install.adapters.helpers import revert_merge_json
+
+        revert_merge_json(op)
+        return
+    if op.kind == "inject-markers":
+        from loopengine_install.adapters.helpers import revert_inject_markers
+
+        revert_inject_markers(op)
+        return
+    if op.kind == "registry-write":
+        from loopengine_install.adapters.helpers import revert_registry_write
+
+        revert_registry_write(op)
+        return
     raise ValueError(f"unknown kind: {op.kind}")

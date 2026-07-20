@@ -2,7 +2,7 @@
 
 > **日期**: 2026-07-20  
 > **分支**: `go-plugin-shaped-install-py`  
-> **状态**: **PENDING_USER** — 树已就位，需人工在 Cursor 新会话验证 skill 加载
+> **状态**: **PASS via install.py** — 2026-07-20 用 `python3 install.py install --only=cursor,claude,zcode` 实装验证通过（见同批验证记录）
 
 ## 环境
 

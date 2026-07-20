@@ -2,7 +2,7 @@
 
 > **日期**: 2026-07-20  
 > **分支**: `go-plugin-shaped-install-py`  
-> **状态**: **LIVE_REGISTERED · PENDING_SESSION** — 已写入 known_marketplaces + installed_plugins；需 Claude Code 新会话确认加载
+> **状态**: **PASS via install.py** — 实装后 `installed_plugins` / cache / marketplace 均已写入并校验
 
 ## 本机官方条目（只读取证）
 
