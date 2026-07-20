@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "loopengine",
-      "description": "LoopEngine: loop闭环编码 + go全自动编排（32 技能 · family-first · orch 已合并进 go）",
+      "description": "LoopEngine: loop闭环编码 + go全自动编排（32 技能 · family-first）",
       "version": "1.3.1",
       "source": "./",
       "author": {

@@ -1,32 +1,25 @@
 #!/usr/bin/env python3
 # ════════════════════════════════════════════════════════════
-# install_zcode_plugin.py — 把 loopengine 注册为正经 ZCode 插件
+# install_zcode_plugin.py — DEPRECATED CLI（emergency / hash helper）
 # ════════════════════════════════════════════════════════════
 #
-# 背景：
-#   install.sh 按设计（INSTALL.md L224「不依赖 marketplace.json 注册」）只写
-#   config.json::enabledPlugins + known_marketplaces.json + 把 skills 文件丢到
-#   ~/.zcode/skills/loopengine/。它【从不】创建 ZCode 插件管理 UI 读取的「三件套」：
-#     ① marketplace.json 的 plugins[] 条目
-#     ② cache 版本目录 ~/.zcode/cli/plugins/cache/<mp>/<plugin>/<version>/
-#     ③ 该版本目录内的 .zcode-plugin-seed.json
-#   三件套只有 ZCode 原生插件安装流程或本等价脚本能造。
+# DEPRECATED: production install is `python3 install.py install` via
+# loopengine_install.adapters.zcode. Prefer that path.
+#
+# Still used as a library: adapters import compute_seed_hash().
+# CLI below is emergency fallback only (debug / offline recovery).
 #
 # 根因验证（zcode.cjs 逆向，2026-07-14）：
 #   - 插件发现路径 scanOfficialCache + loadPlugin 只看：目录存在 +
-#     .zcode-plugin/plugin.json 的 name 合法（^[a-z0-9][a-z0-9._-]{0,127}$）+
-#     在 marketplace.json 列表里。
-#   - seed.json 的 hash 在加载时【不校验】（verifyHash=0 命中；seed.json 仅在
-#     官方内置插件 seeding 的 EEXIST 竞态里被读一次）。
-#   → 因此脚本构造三件套可靠；hash 值即使是近似/占位也不影响插件加载。
+#     .zcode-plugin/plugin.json 的 name 合法 + marketplace.json 列表。
+#   - seed.json 的 hash 在加载时【不校验】（verifyHash=0）。
 #
-# 用法：
+# 用法（emergency）：
 #   python3 scripts/install_zcode_plugin.py              # 安装/升级
 #   python3 scripts/install_zcode_plugin.py --uninstall  # 卸载（删三件套）
 #   python3 scripts/install_zcode_plugin.py --dry-run    # 只打印计划不写盘
 #
-# 依赖：纯标准库（json/shutil/hashlib/subprocess/os/sys），无第三方依赖。
-# 需要 node（计算 seed hash；若不可用则回退占位 hash 并告警）。
+# 依赖：纯标准库；可选 node（compute_seed_hash；不可用则占位 hash）。
 #
 # 与 install.sh 的关系：互补不冲突。install.sh 管 skills filesystem 部署 +
 # 红线注入 + MCP；本脚本额外补「插件管理可见」三件套。

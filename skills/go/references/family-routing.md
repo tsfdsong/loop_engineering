@@ -1,7 +1,7 @@
-# Family Routing（吸收自 orch v2.0 · v2.0 整合 spec-E · D4.1）
+# Family Routing（v2.0 · family-first · D4.1）
 
-> 本文件承载原 orch 的 family 识别能力。orch 已合并到 go（v2.0）。
-> 运行时真源（v2.0 迁移）：`skills/go/references/dag-rules.yaml` + `intent-schema.json` + `families/*.yaml`
+> go Step 0 的 family 识别能力真源。
+> 运行时真源：`skills/go/references/dag-rules.yaml` + `intent-schema.json` + `families/*.yaml`
 
 ## 8 场景家族
 
@@ -52,7 +52,7 @@
 
 未列入的组合仍触发澄清（不自由混编）。
 
-## 执行器边界（保留 orch 的 side-effect-first）
+## 执行器边界（side-effect-first）
 
 | 节点特征 | 执行器 |
 |---|---|
@@ -60,7 +60,7 @@
 | 单任务写代码 / 修复 | `loop` |
 | 跨模块 / 多子任务实施 | `go` + supervisor |
 
-orch（现 go Step 0）只负责 **"意图 → 执行图"**，不重复：
+go Step 0 只负责 **"意图 → 执行图"**，不重复：
 - loop 的门禁 / 自愈 / G9
 - go 的 worktree / 并发 / G10 / 集成回归
 
@@ -90,7 +90,7 @@ browser_explore
         brainstorming(synthesize)
 ```
 
-## 设计原则（继承自 orch v2.0）
+## 设计原则（family-first · v2.0）
 
 1. **Family-first**：先识别场景家族，再在家族内抽取动作
 2. **Action, not skill**：用户意图先落到稳定 action，而不是直连技能名

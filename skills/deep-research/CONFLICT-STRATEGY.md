@@ -1,6 +1,6 @@
 # 冲突场景调优策略（deep-research vs brainstorming）
 
-> 📌 **本文件用途**：当用户输入同时包含 brainstorming 和 deep-research 触发词时，给 orch 和 AI 提供调优策略。
+> 📌 **本文件用途**：当用户输入同时包含 brainstorming 和 deep-research 触发词时，给 go 和 AI 提供调优策略。
 > 📅 **生成时间**：2026-06-29（基于 BM25 + LLM 模拟路由测试结果）
 
 ---
@@ -70,7 +70,7 @@ handoff:
 
 | 限制 | 严重度 | 缓解 |
 |------|------|------|
-| **orch 默认不自动触发复合编排** | 🟡 中 | v1.0 设计为显式 `/orch`；v2.0 起请用 `/go`（family-first）|
+| **go 默认不自动触发复合编排** | 🟡 中 | 显式用 `/go`（family-first）触发多技能编排 |
 | **description 无法精确抢"做 X"中文短语** | 🟡 中 | A1 用例 BM25 score = 0 是已知问题 |
 | **接力棒机制无自动化** | 🟡 中 | 用户需手动 "继续 .workflow/<slug>/" 触发下一阶段 |
 | **冲突场景 C1/C2/C3 全部被 BM25 路由到 deep-research** | 🟠 较高 | description 中文"调研"权重高于英文"design" |
@@ -129,21 +129,21 @@ handoff:
 
 ---
 
-## 5. orch 现状与未来扩展
+## 5. go 现状与未来扩展
 
-**当前状态（v2.0）**：原 orch 已合并进 go Step 0（family-first）。自然语言优先，显式入口为 `/go`（`/orch` 命令已移除）：
+**当前状态（v2.0）**：go Step 0 承担 family-first 意图识别。自然语言优先，显式入口为 `/go`：
 
 - 自动识别场景家族：review / debug_fix / design_build / research_compare / web_qa / parallel_investigation / refactor / test
 - 在 family 内抽取 actions，按 rule-first 组装串行/并行 DAG
-- handoff schema 自动把前一阶段结构化产出喂给后一阶段（见 `skills/go/references/handoff-orch-schema.json`）
+- handoff schema 自动把前一阶段结构化产出喂给后一阶段（见 `skills/go/references/handoff-schema.json`）
 
-> v1.0 的"5 类复合任务链 + `/orch <type>` 编号入口"已被 v2.0 取代。设计哲学仍保留：orch 只做"意图→执行图"规划，不替代 go/loop 的执行细节。
+> 设计哲学：go Step 0 只做"意图→执行图"规划，不替代 go 后续 worktree 并发 / loop 的执行细节。
 
 ---
 
 ## 6. 下一步
 
-**测试**：在 ZCode 端跑 C1/C2/C3 实测，看 orch 实际怎么路由。如果实测仍全部 → deep-research，那意味着 orch 用的是 BM25-like 关键词匹配（确认了我的怀疑）。如果实测给出"复合任务提示"，那意味着 orch 已有 LLM 路由层（更智能）。
+**测试**：在 ZCode 端跑 C1/C2/C3 实测，看 go 实际怎么路由。如果实测仍全部 → deep-research，那意味着 go 用的是 BM25-like 关键词匹配（确认了我的怀疑）。如果实测给出"复合任务提示"，那意味着 go 已有 LLM 路由层（更智能）。
 
 **记录**：实测结果填到 `96-scheduling-accuracy-test.md` 的 C 类表。
 

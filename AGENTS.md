@@ -1,7 +1,7 @@
 # LoopEngine — 循环工程全家桶 (v2.0 · Index-Driven)
 
 > **单点真源**：仓库 AGENTS.md = 5 Core Instincts + 7 Verbal Rules + Unified Checklist + Tier
-> 外部执行环境（~/.zcode/、~/.claude/ 等）由 `install.sh` marker 注入同步，本文件不直接修改外部
+> 外部执行环境（~/.zcode/、~/.claude/ 等）由 `install.py` marker 注入同步，本文件不直接修改外部
 > 完整红线演进史：`docs/legacy/red-lines-history.md`
 >
 > **v2.0 重构**（2026-07-17）：10 条扁平红线 → **5 Core（always-on）+ 7 Verbal（场景触发）**；详规下沉到 `skills/*/SKILL.md`；新增 C5 Token 感知 / V4 Worktree / V7 视觉 三条红线；引入 MCP Tier 机制。

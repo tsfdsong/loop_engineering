@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SessionStart hook for loopengine plugin (Codex variant)
-# Bootstrap: injects go runtime bundle at session start (orch v2 merged into go)
+# Bootstrap: injects go runtime bundle at session start
 # 公共逻辑见 hooks/_lib.sh
 
 set -euo pipefail

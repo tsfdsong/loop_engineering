@@ -1,5 +1,5 @@
 {
-  "$schema": "orch-v2-intent-schema",
+  "$schema": "go-intent-schema",
   "task_shape": [
     "single_skill",
     "multi_skill"

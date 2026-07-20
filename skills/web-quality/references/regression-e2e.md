@@ -47,7 +47,7 @@
 
 ## Workflow
 
-### Phase 1: Project self-check (orch-side, before invoking this skill)
+### Phase 1: Project self-check (go-side, before invoking this skill)
 
 When invoked via `/go` (family `web_qa` / regression), go first runs these checks:
 - `package.json` dependencies → detect Antd/MUI/Tailwind
@@ -97,7 +97,7 @@ Choose one:
 - GitLab CI (see § 2)
 - Jenkins (see § 3)
 
-## Inputs (from orch or user)
+## Inputs (from go or user)
 
 | Input | Required | Default |
 |---|---|---|

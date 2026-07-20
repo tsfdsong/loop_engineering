@@ -62,7 +62,7 @@ def main():
             "path": cache_path,
         },
         "name": marketplace_id,
-        "description": f"ZCode official plugins cache ({marketplace_id}) — registered by LoopEngine install.sh",
+        "description": f"ZCode official plugins cache ({marketplace_id}) — registered by LoopEngine install.py",
         "addedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z"),
         "pluginCount": 0,
     }

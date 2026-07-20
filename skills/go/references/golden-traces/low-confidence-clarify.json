@@ -5,8 +5,8 @@
   "actions": [],
   "confidence": 0.42,
   "expected_behavior": "clarify_low_confidence",
-  "orch_role": "ask_user_question",
-  "rationale": "Vague user intent produces confidence < 0.70. Per spec §3 decision 6 (confidence gate < 0.70 → AskUserQuestion 澄清), orch MUST ask the user to clarify scope/family/goal rather than guess. See spec §15.5 acceptance.",
+  "go_role": "ask_user_question",
+  "rationale": "Vague user intent produces confidence < 0.70. Per spec §3 decision 6 (confidence gate < 0.70 → AskUserQuestion 澄清), go MUST ask the user to clarify scope/family/goal rather than guess. See spec §15.5 acceptance.",
   "ask_user_question_template": {
     "header": "Clarify intent",
     "options_min": 2,

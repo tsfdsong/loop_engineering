@@ -57,7 +57,7 @@
 git clone https://github.com/tsfdsong/loop_engineering
 cd loop_engineering
 # 修改 AGENTS.md / skills/ / scripts/
-bash install.sh --force  # 本地覆盖模式 · 同步到 ~/.zcode/ 等
+python3 install.py install --force  # 本地覆盖模式 · 同步到各工具
 ```
 
 ### 2.2 测试
@@ -66,8 +66,8 @@ bash install.sh --force  # 本地覆盖模式 · 同步到 ~/.zcode/ 等
 # 红线 marker 一致性
 python3 scripts/audit_tools.py
 
-# install.sh dry-run
-bash install.sh --dry-run
+# install.py dry-run
+python3 install.py install --dry-run
 ```
 
 ### 2.3 提交

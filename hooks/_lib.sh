@@ -3,7 +3,7 @@
 # hooks/_lib.sh — SessionStart hook 公共库（v2026-06-30 抽取）
 # ────────────────────────────────────────────────────────────
 # 抽出 session-start 与 session-start-codex 的重复逻辑：
-#   - go 编排运行时 bundle 加载（v2.0 · 原 orch 已合并进 go）
+#   - go 编排运行时 bundle 加载（v2.0 · family-first）
 #   - escape_for_json（bash 参数替换版，速度比 char-by-char 快数量级）
 #   - session_context 模板拼装
 # 调用方按 env var 分发 JSON schema：
@@ -27,7 +27,7 @@ case "${1:-auto}" in
     *) echo "Usage: source _lib.sh [auto|skip]" >&2; return 1 ;;
 esac
 
-# 加载 go 编排运行时 bundle（family 路由 + DAG 契约 · v2.0 吸收原 orch）
+# 加载 go 编排运行时 bundle（family 路由 + DAG 契约 · v2.0）
 load_go_runtime_bundle() {
     local plugin_root="${1:-}"
     if [ -z "$plugin_root" ]; then
@@ -43,12 +43,12 @@ load_go_runtime_bundle() {
         "${refs_root}/intent-schema.json"
         "${refs_root}/capability-registry.yaml"
         "${refs_root}/dag-rules.yaml"
-        "${refs_root}/handoff-orch-schema.json"
+        "${refs_root}/handoff-schema.json"
         "${refs_root}/executor-contracts/direct-skill.json"
         "${refs_root}/executor-contracts/loop.json"
         "${refs_root}/executor-contracts/go.json"
     )
-    # families/*.yaml — family-specific DAG rules (6 files)
+    # families/*.yaml — family-specific DAG rules (8 files)
     for fam_file in "${refs_root}/families"/*.yaml; do
         if [ -f "$fam_file" ]; then
             files+=("$fam_file")
@@ -172,7 +172,7 @@ load_recent_lessons() {
 # v1.3.2 扩展：注入 lessons 到 EXTREMELY_IMPORTANT 块尾部
 #
 # 注意：格式串里的换行必须用字面 \\n（两字符），不能用 \n。
-# 原因：printf 会把 \n 解释成真实 0x0a，但 orch_escaped/lessons_escaped 里的换行
+# 原因：printf 会把 \n 解释成真实 0x0a，但 go_escaped/lessons_escaped 里的换行
 # 已是字面 \\n（经 escape_for_json 转义）。若格式串产生真实 0x0a，整个 session_context
 # 塞进 JSON 字符串值后会违反 JSON 规范（控制字符 0x00-0x1F 必须转义），导致 ZCode
 # strict schema 校验失败（diagnosing-hooks pitfall #8）。详见 L#006 根因 B。
@@ -184,7 +184,7 @@ build_session_context() {
     if [ -n "$lessons_content" ]; then
         lessons_escaped=$(escape_for_json "$lessons_content")
     fi
-    printf '<EXTREMELY_IMPORTANT>\\nYou have LoopEngine — the full-stack development engine with 32 skills.\\n\\n/go (go skill) is the full-stack orchestrator: family-first intent routing (8 families) merged from orch v2, plus worktree-isolated multi-task execution.\\nUse native description matching for single-skill tasks. Use /go for cross-module or multi-step engineering goals.\\n\\n**Below is the go runtime bundle (skill + family/DAG references). For all other skills, use the '\''Skill'\'' tool:**\\n\\n%s\\n%s\\n</EXTREMELY_IMPORTANT>' "$go_escaped" "$lessons_escaped"
+    printf '<EXTREMELY_IMPORTANT>\\nYou have LoopEngine — the full-stack development engine with 32 skills.\\n\\n/go (go skill) is the full-stack orchestrator: family-first intent routing (8 families), plus worktree-isolated multi-task execution.\\nUse native description matching for single-skill tasks. Use /go for cross-module or multi-step engineering goals.\\n\\n**Below is the go runtime bundle (skill + family/DAG references). For all other skills, use the '\''Skill'\'' tool:**\\n\\n%s\\n%s\\n</EXTREMELY_IMPORTANT>' "$go_escaped" "$lessons_escaped"
 }
 
 # 输出 SessionStart JSON（按 env var 路由 schema）

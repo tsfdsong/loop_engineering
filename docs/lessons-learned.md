@@ -127,7 +127,7 @@ bash: line 61: /dev/scripts/install/_common.sh: No such file or directory
       source "$SCRIPT_DIR/scripts/install/_common.sh"
   fi
   ```
-- **R3.5 同根扫描**：全仓 4 个 BASH_SOURCE 用法，仅 `install.sh:59` 用了 `:-/dev/null` 形式（其他 3 处 `hooks/_lib.sh:23` / `skills/orch/hooks/install-hooks.sh:7` / `skills/orch/hooks/orch-bootstrap.sh:8` 都用简单 `${BASH_SOURCE[0]}`，file-based 调用，不踩坑）。
+- **R3.5 同根扫描**：全仓 4 个 BASH_SOURCE 用法，仅 `install.sh:59` 用了 `:-/dev/null` 形式（其他处如 `hooks/_lib.sh` 用简单 `${BASH_SOURCE[0]}`，file-based 调用，不踩坑）。历史路径曾含 `skills/orch/hooks/*` / `skills/go/hooks/*`（已删除；会话 hook 统一走仓库根 `hooks/`）。
 - **关键设计点**：不用 `source <(curl ...)` 是因为 bash process-substitution 怪癖 — curl 失败时 process substitution 的 fd 仍"open"，让 `source` 返回 0，导致 `||` 错误处理失效（静默吞错）。改用 `mktemp + if ! curl` 显式校验退出码。
 
 ### 教训（3 条）

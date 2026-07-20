@@ -203,7 +203,9 @@ TOOL_ADAPTERS: List[ToolAdapter] = [
             "MCP 写 config.json mcp.servers"
         ),
         drop_fields=["mcpServers"],
-        activate=activate_zcode_plugin,
+        # activate stays None: package render must not side-activate ~/.zcode.
+        # ZCode activation belongs to loopengine_install adapters only (D10/C3).
+        activate=None,
     ),
     ToolAdapter(
         id="cursor",

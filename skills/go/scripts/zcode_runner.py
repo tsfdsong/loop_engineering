@@ -224,7 +224,7 @@ def _get_go_runtime_context(worktree_dir, task):
     touches_go = any("skills/go/" in f or "hooks/" in f for f in task_files)
     mentions_go = any(
         token in task_text
-        for token in ["go", "family", "orch", "orchestrator", "编排"]
+        for token in ["go", "family", "orchestrator", "编排"]
     )
     if not (touches_go or mentions_go):
         return None

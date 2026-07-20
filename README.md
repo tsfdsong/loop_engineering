@@ -1,6 +1,6 @@
 # LoopEngine — 循环工程全家桶
 
-> **v2.0**（2026-07-18）：**go** 全自动编排（含 family 识别 · orch 已合并）+ **loop** 闭环编码（门禁按 L 分级）+ **supervisor** 监控看门狗 + **32 skills + 12 红线**（5 Core Instincts + 7 Verbal）+ 工具/模型双无关化。
+> **v2.0**（2026-07-18）：**go** 全自动编排（含 family 识别）+ **loop** 闭环编码（门禁按 L 分级）+ **supervisor** 监控看门狗 + **32 skills + 12 红线**（5 Core Instincts + 7 Verbal）+ 工具/模型双无关化。
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-2.0.0-blue)](AGENTS.md)
@@ -94,7 +94,7 @@ jcodemunch-mcp index_folder .
 ┌───────────────────────────────────────────────────┐
 │                      go                           │
 │  🚀 全自动编排 · family-first · worktree 并发      │
-│  （含原 orch 的 8 场景家族识别 + DAG 组装）         │
+│  （8 场景家族识别 + DAG 组装）                      │
 └──────────┬──────────────────────┬─────────────────┘
            │                      │
            ▼                      ▼
@@ -117,7 +117,7 @@ jcodemunch-mcp index_folder .
 ```
 自动：意图识别（8 family）→ 6 维需求分析 → 拆分子任务 → worktree 并发 → 回归 → 系统审查 → 交付。
 
-> **v2.0**：原独立 `orch` 技能已合并进 go Step 0。跨模块/多技能编排请用 `/go`（不再提供 `/orch` 命令别名）。
+> **v2.0**：跨模块/多技能编排请用 `/go`（go Step 0 负责 family-first 路由）。
 
 #### family 路由示例（由 go 承担）
 
@@ -179,34 +179,33 @@ loopengine/
 ├── skills/                  # 32 个内置技能定义（SKILL.md + references）
 │   ├── loop/                # 闭环编码引擎
 │   ├── go/                  # 全自动编排引擎（含 family 路由 · worktree 并发）
-│   │   ├── references/      # family/DAG 契约（自 orch v2 迁移）
+│   │   ├── references/      # family/DAG 契约
 │   │   └── scripts/         # Python 编排脚本（orchestrator/zcode_runner/git_ops/state_manager）
 │   ├── supervisor/          # 并发子任务监控
 │   └── ...                  # 其余技能
 ├── commands/                # Slash commands（plugin 包组件）
 │   ├── audit.md             # /audit 6 维度部署审计
-│   ├── go.md                # /go 全自动编排（含原 orch family 路由）
+│   ├── go.md                # /go 全自动编排（含 family 路由）
 │   └── loop.md              # /loop 闭环编码
 ├── hooks/                   # 会话启动钩子
 │   ├── session-start        # 启动引导脚本（注入 go runtime bundle）
 │   ├── run-hook.cmd         # 跨平台 polyglot 包装器
 │   └── hooks*.json          # 各平台钩子配置
 ├── docs/                    # 文档
-│   ├── INSTALL.md           # 安装指南（含 PowerShell）
+│   ├── INSTALL.md           # 安装指南（install.py）
 │   ├── mcp-setup-guide.md   # MCP 三件套安装配置
 │   ├── lessons-learned.md   # 事故教训库（单一真源）
-│   └── superpowers/         # 设计文档 + specs + plans
+│   └── 2026-07-20-*.md      # plugin-shaped install 设计 / 计划
 ├── scripts/                 # 平台工具脚本
-│   ├── install/             # 跨平台 install 子脚本（_common.sh 三平台合一）
-│   ├── render_plugins.py    # plugin manifest 渲染（v1.4 ToolAdapter 注册表）
-│   ├── audit_tools.py       # 6 维度部署审计（v1.4 新增）
-│   ├── inject_rules.py      # 红线 sentinel 注入（2 H2 块 · 承载 12 条规则）
-│   ├── merge_mcp_config.py  # ZCode + Cursor MCP 合并
-│   ├── register_zcode_*.py  # ZCode plugin 激活（marketplace + enabledPlugins）
-│   └── render_plugins.py    # ToolAdapter 注册表 + activate 回调
-├── tests/                   # 单元测试（unittest · 126 tests）
-├── install.py               # 一键安装 / 更新 / 卸载（Python · 全平台）
-├── scripts/loopengine_install/  # 安装运行时（adapters + lifecycle）
+│   ├── loopengine_install/  # 安装运行时（adapters + lifecycle）
+│   ├── render_plugins.py    # plugin manifest 渲染（ToolAdapter；无侧激活）
+│   ├── audit_tools.py       # 6 维度部署审计
+│   ├── inject_rules.py      # 红线 sentinel 注入
+│   ├── merge_mcp_config.py  # DEPRECATED CLI · adapters 主路径
+│   ├── install_zcode_plugin.py  # DEPRECATED CLI · 仍导出 compute_seed_hash
+│   └── register_zcode_*.py  # ZCode marketplace / enabledPlugins helpers
+├── tests/                   # 单元测试（unittest）
+├── install.py               # 一键安装 / 更新 / 卸载（唯一入口）
 ├── .plugin-template.json    # plugin manifest 模板（单一真源 · version + commands 字段）
 ├── .zcode-plugin/           # ZCode 插件清单 overlay
 ├── .claude-plugin/          # Claude Code 插件清单 overlay + marketplace.json

@@ -48,8 +48,8 @@ def orchestrate(feature, project_dir, acceptance_criteria=None, explicit_flag=No
     print(f"🌿 Feature 分支: {branch} (从 {current_before} 切出)")
 
     # Step ②: 状态初始化
-    orch_id = f"go/{feature_slug}-{datetime.now().strftime('%m%d%H%M')}"
-    state_manager.create_state(project_dir, orch_id, feature, tier, acceptance_criteria)
+    orchestrate_id = f"go/{feature_slug}-{datetime.now().strftime('%m%d%H%M')}"
+    state_manager.create_state(project_dir, orchestrate_id, feature, tier, acceptance_criteria)
 
     # 记录分支信息 (用 atomic_update, 修复 BUG #3)
     def _set_branches(s):
@@ -173,7 +173,7 @@ def _load_go_planning_context(feature, project_dir):
     仅在目标明显涉及 go 编排 / family 路由时，把 go references 真源摘要带入拆分 prompt。
     """
     feature_lower = feature.lower()
-    if not any(token in feature_lower for token in ["go", "family", "orch", "orchestrat", "编排", "调度"]):
+    if not any(token in feature_lower for token in ["go", "family", "orchestrat", "编排", "调度"]):
         return None
 
     project_dir = Path(project_dir)

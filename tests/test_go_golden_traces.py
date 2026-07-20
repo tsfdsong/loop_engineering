@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""go family golden-trace acceptance runner (assets migrated from orch v2).
+"""go family golden-trace acceptance runner.
 
 Validates golden-traces under skills/go/references/golden-traces/
 satisfy the spec's acceptance criteria (docs/superpowers/specs/2026-07-02-
-orch-v2-c-lite-design.md §15.1-§15.5) and that handoff-orch-schema.json is
-a well-formed JSON Schema draft-07 file.
+orch-v2-c-lite-design.md §15.1-§15.5; historical filename) and that
+handoff-schema.json is a well-formed JSON Schema draft-07 file.
 
-Run: python -m unittest tests.test_orch_golden_traces -v
+Run: python -m unittest tests.test_go_golden_traces -v
 """
 import json
 import unittest
@@ -15,7 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 GOLDEN_DIR = ROOT / "skills" / "go" / "references" / "golden-traces"
-HANDOFF_SCHEMA = ROOT / "skills" / "go" / "references" / "handoff-orch-schema.json"
+HANDOFF_SCHEMA = ROOT / "skills" / "go" / "references" / "handoff-schema.json"
 
 # Spec resolution (v1.3.2 · 2026-07-02):
 #   1. External repo (~/.loopengine/specs/) — preferred after externalization
@@ -34,7 +34,7 @@ def _load(name):
     return json.loads((GOLDEN_DIR / name).read_text(encoding="utf-8"))
 
 
-class TestOrchGoldenTraces(unittest.TestCase):
+class TestGoGoldenTraces(unittest.TestCase):
     """Spec §15.1-§15.5 acceptance criteria."""
 
     # --- §15.1 review family: 5-step DAG, must include code-reviewer + clean-code ---
@@ -60,14 +60,14 @@ class TestOrchGoldenTraces(unittest.TestCase):
         # browser_accessibility_audit must also be present in actions
         self.assertIn("browser_accessibility_audit", trace["actions"])
 
-    # --- §15.3 single_skill task: orch must NOT intervene ---
+    # --- §15.3 single_skill task: go must NOT intervene ---
     def test_ac15_3_single_pr_review_is_single_skill(self):
         trace = _load("single-pr-review.json")
         self.assertEqual(trace["task_shape"], "single_skill")
         self.assertEqual(trace["scenario_family"], None)
-        self.assertEqual(trace["expected_behavior"], "orch_exit_native_match")
-        self.assertEqual(trace["orch_role"], "passthrough")
-        # Per spec §1.4 G1: single_skill → orch 退出
+        self.assertEqual(trace["expected_behavior"], "go_exit_native_match")
+        self.assertEqual(trace["go_role"], "passthrough")
+        # Per spec §1.4 G1: single_skill → go 退出
         self.assertEqual(trace["actions"], ["code_review"])
 
     # --- §15.4 cross-family mix: MUST clarify, NOT auto-merge ---
@@ -76,7 +76,7 @@ class TestOrchGoldenTraces(unittest.TestCase):
         self.assertEqual(trace["task_shape"], "multi_skill")
         self.assertEqual(trace["scenario_family"], None)
         self.assertEqual(trace["expected_behavior"], "clarify_no_merge")
-        self.assertEqual(trace["orch_role"], "ask_user_question")
+        self.assertEqual(trace["go_role"], "ask_user_question")
         # Must detect at least 2 primary families
         self.assertGreaterEqual(len(trace["detected_families"]), 2)
         # AskUserQuestion template must be present and have 2 options
@@ -89,14 +89,14 @@ class TestOrchGoldenTraces(unittest.TestCase):
         trace = _load("low-confidence-clarify.json")
         self.assertLess(trace["confidence"], 0.70)
         self.assertEqual(trace["expected_behavior"], "clarify_low_confidence")
-        self.assertEqual(trace["orch_role"], "ask_user_question")
+        self.assertEqual(trace["go_role"], "ask_user_question")
         tmpl = trace["ask_user_question_template"]
         self.assertIn("family_explanation", tmpl["must_include"])
         self.assertGreaterEqual(tmpl["options_max"], 2)
 
 
-class TestOrchHandoffSchema(unittest.TestCase):
-    """Validate handoff-orch-schema.json (spec §10.1 + §11)."""
+class TestGoHandoffSchema(unittest.TestCase):
+    """Validate handoff-schema.json (spec §10.1 + §11)."""
 
     def test_handoff_schema_file_exists(self):
         self.assertTrue(HANDOFF_SCHEMA.exists(), f"missing: {HANDOFF_SCHEMA}")
@@ -141,7 +141,7 @@ class TestOrchHandoffSchema(unittest.TestCase):
         self.assertEqual(buckets, {"critical", "important", "minor"})
 
 
-class TestOrchGoldenTraceCoverage(unittest.TestCase):
+class TestGoGoldenTraceCoverage(unittest.TestCase):
     """Meta-check: golden-traces cover all 5 explicit acceptance criteria in §15."""
 
     def test_all_acceptance_criteria_have_traces(self):

@@ -1,6 +1,7 @@
 # 设计文档外部仓库
 
 > **重要变更** (2026-07-02): LoopEngine 的设计文档（spec / plan / ADR）已从主仓剥离，独立仓库管理。
+> **2026-07-20**: 主仓安装入口已改为 `install.py`；specs 同步不再作为 install 默认步骤（可手动 clone）。
 
 ## 外部仓库
 
@@ -9,7 +10,7 @@
 | 仓库名 | `loop_engineering_specs` |
 | URL | `https://github.com/tsfdsong/loop_engineering_specs` |
 | 用途 | 存放所有 design docs（spec / plan / ADR） |
-| 同步机制 | 主仓 `install.sh` 自动 clone 到本地 |
+| 同步机制 | 手动 `git clone` 到本地（可选） |
 
 ## 本地缓存路径
 
@@ -17,22 +18,22 @@
 - **结构**：
   ```
   ~/.loopengine/specs/
-  ├── README.md
-  ├── specs/
-  │   └── YYYY-MM-DD-<topic>-design.md
-  └── plans/
-      └── YYYY-MM-DD-<topic>-implementation.md
+    ├── README.md
+    ├── specs/
+    │   └── YYYY-MM-DD-<topic>-design.md
+    └── plans/
+        └── YYYY-MM-DD-<topic>-implementation.md
   ```
 
-## install.sh 集成
+## 可选同步
 
-| Flag | 行为 |
-|---|---|
-| `--with-specs` (默认) | clone 外部仓库到 `~/.loopengine/specs/` |
-| `--skip-specs` | 跳过 clone |
-| `--specs-source <url\|path>` | 自定义克隆源（默认 github URL） |
+```bash
+mkdir -p ~/.loopengine
+git clone https://github.com/tsfdsong/loop_engineering_specs ~/.loopengine/specs
+# 更新：cd ~/.loopengine/specs && git pull
+```
 
-若 clone 失败：打印警告，不阻塞主安装流程。
+若 clone 失败：不影响 `python3 install.py install` 主流程。
 
 ## 引用约定
 
@@ -45,7 +46,7 @@
 
 | 症状 | 解决 |
 |---|---|
-| install 后 `~/.loopengine/specs/` 为空 | 重新运行 `install.sh --with-specs` 或手动 `git clone` |
+| `~/.loopengine/specs/` 为空 | 手动 `git clone`（见上） |
 | spec 内容过时 | `cd ~/.loopengine/specs && git pull` |
 | 找不到外部仓 | 检查 `gh repo view tsfdsong/loop_engineering_specs` 是否存在 |
 | 测试 `test_spec_decision_8_*` skip | 设 `LOOPENGINE_REQUIRE_SPECS=1` 强制要求 spec |

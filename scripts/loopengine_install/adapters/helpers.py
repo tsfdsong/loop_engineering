@@ -38,10 +38,6 @@ def copy_tree_op(
     return op
 
 
-# Back-compat alias for older call sites / tests
-link_or_copy_op = copy_tree_op
-
-
 def cleanup_flat_skills(
     skills_root: Path, skill_names: list[str], dry_run: bool, prefix: str
 ) -> list[Operation]:
@@ -72,29 +68,6 @@ def cleanup_flat_skills(
     if semi.exists() and not dry_run:
         shutil.rmtree(semi)
     return ops
-
-
-def merge_json_keys(
-    op_id: str,
-    destination: Path,
-    keys: list[str],
-    mutator,
-    dry_run: bool,
-) -> Operation:
-    """Apply mutator(data)->data, write JSON; op records merge_keys for uninstall."""
-    op = Operation(
-        id=op_id,
-        kind="merge-json",
-        ownership="managed",
-        destination=str(destination),
-        merge_keys=keys,
-    )
-    if not dry_run:
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        data = json_io.read_json(str(destination))
-        data = mutator(data)
-        json_io.atomic_write_json(str(destination), data)
-    return op
 
 
 def revert_merge_json(op: Operation) -> None:

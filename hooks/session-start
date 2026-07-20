@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SessionStart hook for loopengine plugin (Claude Code / Cursor / Copilot)
-# Bootstrap: injects go runtime bundle (family routing · orch v2 merged into go) at session start
+# Bootstrap: injects go runtime bundle (family routing) at session start
 # 公共逻辑见 hooks/_lib.sh
 
 set -euo pipefail

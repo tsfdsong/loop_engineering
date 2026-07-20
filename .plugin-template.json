@@ -35,7 +35,7 @@
   "interface": {
     "displayName": "LoopEngine",
     "shortDescription": "Loop闭环编码 + go全自动编排（32技能 · family-first）",
-    "longDescription": "LoopEngine 是开发引擎全家桶：/loop 闭环编码自动完成需求→计划→门禁→自愈→交付全流程；/go 全自动编排（含原 orch 的 family-first 路由 + worktree 并发），识别 8 场景家族（review/debug_fix/design_build/research_compare/web_qa/parallel_investigation/refactor/test）。涵盖编码、架构、重构、测试、调试、CI/CD 等全领域。",
+    "longDescription": "LoopEngine 是开发引擎全家桶：/loop 闭环编码自动完成需求→计划→门禁→自愈→交付全流程；/go 全自动编排（family-first 路由 + worktree 并发），识别 8 场景家族（review/debug_fix/design_build/research_compare/web_qa/parallel_investigation/refactor/test）。涵盖编码、架构、重构、测试、调试、CI/CD 等全领域。",
     "developerName": "tsfdsong",
     "category": "Coding",
     "capabilities": [

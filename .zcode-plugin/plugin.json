@@ -1,4 +1,4 @@
 {
-  "_comment": "ZCode 桌面版工具特异字段 overlay。共有字段见 ../.plugin-template.json。ZCode 桌面版不需要 mcpServers 字段（写到 ~/.zcode/cli/config.json），见 install.sh Step 4。",
+  "_comment": "ZCode 桌面版工具特异字段 overlay。共有字段见 ../.plugin-template.json。ZCode 桌面版不需要 mcpServers 字段（写到 ~/.zcode/cli/config.json），见 install.py / adapters.zcode。",
   "skills": "skills"
 }

@@ -318,10 +318,10 @@ class TestToolAdapter(unittest.TestCase):
         """TOOL_ADAPTERS 应有 5 个启用条目（Kimi 注释掉）"""
         self.assertEqual(len(TOOL_ADAPTERS), 5)
 
-    def test_zcode_adapter_has_activate_callable(self):
-        """ZCode 必须有 activate 回调"""
+    def test_zcode_adapter_has_no_activate_on_render(self):
+        """Package render must not side-activate ~/.zcode (adapter-only)."""
         zcode = next(a for a in TOOL_ADAPTERS if a.id == "zcode")
-        self.assertIsNotNone(zcode.activate)
+        self.assertIsNone(zcode.activate)
 
     def test_claude_adapter_has_marketplace_extra_output(self):
         """Claude Code 必须有 marketplace.json extra_output"""

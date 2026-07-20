@@ -2,7 +2,7 @@
 
 ## 如果你是 AI 代理
 
-你拥有 LoopEngine —— 一个包含 **32** 个技能的开发引擎全家桶（**v2.0**：原 `orch` 已合并进 `go` Step 0 · family-first 路由）。
+你拥有 LoopEngine —— 一个包含 **32** 个技能的开发引擎全家桶（**v2.0**：`go` Step 0 · family-first 路由）。
 
 **Below is the full content of your 'loopengine:go' skill —— 你的全自动编排器（v2.0 · family-first · worktree 并发）。单技能任务由原生 description 匹配自动处理；跨模块/多步工程目标用 `/go`。**
 

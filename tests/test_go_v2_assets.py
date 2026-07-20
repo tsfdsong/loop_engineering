@@ -55,7 +55,7 @@ def load_orchestrator_module():
     return module
 
 
-class TestOrchV2Assets(unittest.TestCase):
+class TestGoV2Assets(unittest.TestCase):
     def test_reference_asset_paths_exist(self):
         required = [
             "skills/go/references/intent-schema.json",
@@ -75,7 +75,7 @@ class TestOrchV2Assets(unittest.TestCase):
             "skills/go/references/golden-traces/single-pr-review.json",
             "skills/go/references/golden-traces/cross-family-mix.json",
             "skills/go/references/golden-traces/low-confidence-clarify.json",
-            "skills/go/references/handoff-orch-schema.json",
+            "skills/go/references/handoff-schema.json",
         ]
         for rel in required:
             self.assertTrue((ROOT / rel).exists(), rel)
@@ -110,8 +110,8 @@ class TestOrchV2Assets(unittest.TestCase):
         self.assertIn("load_go_runtime_bundle", text)
 
     def test_session_start_codex_uses_runtime_bundle(self):
-        """Regression for system-review finding C1: Codex must not use the
-        degraded load_orch_content path; it must share the runtime bundle."""
+        """Regression for system-review finding C1: Codex must not use a
+        degraded load path; it must share the runtime bundle."""
         text = (ROOT / "hooks/session-start-codex").read_text(encoding="utf-8")
         self.assertIn("load_go_runtime_bundle", text)
         self.assertNotIn("load_orch_content", text)
@@ -122,13 +122,13 @@ class TestOrchV2Assets(unittest.TestCase):
         text = (ROOT / "hooks/_lib.sh").read_text(encoding="utf-8")
         self.assertIn("families", text)
         self.assertIn("golden-traces", text)
-        self.assertIn("handoff-orch-schema.json", text)
+        self.assertIn("handoff-schema.json", text)
 
     def test_skill_md_lists_handoff_schema_in_refs(self):
         """Regression for system-review finding H3: SKILL.md must reference
-        the new handoff-orch-schema.json in its 参考真源 section."""
+        handoff-schema.json in its 参考真源 section."""
         text = (ROOT / "skills/go/SKILL.md").read_text(encoding="utf-8")
-        self.assertIn("handoff-orch-schema.json", text)
+        self.assertIn("handoff-schema.json", text)
 
     def test_web_qa_family_includes_plan_execution(self):
         """Regression for system-review finding H1: web_qa family actions
@@ -146,7 +146,7 @@ class TestOrchV2Assets(unittest.TestCase):
         a skill phase, not an executor type."""
         data = json.loads(
             (
-                ROOT / "skills/go/references/handoff-orch-schema.json"
+                ROOT / "skills/go/references/handoff-schema.json"
             ).read_text(encoding="utf-8")
         )
         phase_enum = set(data["properties"]["phase"]["enum"])

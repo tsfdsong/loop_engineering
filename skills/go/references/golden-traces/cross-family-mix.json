@@ -6,8 +6,8 @@
   "scenario_family": null,
   "actions": [],
   "expected_behavior": "clarify_no_merge",
-  "orch_role": "ask_user_question",
-  "rationale": "Two primary scenario families detected (review + web_qa). Per spec §3 decision 3 (Single family v1) and G0 (multi_family → clarify, 不混编), orch MUST NOT auto-merge. Must invoke AskUserQuestion to let user pick one primary family. See spec §15.4 acceptance.",
+  "go_role": "ask_user_question",
+  "rationale": "Two primary scenario families detected (review + web_qa). Per spec §3 decision 3 (Single family v1) and G0 (multi_family → clarify, 不混编), go MUST NOT auto-merge. Must invoke AskUserQuestion to let user pick one primary family. See spec §15.4 acceptance.",
   "ask_user_question_template": {
     "header": "Primary family",
     "options_min": 2,

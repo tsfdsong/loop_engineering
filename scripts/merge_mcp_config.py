@@ -8,7 +8,8 @@
 #     （ZCode 桌面版特有 schema）
 #   • cursor: ~/.cursor/mcp.json → mcpServers.<name>.{command,args}
 #     （Cursor IDE 0.40+ schema，无 type 字段）
-# 由 install.sh 的 common_write_zcode_desktop_config / common_deploy_cursor_mcp 调用
+# DEPRECATED as install primary path: loopengine_install adapters own MCP merge.
+# Kept for unit tests + emergency CLI. Prefer python3 install.py install.
 #
 # 保留用户其他顶层字段与已有 MCP server（合并幂等）。
 # 强制覆写脚本负责的 server key（路径变化时同步）。

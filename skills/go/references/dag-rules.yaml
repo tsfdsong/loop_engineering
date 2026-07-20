@@ -1,6 +1,6 @@
 global:
   multi_family: clarify
-  single_skill: exit_orch
+  single_skill: exit_go
   executor_policy: side_effect_first
   confidence_bands:
     auto_execute_min: 0.85

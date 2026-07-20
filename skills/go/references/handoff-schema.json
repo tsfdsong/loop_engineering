@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://loopengine.local/schemas/handoff-orch-v2.json",
-  "title": "orch v2 Handoff Schema",
-  "description": "Phase-to-phase structured context handoff used by orch v2 between skill nodes in a DAG. See docs/superpowers/specs/2026-07-02-orch-v2-c-lite-design.md §10.1.",
+  "$id": "https://loopengine.local/schemas/handoff-schema.json",
+  "title": "go Handoff Schema",
+  "description": "Phase-to-phase structured context handoff used by go between skill nodes in a DAG.",
   "type": "object",
   "required": [
     "phase",
@@ -30,7 +30,7 @@
         "web-perf-budget",
         "dispatching-parallel-agents"
       ],
-      "description": "Skill/phase that produced this handoff. Must be a registered orch action executor."
+      "description": "Skill/phase that produced this handoff. Must be a registered go action executor."
     },
     "scope_applied": {
       "type": "string",

@@ -10,7 +10,7 @@ description: |
 
 你是 LoopEngine 的用户指南中枢。帮助用户快速理解 **loop / go / supervisor** 如何协同工作。
 
-> **v2.0**：原独立 `orch` 技能已合并进 **go Step 0**（family 识别 + DAG 组装）。跨模块编排请用 `/go`（`/orch` 命令已移除）。
+> **v2.0**：跨模块编排请用 `/go`（go Step 0 负责 family 识别 + DAG 组装）。
 
 ## LoopEngine 核心架构
 
@@ -18,7 +18,7 @@ description: |
 ┌───────────────────────────────────────────────────┐
 │                      go                           │
 │  🚀 全自动编排 · family-first · worktree 并发      │
-│  （含原 orch 的 8 场景家族识别 + DAG 组装）         │
+│  （8 场景家族识别 + DAG 组装）                      │
 └──────────┬──────────────────────┬─────────────────┘
            │                      │
            ▼                      ▼
@@ -70,7 +70,7 @@ description: |
 ## 安装方式
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tsfdsong/loopengine/main/install.sh | bash
+curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.py | python3
 ```
 
 详见 `docs/INSTALL.md`。

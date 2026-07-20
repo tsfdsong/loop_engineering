@@ -1,7 +1,7 @@
 /**
  * LoopEngine plugin for OpenCode.ai
  *
- * Injects loopengine bootstrap context (orch) via message transform.
+ * Injects loopengine bootstrap context (go) via message transform.
  * Auto-registers skills directory via config hook.
  */
 
@@ -58,8 +58,8 @@ export const LoopEnginePlugin = async ({ client, directory }) => {
   const getBootstrapContent = () => {
     if (_bootstrapCache !== undefined) return _bootstrapCache;
 
-    // Load orch as the bootstrap skill
-    const skillPath = path.join(loopengineSkillsDir, 'orch', 'SKILL.md');
+    // Load go as the bootstrap skill
+    const skillPath = path.join(loopengineSkillsDir, 'go', 'SKILL.md');
     if (!fs.existsSync(skillPath)) {
       _bootstrapCache = null;
       return null;
@@ -84,10 +84,10 @@ Use OpenCode's native \`skill\` tool to list and load skills.`;
     _bootstrapCache = `<EXTREMELY_IMPORTANT>
 You have LoopEngine — the full-stack development engine with 33 skills.
 
-**IMPORTANT: The orch (multi-skill orchestrator) skill content is included below. It is ALREADY LOADED - you are currently following it. Do NOT use the skill tool to load "orch" again — that would be redundant.**
+**IMPORTANT: The go (multi-skill orchestrator) skill content is included below. It is ALREADY LOADED - you are currently following it. Do NOT use the skill tool to load "go" again — that would be redundant.**
 
-Single-skill tasks: native description matching handles it — do NOT call /orch.
-Multi-skill tasks: user must explicitly type /orch — see content below for the 5 task chains.
+Single-skill tasks: native description matching handles it — do NOT call /go.
+Multi-skill / cross-module tasks: user must explicitly type /go — see content below for family-first routing.
 
 ${content}
 
