@@ -32,10 +32,16 @@ class CheckTest(unittest.TestCase):
             plugin_skill = dest / "skills" / "go"
             plugin_skill.mkdir(parents=True)
             (plugin_skill / "SKILL.md").write_text("# go\n", encoding="utf-8")
-            # dual-deploy stub so cursor-flat check does not fail
+            (dest / ".cursor-plugin").mkdir(parents=True)
+            (dest / ".cursor-plugin" / "plugin.json").write_text("{}\n", encoding="utf-8")
+            (dest / "hooks").mkdir(parents=True)
+            (dest / "hooks" / "hooks.json").write_text("{}\n", encoding="utf-8")
+            # D3: flat LE skill must NOT exist
             flat = home / ".cursor" / "skills" / "go"
-            flat.mkdir(parents=True)
-            (flat / "SKILL.md").write_text("# go\n", encoding="utf-8")
+            if flat.exists():
+                import shutil
+
+                shutil.rmtree(flat)
             m = Manifest(
                 schema_version=2,
                 product="loopengine",

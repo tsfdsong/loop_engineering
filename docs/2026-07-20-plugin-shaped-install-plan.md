@@ -1,7 +1,7 @@
 # Plugin-Shaped Install v2.1 Implementation Plan
 
-> **Storage (D13 · design v2.2):** No symlinks. Central `current` is a pointer file.
-> Each tool gets its own real `copy-tree`. Cursor dual-deploys plugin + flat skills.
+> **Storage (D13 · design v2.3):** No symlinks. Central `current` is a pointer file.
+> Each tool gets its own real `copy-tree`. Cursor is **plugin-only** (no LE flat skills).
 > Spec truth: `docs/2026-07-20-plugin-shaped-install-design-v2.md`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `subagent-driven-development` (recommended) or `executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -50,7 +50,8 @@
 **Locked plan defaults (spec §14):**
 
 - Claude `installPath`: `~/.claude/plugins/cache/loopengine-local/loopengine/<version>/` (adjust only if P0 proves otherwise).
-- Central package: versioned dir + `current` as **junction/symlink on Unix**, **directory rename swap on Windows** if symlink fails.
+- Central package: versioned dir + `current` as **pointer text file** (never symlink; D13).
+- Each tool: independent **copy-tree** (`symlinks=False`); Cursor is **plugin-only** (no LE flat).
 - Helpers: **call** existing scripts as libraries where possible; relocate into package only if import path is painful.
 
 ---
@@ -233,7 +234,7 @@ PYTHONPATH=scripts python3 -m unittest tests.test_loopengine_install_ops -v
 
 `schemas/install-manifest.schema.json` — require `schema_version`, `product`, `version`, `central_root`, `skill_names`, `operations` (array of objects with `id`, `kind`, `ownership`).
 
-`ops.py` — dataclasses; `link-or-copy` tries `os.symlink` then `shutil.copytree`; `merge-json` / `registry-write` / `inject-markers` stubs that raise `NotImplementedError` until adapter tasks fill them (or implement merge-json using `json_io` now).
+`ops.py` — dataclasses; `copy-tree` always `shutil.copytree(..., symlinks=False)` (legacy `link-or-copy` is an alias); `merge-json` / `registry-write` / `inject-markers` applied by adapters.
 
 Minimal `validate_manifest`: check required fields + `kind in ALLOWED_KINDS`.
 
@@ -268,7 +269,7 @@ git commit -m "feat(install): manifest ops apply/revert foundation"
 def build_central_package(repo_root: Path, loopengine_home: Path, version: str) -> Path:
     dest = loopengine_home / "plugins" / "loopengine" / version
     # copy skills, hooks, commands; run render_plugins into dest overlays
-    # write/update `current` pointer (symlink or marker file current.json)
+    # write/update `current` pointer file (never symlink; D13)
     return dest
 ```
 
@@ -511,7 +512,7 @@ git commit -m "feat(install): retire Bash/PS install; document install.py"
 - **Stop** if Task 1 or 2 FAIL.
 - Prefer `PYTHONPATH=scripts` in all commands until/unless a tiny `pyproject.toml` is added (out of scope unless needed).
 - Do not add `plan`/`doctor`/`repair`/`list` subcommands before Task 12.
-- Windows: test `link-or-copy` fallback in CI or manual once before declaring Task 11 done.
+- Windows: confirm `copy-tree` (no symlink) works once before declaring Task 11 done.
 
 ## Self-review checklist (author)
 

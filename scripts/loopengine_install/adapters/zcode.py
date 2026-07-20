@@ -103,7 +103,10 @@ class ZCodeAdapter(Adapter):
             keys.append("jcodemunch")
         if repo:
             keys.append("repomix")
-        if not ctx.dry_run and cfg.exists():
+        if not ctx.dry_run:
+            cfg.parent.mkdir(parents=True, exist_ok=True)
+            if not cfg.exists():
+                cfg.write_text("{}\n", encoding="utf-8")
             from _lib.json_io import atomic_write_json, read_json
 
             data = read_json(str(cfg))

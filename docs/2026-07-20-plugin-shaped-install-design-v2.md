@@ -1,10 +1,11 @@
-# Design: Plugin-Shaped Install v2.2（禁止软链 · 分工具实体存储）
+# Design: Plugin-Shaped Install v2.3（禁止软链 · Cursor 仅官方插件路径）
 
 > **日期**: 2026-07-20  
 > **状态**: **Approved** · 2026-07-20 · 实施计划见 `docs/2026-07-20-plugin-shaped-install-plan.md`  
-> **取代**: v2.1 同路径（本文件即为现行真源）；v1 见 `docs/2026-07-20-plugin-shaped-install-design.md`  
+> **取代**: v2.2 同路径（本文件即为现行真源）；v1 见 `docs/2026-07-20-plugin-shaped-install-design.md`  
 > **修订动机**: 对照核心目的审查后全面简化——抬一键生命周期与官方插件四件套，砍 ECC 运维表面积  
-> **v2.2 修订（2026-07-20）**: 安装路径 **禁止 symlink**；中央包与各工具 plugin 树 **各自真实拷贝**；Cursor 双部署（plugin + 平铺 skills）以保证 Agent 可发现全部技能  
+> **v2.2**：禁止 symlink；各工具实体拷贝（D13）  
+> **v2.3（2026-07-20）**: **撤销** Cursor「双部署平铺」；恢复 D3 = **仅** `plugins/local/loopengine` 真实拷贝，并 **清理** `~/.cursor/skills/<le-skill>/`（对齐 §0 官方插件形态；v2.2 双部署属症状绕过，已废止）  
 > **路径说明**: 落在 `docs/` 以便主仓版本化。
 
 ## 0. 核心目的（验收北极星）
@@ -38,7 +39,7 @@
 |---|------|------|
 | D1 | 优先目标 | 官方插件形态管理 skills/hooks/MCP/AGENTS |
 | D2 | 工具范围 | **Tier 分期**（见 §6）：先 Tier-1，再 Tier-2/3 |
-| D3 | Cursor | `~/.cursor/plugins/local/loopengine` **真实目录**；并 **双部署** 平铺 `~/.cursor/skills/<skill>/`（Agent Skills 发现） |
+| D3 | Cursor | **仅** `~/.cursor/plugins/local/loopengine` **真实目录**；**禁止** LE 平铺 `~/.cursor/skills/<le-skill>/`（安装时按 `skill_names` 清理） |
 | D4 | 生命周期 | 一键 **install（含智能升级）/ uninstall**；`upgrade` 仅为别名 |
 | D5 | 架构 | 中央物理包 + Adapter 四件套；**各工具分存，禁止跨目录软链** |
 | D6 | Claude | **必须** `installed_plugins.json` + local marketplace |
@@ -176,7 +177,7 @@ write_manifest()
 
 | 工具 | 独立存储根（真实目录，禁止指向中央包的软链） |
 |------|-----------------------------------------------|
-| Cursor | `~/.cursor/plugins/local/loopengine` + 平铺 `~/.cursor/skills/<skill>/` |
+| Cursor | **仅** `~/.cursor/plugins/local/loopengine`（真实目录；禁止软链；禁止 LE 平铺） |
 | Claude | cache `…/plugins/cache/loopengine-local/loopengine/<ver>/` + marketplace `…/marketplaces/loopengine-local/plugins/loopengine/` |
 | ZCode | `~/.zcode/skills/loopengine` |
 | Codex / Gemini / Copilot / Pi | 各 Adapter 约定的本工具目录（同样 copy-tree） |
@@ -185,11 +186,12 @@ write_manifest()
 
 ### 8.1 Cursor（Tier-1）
 
-- **Plugin 包**：`~/.cursor/plugins/local/loopengine` 为 **真实拷贝**（含 skills/hooks/commands、规范化 `hooks/hooks.json`、`mcp.json`、`rules/`）；安装前删除 `loopengine-spike` 与旧 symlink。
-- **双部署 skills**：每个 LE skill 再拷贝到 `~/.cursor/skills/<name>/`（Cursor Agent Skills 历史扫描路径；仅靠 plugin 目录时会出现「只看见 using-loopengine」类残缺）。
+- **Plugin 包（唯一 skills 真源）**：`~/.cursor/plugins/local/loopengine` 为 **真实拷贝**（含 skills/hooks/commands、规范化 `hooks/hooks.json`、`mcp.json`、`rules/`）；安装前删除 `loopengine-spike` 与旧 symlink。
+- **禁止平铺**：按 manifest `skill_names` **删除** `~/.cursor/skills/<le-skill>/`；**不得**再双部署。用户自有非 LE skill 保留。
 - MCP：`~/.cursor/mcp.json`（仅 LE keys）+ plugin 内 `mcp.json` 同步。
 - AGENTS：`~/.cursor/rules/loopengine-interaction.mdc`，并镜像进 plugin `rules/`。
-- `--check`：plugin 非 symlink；plugin 与平铺 skill 数量均 ≥ manifest `skill_names`。
+- `--check`：plugin 非 symlink；plugin skill 数量达标；**不得**残留 LE 平铺 skill。
+- **发现失败策略**：若 Cursor 仅靠 plugin 仍无法加载全部 skill → **阻断并排查 plugin 发现**（plugin.json / enable / 路径），**禁止**回退平铺（同 v2.1 §8.1）。
 
 ### 8.2 Claude（Tier-1 · D6）
 
@@ -231,7 +233,7 @@ uninstall = 对 `ownership=managed` **逆序** revert。
 
 1. 唯一入口 `install.py`；无 `install.sh` / `install.ps1` / `scripts/install/*.sh`。  
 2. `curl | python3` 完成装或升；`install.py uninstall` 干净卸载。  
-3. Cursor：`plugins/local/loopengine` 为真实目录（非 symlink），含全部 skills/hooks；`~/.cursor/skills/` 下 LE skill 齐全；会话可加载。  
+3. Cursor：`plugins/local/loopengine` 为真实目录（非 symlink），含全部 skills/hooks；**无** LE 平铺于 `~/.cursor/skills/`；会话可从 plugin 加载。  
 4. Claude：`installed_plugins.json` 含 LE 且 installPath 为真实可读目录。  
 5. ZCode：真实整包 + registry 一致；卸载可逆；plugin_root 非 symlink。  
 6. MCP / AGENTS：安装写入、卸载剥离；用户非 LE 内容保留。  
@@ -255,7 +257,7 @@ Tracer：先打通 **Cursor 四件套垂直切片**，再 Claude、ZCode。
 
 | 风险 | 缓解 |
 |------|------|
-| Cursor local 不加载 / 只见单 skill | 真实拷贝 + 双部署平铺；删 spike；`--check` 验数量 |
+| Cursor local 不加载 / 只见单 skill | 真实拷贝 + 删 spike；**禁止**回退平铺；查 plugin 发现与 enable |
 | Claude schema 不符 | P0 对照官方条目 |
 | 误删用户资产 | 白名单 + managed operations |
 | 多份拷贝占盘 | D13 明确可接受；正确性优先 |
@@ -270,12 +272,13 @@ Tracer：先打通 **Cursor 四件套垂直切片**，再 Claude、ZCode。
 ## 14. 开放细节（plan 锁定）
 
 - Claude `installPath` 最终路径（P0）— 已采用 cache + marketplace 双真实拷贝。  
-- Cursor 是否需额外 enable 文件。  
+- Cursor 是否需额外 enable 文件（plugin-only 发现不全时优先查此项，仍禁止平铺兜底）。  
 - ~~中央包 `current` symlink~~ → **已决（D13）**：pointer 文件。  
+- ~~Cursor 双部署平铺~~ → **已废（v2.3）**：回归 plugin-only。  
 - 现有 py helpers 迁入 vs 调用的目录整理粒度。
 
 ## 15. 文档关系
 
-- **本文件** = 现行设计真源（**v2.2**）。  
+- **本文件** = 现行设计真源（**v2.3**）。  
 - v1 design = Superseded。  
-- `docs/2026-07-20-plugin-shaped-install-plan.md` 以本文件为准做差分修订（存储语义以 D13 / §7–§8 为准）。
+- `docs/2026-07-20-plugin-shaped-install-plan.md` 以本文件为准（D3/D13 / §7–§8）。

@@ -231,11 +231,22 @@ def revert_registry_write(op: Operation) -> None:
         data["plugins"].pop(op.key, None)
         json_io.atomic_write_json(str(path), data)
         return
-    # known_marketplaces top-level key
+    # known_marketplaces top-level key (Claude)
     if op.key in data and op.registry and "marketplace" in (op.registry or ""):
         data.pop(op.key, None)
         json_io.atomic_write_json(str(path), data)
         return
+    # ZCode known_marketplaces list by id
+    if op.registry and "known_marketplaces" in (op.registry or ""):
+        mps = data.get("marketplaces")
+        if isinstance(mps, list):
+            data["marketplaces"] = [
+                x
+                for x in mps
+                if not (isinstance(x, dict) and x.get("id") == op.key)
+            ]
+            json_io.atomic_write_json(str(path), data)
+            return
     # ZCode enabledPlugins
     enabled = data.get("plugins", {}).get("enabledPlugins")
     if isinstance(enabled, dict) and op.key in enabled:

@@ -397,18 +397,18 @@ def dimension_g_registry_namespace(
             except (json.JSONDecodeError, OSError):
                 skill_names = []
             flat = os.path.join(home, ".cursor", "skills")
-            missing = [
+            leftover = [
                 n
                 for n in skill_names
-                if not os.path.isfile(os.path.join(flat, n, "SKILL.md"))
+                if os.path.isfile(os.path.join(flat, n, "SKILL.md"))
             ]
-            if missing:
+            if leftover:
                 results.append(
                     AuditResult(
                         "G",
                         "error",
                         "cursor",
-                        f"Agent 平铺 skills 缺失: {missing[:8]}",
+                        f"仍有 LE 平铺 skills（D3 禁止）: {leftover[:8]}",
                     )
                 )
             else:
@@ -417,7 +417,7 @@ def dimension_g_registry_namespace(
                         "G",
                         "ok",
                         "cursor",
-                        f"Agent 平铺 skills 齐全 ({len(skill_names)})",
+                        "无 LE 平铺 skills（plugin-only）",
                     )
                 )
             # Plugin must be a real directory, not symlink
@@ -427,7 +427,7 @@ def dimension_g_registry_namespace(
                         "G",
                         "error",
                         "cursor",
-                        "plugins/local/loopengine 是 symlink（技能可能加载不全）",
+                        "plugins/local/loopengine 是 symlink（D13 禁止）",
                     )
                 )
             elif os.path.isdir(local):
@@ -459,8 +459,23 @@ def dimension_g_registry_namespace(
                 with open(ip, encoding="utf-8") as f:
                     plugins = json.load(f).get("plugins") or {}
                 if key in plugins:
+                    # §10.4: installPath must be a readable directory
+                    entries = plugins[key]
+                    path_ok = False
+                    if isinstance(entries, list) and entries:
+                        ipath = entries[0].get("installPath") if isinstance(entries[0], dict) else None
+                        path_ok = bool(ipath and os.path.isdir(ipath))
                     results.append(
-                        AuditResult("G", "ok", "claude-code", f"registry 含 {key}")
+                        AuditResult(
+                            "G",
+                            "ok" if path_ok else "error",
+                            "claude-code",
+                            (
+                                f"registry 含 {key} 且 installPath 可读"
+                                if path_ok
+                                else f"registry 含 {key} 但 installPath 不可读"
+                            ),
+                        )
                     )
                 else:
                     results.append(

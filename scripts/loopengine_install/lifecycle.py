@@ -12,7 +12,11 @@ from loopengine_install.adapters.base import AdapterContext
 from loopengine_install.adapters.helpers import list_skill_names
 from loopengine_install.detect import detect_agents, detect_mcp_binaries
 from loopengine_install.ops import Manifest, load_manifest, revert_operation, save_manifest
-from loopengine_install.package import build_central_package, read_repo_version
+from loopengine_install.package import (
+    build_central_package,
+    prune_old_versions,
+    read_repo_version,
+)
 
 
 def loopengine_home(home: Path | None = None) -> Path:
@@ -58,18 +62,61 @@ def do_install(
     skill_names = list_skill_names(repo_root)
     mcp_bins = detect_mcp_binaries()
 
-    plan = {
+    plan: dict = {
         "command": "install",
         "version": version,
         "targets": targets,
         "dry_run": dry_run,
+        "force": force,
         "skill_count": len(skill_names),
     }
+
+    # D4: same version → tip unless --force
+    mpath = manifest_path(home)
+    if mpath.is_file() and not force:
+        try:
+            existing = load_manifest(mpath)
+            if existing.version == version and not dry_run:
+                plan["skipped"] = True
+                plan["message"] = (
+                    f"already installed v{version}; pass --force to reinstall"
+                )
+                if json_out:
+                    print(json.dumps(plan, ensure_ascii=False, indent=2))
+                else:
+                    print(f"ℹ️  {plan['message']}")
+                return plan
+        except Exception:  # noqa: BLE001
+            pass
+
     if dry_run:
+        # Plan ops without mutating disk (central source ≈ repo tree)
+        adapters = get_adapters(targets)
+        all_ops = []
+        components = {}
+        ctx = AdapterContext(
+            home=home,
+            repo_root=repo_root,
+            central=repo_root,
+            version=version,
+            skill_names=skill_names,
+            dry_run=True,
+            mcp_bins=mcp_bins,
+        )
+        for adapter in adapters:
+            ops = adapter.install(ctx)
+            all_ops.extend(ops)
+            components[adapter.name] = {"ops": len(ops)}
+        plan["operations"] = [op.to_dict() for op in all_ops]
+        plan["operation_count"] = len(all_ops)
+        plan["components"] = components
         if json_out:
             print(json.dumps(plan, ensure_ascii=False, indent=2))
         else:
-            print(f"[dry-run] install v{version} → {targets}")
+            print(
+                f"[dry-run] install v{version} → {targets} "
+                f"({len(all_ops)} planned ops)"
+            )
         return plan
 
     central = build_central_package(repo_root, le_home, version)
@@ -98,6 +145,7 @@ def do_install(
             "ops": len(ops),
         }
 
+    pruned = prune_old_versions(le_home, version)
     manifest = Manifest(
         schema_version=2,
         product="loopengine",
@@ -107,11 +155,14 @@ def do_install(
         skill_names=skill_names,
         components=components,
         operations=all_ops,
+        extras={"pruned_versions": pruned} if pruned else {},
     )
-    save_manifest(manifest_path(home), manifest)
+    save_manifest(mpath, manifest)
     plan["central_root"] = str(central)
     plan["operations"] = len(all_ops)
-    plan["manifest"] = str(manifest_path(home))
+    plan["manifest"] = str(mpath)
+    if pruned:
+        plan["pruned_versions"] = pruned
     if json_out:
         print(json.dumps(plan, ensure_ascii=False, indent=2))
     else:
@@ -181,22 +232,22 @@ def do_check(
             }
         )
 
-    # Cursor dual-deploy: flat LE skills should exist (Agent Skills discovery)
+    # D3: LE flat skills must be absent (plugin-only)
     flat = home / ".cursor" / "skills"
     if flat.is_dir() and manifest.skill_names:
-        missing_flat = [
+        leftover_flat = [
             n
             for n in manifest.skill_names
-            if not (flat / n / "SKILL.md").is_file()
+            if (flat / n / "SKILL.md").is_file()
         ]
-        if missing_flat:
+        if leftover_flat:
             report["ok"] = False
             report["issues"].append(
                 {
                     "id": "cursor-flat",
                     "message": (
-                        "LE skills missing under ~/.cursor/skills "
-                        f"(need dual-deploy): {missing_flat[:8]}"
+                        "LE skills still under ~/.cursor/skills "
+                        f"(D3 forbids flat): {leftover_flat[:8]}"
                     ),
                 }
             )
@@ -230,6 +281,18 @@ def do_check(
                         ),
                     }
                 )
+            for rel, cid in (
+                (".cursor-plugin/plugin.json", "cursor-plugin-json"),
+                ("hooks/hooks.json", "cursor-hooks"),
+            ):
+                if not (plugin / rel).is_file():
+                    report["ok"] = False
+                    report["issues"].append(
+                        {
+                            "id": cid,
+                            "message": f"missing {rel} under plugins/local/loopengine",
+                        }
+                    )
 
     for op in manifest.operations:
         if op.ownership != "managed":

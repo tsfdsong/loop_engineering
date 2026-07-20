@@ -38,7 +38,7 @@ class ClaudeAdapter(Adapter):
         if not ctx.dry_run:
             if cache.exists():
                 shutil.rmtree(cache)
-            shutil.copytree(ctx.central, cache)
+            shutil.copytree(ctx.central, cache, symlinks=False)
         ops.append(
             Operation(
                 id="claude-sync-cache",
@@ -54,7 +54,7 @@ class ClaudeAdapter(Adapter):
             if mp.exists():
                 shutil.rmtree(mp)
             plugin_dir.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copytree(ctx.central, plugin_dir)
+            shutil.copytree(ctx.central, plugin_dir, symlinks=False)
             meta = mp / ".claude-plugin"
             meta.mkdir(parents=True, exist_ok=True)
             (meta / "marketplace.json").write_text(
@@ -77,7 +77,7 @@ class ClaudeAdapter(Adapter):
                 kind="copy-tree",
                 ownership="managed",
                 source=str(ctx.central),
-                destination=str(plugin_dir),
+                destination=str(mp),
             )
         )
         return ops

@@ -1,4 +1,4 @@
-"""Cursor Tier-1 adapter: real plugin copy + flat skills for Agent discovery."""
+"""Cursor Tier-1 adapter: real plugin copy only (no flat LE skills; D3 + D13)."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from pathlib import Path
 
 from loopengine_install.adapters.base import Adapter, AdapterContext
 from loopengine_install.adapters.helpers import (
+    cleanup_flat_skills,
     extract_redline_blocks,
     inject_agents_file,
     list_skill_names,
@@ -24,14 +25,21 @@ class CursorAdapter(Adapter):
     def sync_plugin(self, ctx: AdapterContext) -> list[Operation]:
         """Deploy a real directory under plugins/local (never symlink).
 
-        Cursor may refuse to load skill bodies that resolve outside
-        ~/.cursor/plugins/ via symlink. Also dual-deploy each skill to
-        ~/.cursor/skills/<name>/ so Agent Skills discovery keeps working
-        (same path Cursor historically scanned).
+        D3: skills live only in the plugin package — remove LE flat skills
+        under ~/.cursor/skills/. D13: never symlink to the central package.
         """
         ops: list[Operation] = []
         dest = self.plugin_root(ctx)
         local_root = ctx.home / ".cursor" / "plugins" / "local"
+        skill_names = ctx.skill_names or list_skill_names(ctx.central)
+
+        # One-way migration: clear LE flat skills (not recorded as reversible ops)
+        cleanup_flat_skills(
+            ctx.home / ".cursor" / "skills",
+            skill_names,
+            ctx.dry_run,
+            "cursor",
+        )
 
         if not ctx.dry_run:
             local_root.mkdir(parents=True, exist_ok=True)
@@ -59,32 +67,6 @@ class CursorAdapter(Adapter):
                 destination=str(dest),
             )
         )
-
-        # Dual-deploy: flat skills for Agent Skills scanner
-        flat_root = ctx.home / ".cursor" / "skills"
-        skill_names = ctx.skill_names or list_skill_names(ctx.central)
-        for i, name in enumerate(skill_names):
-            src = ctx.central / "skills" / name
-            dst = flat_root / name
-            if not src.is_dir():
-                continue
-            if not ctx.dry_run:
-                flat_root.mkdir(parents=True, exist_ok=True)
-                if dst.exists() or dst.is_symlink():
-                    if dst.is_symlink() or dst.is_file():
-                        dst.unlink()
-                    else:
-                        shutil.rmtree(dst)
-                shutil.copytree(src, dst, symlinks=False)
-            ops.append(
-                Operation(
-                    id=f"cursor-flat-skill-{i:03d}-{name}",
-                    kind="copy-tree",
-                    ownership="managed",
-                    source=str(src),
-                    destination=str(dst),
-                )
-            )
         return ops
 
     def _normalize_cursor_plugin(self, dest: Path, ctx: AdapterContext) -> None:
@@ -95,7 +77,6 @@ class CursorAdapter(Adapter):
         if cursor_hooks.is_file():
             shutil.copy2(cursor_hooks, default_hooks)
 
-        # Prefer mcp.json at plugin root (Cursor default discovery)
         plugin_json = dest / ".cursor-plugin" / "plugin.json"
         mcp_path = dest / "mcp.json"
         if plugin_json.is_file():
@@ -107,11 +88,8 @@ class CursorAdapter(Adapter):
                     + "\n",
                     encoding="utf-8",
                 )
-            # Use default folder discovery for skills/commands/hooks
-            # (explicit paths are optional; defaults are more reliable)
             for key in ("skills", "commands", "hooks", "mcpServers"):
                 data.pop(key, None)
-            # Point hooks explicitly to default file if present
             if default_hooks.is_file():
                 data["hooks"] = "./hooks/hooks.json"
             if mcp_path.is_file():
@@ -121,9 +99,6 @@ class CursorAdapter(Adapter):
                 encoding="utf-8",
             )
 
-        # Also place rules inside the plugin for plugin-scoped alwaysApply
-        rules_src = ctx.home / ".cursor" / "rules" / "loopengine-interaction.mdc"
-        # Will be filled after inject_agents; copy from central AGENTS extract later if exists
         rules_dir = dest / "rules"
         rules_dir.mkdir(parents=True, exist_ok=True)
 
@@ -165,7 +140,6 @@ class CursorAdapter(Adapter):
                 servers.pop("headroom", None)
             atomic_write_json(str(cfg), data)
 
-            # Keep plugin mcp.json in sync if plugin dir is a real copy
             plugin_mcp = self.plugin_root(ctx) / "mcp.json"
             if self.plugin_root(ctx).is_dir() and not self.plugin_root(ctx).is_symlink():
                 plugin_mcp.write_text(
@@ -193,12 +167,10 @@ class CursorAdapter(Adapter):
         op = inject_agents_file("cursor-agents", target, blocks, ctx.dry_run)
         ops = [op] if op else []
 
-        # Mirror rules into the plugin package for plugin-scoped discovery
         if not ctx.dry_run and target.is_file():
             plugin_rules = self.plugin_root(ctx) / "rules" / "loopengine-interaction.mdc"
             plugin_rules.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(target, plugin_rules)
-            # Ensure plugin.json discovers rules/
             plugin_json = self.plugin_root(ctx) / ".cursor-plugin" / "plugin.json"
             if plugin_json.is_file():
                 data = json.loads(plugin_json.read_text(encoding="utf-8"))

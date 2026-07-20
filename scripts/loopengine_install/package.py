@@ -20,7 +20,22 @@ def _copy_tree(src: Path, dst: Path) -> None:
         return
     if dst.exists():
         shutil.rmtree(dst)
-    shutil.copytree(src, dst)
+    shutil.copytree(src, dst, symlinks=False)
+
+
+def prune_old_versions(loopengine_home: Path, keep_version: str) -> list[str]:
+    """Remove version dirs other than keep_version under plugins/loopengine (D13 §7)."""
+    root = loopengine_home.expanduser() / "plugins" / "loopengine"
+    removed: list[str] = []
+    if not root.is_dir():
+        return removed
+    for p in root.iterdir():
+        if p.name in {"current"} or p.name.startswith("."):
+            continue
+        if p.is_dir() and p.name != keep_version:
+            shutil.rmtree(p, ignore_errors=True)
+            removed.append(p.name)
+    return removed
 
 
 def _run_render_plugins(repo_root: Path, out_dir: Path) -> None:
