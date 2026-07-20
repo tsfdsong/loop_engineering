@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SessionStart hook for loopengine plugin (Codex variant)
-# Bootstrap: injects orch (multi-skill orchestrator) at session start
+# Bootstrap: injects go runtime bundle at session start (orch v2 merged into go)
 # 公共逻辑见 hooks/_lib.sh
 
 set -euo pipefail
@@ -8,9 +8,9 @@ set -euo pipefail
 # shellcheck source=_lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
 
-orch_content=$(load_orch_runtime_bundle "$PLUGIN_ROOT")
+go_content=$(load_go_runtime_bundle "$PLUGIN_ROOT")
 lessons_content=$(load_recent_lessons "$PLUGIN_ROOT")
-session_context=$(build_session_context "$orch_content" "$lessons_content")
+session_context=$(build_session_context "$go_content" "$lessons_content")
 
 # Codex: 固定使用 SDK 标准 schema（与 hooks-codex.json matcher 一致）
 printf '{\n  "additionalContext": "%s"\n}\n' "$session_context" | cat

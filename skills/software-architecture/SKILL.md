@@ -314,7 +314,7 @@ Step 3: Layer 3 引入
 - **v6.4 重组**：从堆叠 → 三层递进结构（单进程 → 企业模式 → 分布式）
 - 修死引用：v6.2 时该 references 文件已不存在（v6.2 仅删 SKILL.md 未删 references）→ v6.4 已改为内联要点
 - 内联：poeaa + ddia 完整内容（30+30 行）已融入 Layer 2/3 章节
-- orch 调度表已同步
+- go family 路由表已同步
 
 ---
 

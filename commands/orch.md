@@ -1,20 +1,20 @@
 ---
-description: 多技能编排器（orch v2 · 自然语言优先 · family-first）
+description: 兼容别名 — 多技能编排已合并进 /go（family-first · v2.0）
 allowed-tools: Skill, Read, Bash, TodoWrite, WebFetch, WebSearch
 ---
 
-使用 `orch` 技能进行多技能编排。
+> **v2.0 变更**：`orch` 独立技能已删除，family 识别 + DAG 组装已合并进 **go Step 0**。
+> 本命令保留为兼容入口，行为等同于加载 `go` 技能。
 
-加载 `skills/orch/SKILL.md` 获取完整编排方法论。
+使用 `go` 技能进行多技能 / 跨模块编排。
 
-orch v2 识别 scenario family（review / debug_fix / design_build / research_compare / web_qa / parallel_investigation / refactor / test），在 family 内组装串行/并行 DAG，按 rule-first 规则委托 direct_skill / loop / go。
+加载 `skills/go/SKILL.md` 获取完整方法论；family 路由见 `skills/go/references/family-routing.md`。
 
 ## 触发词
 
-`/orch`、多技能编排、2+ 技能组合
+`/orch`（兼容）、`/go`、多技能编排、2+ 技能组合、family 路由
 
 ## 不适用
 
-- 单技能任务（由原生 description 匹配自动处理）
-- 明确的闭环编码（用 `/loop`）
-- 跨模块工程任务（用 `/go`）
+- 单任务闭环（用 `/loop`）
+- 纯只读调研（用 `deep-research` 或 `/go` 的 `research_compare` family）

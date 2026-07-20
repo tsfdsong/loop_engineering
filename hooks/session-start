@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SessionStart hook for loopengine plugin (Claude Code / Cursor / Copilot)
-# Bootstrap: injects orch v2 (natural-language-first multi-skill orchestrator) at session start
+# Bootstrap: injects go runtime bundle (family routing · orch v2 merged into go) at session start
 # 公共逻辑见 hooks/_lib.sh
 
 set -euo pipefail
@@ -8,9 +8,9 @@ set -euo pipefail
 # shellcheck source=_lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
 
-orch_content=$(load_orch_runtime_bundle "$PLUGIN_ROOT")
+go_content=$(load_go_runtime_bundle "$PLUGIN_ROOT")
 lessons_content=$(load_recent_lessons "$PLUGIN_ROOT")
-session_context=$(build_session_context "$orch_content" "$lessons_content")
+session_context=$(build_session_context "$go_content" "$lessons_content")
 
 # D1.5: 追加 [TIER HINT] 段（v2.0 MCP tier 机制）
 # 将 Tier 默认值与升降级触发场景注入到 session_context，

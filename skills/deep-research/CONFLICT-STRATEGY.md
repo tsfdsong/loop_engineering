@@ -135,7 +135,7 @@ handoff:
 
 - 自动识别场景家族：review / debug_fix / design_build / research_compare / web_qa / parallel_investigation / refactor / test
 - 在 family 内抽取 actions，按 rule-first 组装串行/并行 DAG
-- handoff schema 自动把前一阶段结构化产出喂给后一阶段（见 `skills/orch/references/handoff-orch-schema.json`）
+- handoff schema 自动把前一阶段结构化产出喂给后一阶段（见 `skills/go/references/handoff-orch-schema.json`）
 
 > v1.0 的"5 类复合任务链 + `/orch <type>` 编号入口"已被 v2.0 取代。设计哲学仍保留：orch 只做"意图→执行图"规划，不替代 go/loop 的执行细节。
 

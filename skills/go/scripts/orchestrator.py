@@ -143,12 +143,12 @@ def _build_split_prompt(feature, project_dir, tier):
         "",
     ]
 
-    orch_context = _load_orch_planning_context(feature, project_dir)
-    if orch_context:
+    go_context = _load_go_planning_context(feature, project_dir)
+    if go_context:
         parts.extend([
-            "以下 orch v2 运行时真源会约束拆分方式。若任务与 orch 编排有关，必须优先依据这些 family/rules/contracts 来拆分，不要凭空发明流程:",
+            "以下 go family/DAG 运行时真源会约束拆分方式。若任务与 go 编排有关，必须优先依据这些 family/rules/contracts 来拆分，不要凭空发明流程:",
             "```",
-            orch_context,
+            go_context,
             "```",
             "",
         ])
@@ -168,23 +168,22 @@ def _build_split_prompt(feature, project_dir, tier):
     return "\n".join(parts)
 
 
-def _load_orch_planning_context(feature, project_dir):
+def _load_go_planning_context(feature, project_dir):
     """
-    仅在目标明显涉及 orch/orchestration 时，把 orch 真源摘要带入拆分 prompt，
-    让 Step ③ 的任务拆分也消费 references。
+    仅在目标明显涉及 go 编排 / family 路由时，把 go references 真源摘要带入拆分 prompt。
     """
     feature_lower = feature.lower()
-    if not any(token in feature_lower for token in ["orch", "orchestrat", "编排", "调度"]):
+    if not any(token in feature_lower for token in ["go", "family", "orch", "orchestrat", "编排", "调度"]):
         return None
 
     project_dir = Path(project_dir)
     refs = [
-        project_dir / "skills/orch/references/intent-schema.json",
-        project_dir / "skills/orch/references/capability-registry.yaml",
-        project_dir / "skills/orch/references/dag-rules.yaml",
-        project_dir / "skills/orch/references/executor-contracts/direct-skill.json",
-        project_dir / "skills/orch/references/executor-contracts/loop.json",
-        project_dir / "skills/orch/references/executor-contracts/go.json",
+        project_dir / "skills/go/references/intent-schema.json",
+        project_dir / "skills/go/references/capability-registry.yaml",
+        project_dir / "skills/go/references/dag-rules.yaml",
+        project_dir / "skills/go/references/executor-contracts/direct-skill.json",
+        project_dir / "skills/go/references/executor-contracts/loop.json",
+        project_dir / "skills/go/references/executor-contracts/go.json",
     ]
 
     chunks = []

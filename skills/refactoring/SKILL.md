@@ -306,7 +306,7 @@ Refs: <原 issue / 设计文档>"
 - **v6.4 重组**：4 源 → 重构全流程（识别 → 计划 → 小步 → 验证）
 - 内联：legacy-code 31 行要点已融入"特殊场景：遗留代码改造"章节
 - 保留：framework-migration-full.md（140 行，strangler fig 完整模式）
-- orch 调度表已同步
+- go family 路由表已同步
 
 ---
 

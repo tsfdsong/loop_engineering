@@ -331,4 +331,4 @@ Step 3 (发布): 蓝绿部署 + 监控
 - 内联：release-it 30 行要点（稳定性反模式 / 模式 / 发布模式 / 容量规划）已融入 Stage 2/3
 - 内联：production-code-audit 6 维度审计清单已融入 Stage 1 章节
 - 保留：release-it 通过 agent-rules-books 规则文件引用
-- orch 调度表已同步
+- go family 路由表已同步

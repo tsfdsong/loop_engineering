@@ -95,7 +95,7 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 | 2️⃣ 部署（5 子步） | **2a** 渲染 7 plugin manifest（去 _comment，version 同步；v1.2.2 加 Cursor）<br>**2b** 复制 `skills/` 到目标（**v1.3.0 平台分支** + agent filter）<br>**2c** 复制 `hooks/` 到目标<br>**2d** 部署 7 个 `plugin.json` / `marketplace.json` / `gemini-extension.json`<br>**2e** 复制 `AGENTS.md` + `README.md` 到目标 |
 | 3️⃣ MCP 三件套 | `pip install --user jcodemunch-mcp headroom` + `npm i -g repomix`（已装会跳过） |
 | 4️⃣ ZCode 桌面版 MCP | 自动写入 `~/.zcode/cli/config.json` 的 `mcp.servers`（**v1.0 根因**：桌面版真正入口） |
-| 5️⃣ 7 条红线 | 把 AGENTS.md 的 7 条 🔴 红线章节注入 7 个工具的**用户级**规则文件（sentinel markers，幂等；v1.2.2 扩展自 5 条） |
+| 5️⃣ 12 条红线 | 把 AGENTS.md 的 12 条规则（5 Core + 7 Verbal）以 **2 个 H2 sentinel 块**注入 7 个工具用户级规则文件（幂等） |
 | 5️⃣.5 **Cursor MCP 合并**（v1.3.0） | win/macOS/Linux 自动写入 `~/.cursor/mcp.json` 的 `mcpServers`（保留 drawio 等用户自有 server） |
 | 6️⃣ 自检 | 验证关键路径 + manifest 数 + 写入 `~/.loopengine/.installed_version`（**v1.3.0 阈值按平台 + agent 过滤自适应**） |
 
@@ -108,7 +108,7 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 - plugin manifest 5-7 路径
 - ZCode 桌面版 MCP 1 路径
 - Cursor MCP（v1.3.0+） 1 路径（仅 detect 到 cursor）
-- 7 条红线注入 7 工具用户级文件
+- 2 个 H2 sentinel 块注入 7 工具用户级文件（承载 12 条规则）
 - 版本号文件 1 路径
 
 **v1.3.0+ 自适应**：`skill_ok >= 总目标的 80%` 即视为通过（v1.2.x 硬阈值 8/9 改为自适应）。
@@ -133,7 +133,7 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 
 ## 全局红线注入（Step 5）
 
-`install.sh` 自动把 AGENTS.md 中的 7 条 🔴 红线章节（v1.2.2 起含进度汇报 + Subagent 边界）注入到 7 个 AI 工具的**用户级**规则文件：
+`install.sh` 自动把 AGENTS.md 中的 **12 条规则**（5 Core Instincts + 7 Verbal Rules）以 **2 个 H2 sentinel 块**注入到 7 个 AI 工具的**用户级**规则文件：
 
 - `~/.zcode/AGENTS.md`
 - `~/.claude/CLAUDE.md`
@@ -169,12 +169,12 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 开新 AI 会话后发送：
 
 ```
-"告诉我 LoopEngine 的核心价值，并说明 orch v2 的场景家族（family）有哪些"
+"告诉我 LoopEngine 的核心价值，并说明 go 的 8 个场景家族（family）有哪些"
 ```
 
 期望：
-- 解释出 "loop + go + orch 多技能编排" 核心价值
-- 列出 orch 的 5 类（调研+决策 / 分析+建议 / 诊断+修复 / 设计+实现 / 并行调研）
+- 解释出 "loop + go + supervisor" 核心价值
+- 列出 8 个 family（review / debug_fix / design_build / research_compare / web_qa / parallel_investigation / refactor / test）
 
 自动安装验证：
 
@@ -182,15 +182,15 @@ curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | ba
 # 1. 自检通过
 bash install.sh --dry-run
 
-# 2. 检查 9 工具 skill 部署
-ls ~/.zcode/skills/loopengine/skills/orch/   # ZCode 用户级（plugin 中间层）
-ls ~/.cursor/skills/orch/                    # Cursor（v1.3.2 扁平，无 loopengine/ 中间层）
+# 2. 检查 skill 部署（go 含 family 路由 references）
+ls ~/.zcode/skills/loopengine/skills/go/references/family-routing.md
+ls ~/.cursor/skills/go/references/family-routing.md
 
 # 3. 检查 Cursor MCP 合并
 cat ~/.cursor/mcp.json                       # drawio + jcodemunch + repomix（+ 可选 headroom）
 
-# 4. 检查 9 红线注入
-grep "LOOPENGINE-MANAGED" ~/.zcode/AGENTS.md # 9 sentinel markers
+# 4. 检查红线注入（2 sentinel 块）
+grep "LOOPENGINE-MANAGED" ~/.zcode/AGENTS.md
 
 # 5. 检查版本号
 cat ~/.loopengine/.installed_version         # 1.3.2

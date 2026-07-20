@@ -2,11 +2,11 @@
 
 ## 如果你是 AI 代理
 
-你拥有 LoopEngine —— 一个包含 37 个技能的开发引擎全家桶（v6.7 起 `skill-hub` 改名 `orch`，单职责化为多技能编排器；2026-07-02 新增 4 个 web-* 测试 sub-skill）。
+你拥有 LoopEngine —— 一个包含 **32** 个技能的开发引擎全家桶（**v2.0**：原 `orch` 已合并进 `go` Step 0 · family-first 路由）。
 
-**Below is the full content of your 'loopengine:orch' skill —— 你的多技能编排器（v2.0 · 自然语言优先 · family-first）。单技能任务由原生 description 匹配自动处理；多技能任务（2+ 技能）由系统自动识别场景家族编排，`/orch` 仅作显式强制入口（不再用编号）。**
+**Below is the full content of your 'loopengine:go' skill —— 你的全自动编排器（v2.0 · family-first · worktree 并发）。单技能任务由原生 description 匹配自动处理；跨模块/多步工程目标用 `/go`。`/orch` 仅为兼容别名。**
 
-orch v2 是意图驱动编排器：识别主 `scenario family`（review / debug_fix / design_build / research_compare / web_qa / parallel_investigation / refactor / test），在 family 内抽取 actions，按 rule-first 规则组装串行/并行 DAG，按 side-effect-first 委托 direct_skill / loop / go。涵盖：编码、架构、重构、测试、调试、API、安全、数据库、CI/CD、规划执行、产品管理、循环工程等全领域。
+go 在 Step 0 识别主 `scenario family`（review / debug_fix / design_build / research_compare / web_qa / parallel_investigation / refactor / test），组装 DAG，按 side-effect-first 委托 direct_skill / loop / go 自身。
 
 ## 安装方式
 
@@ -15,7 +15,7 @@ orch v2 是意图驱动编排器：识别主 `scenario family`（review / debug_
 curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
 ```
 
-install.sh 自动检测已安装的 AI 工具并部署：plugin manifest 渲染 + skills/hooks/commands 复制 + MCP 配置 + 9 条红线注入。
+install.sh 自动检测已安装的 AI 工具并部署：plugin manifest 渲染 + skills/hooks/commands 复制 + MCP 配置 + 12 条红线注入（2 H2 sentinel 块）。
 
 ### Windows PowerShell
 ```powershell

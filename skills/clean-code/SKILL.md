@@ -328,7 +328,7 @@ metadata:
 - **v6.4 重组**：4 源 → 4 个明确维度（原则/要点/规范/决策），避免风格混用
 - 内联：pragmatic-programmer 34 行要点已融入"维度 4：决策"章节
 - 保留：clean-code + code-complete 通过 `~/.agents/skills/agent-rules-books/` 规则文件引用
-- orch 调度表已同步
+- go family 路由表已同步
 
 ---
 

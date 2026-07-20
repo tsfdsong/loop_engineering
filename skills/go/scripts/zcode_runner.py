@@ -186,12 +186,12 @@ def build_prompt(task, worktree_dir, handoff_summaries=None):
                 parts.append(f"- 提示: {hs['next_task_hint']}")
             parts.append("")
 
-    orch_runtime_context = _get_orch_runtime_context(worktree_dir, task)
-    if orch_runtime_context:
-        parts.append("## orch v2 运行时真源")
-        parts.append("以下 orch v2 资产是真实运行路径要消费的规则与契约，请按它们实现，不要只改文档:")
+    go_runtime_context = _get_go_runtime_context(worktree_dir, task)
+    if go_runtime_context:
+        parts.append("## go 编排运行时真源")
+        parts.append("以下 go family/DAG 资产是真实运行路径要消费的规则与契约，请按它们实现，不要只改文档:")
         parts.append("```")
-        parts.append(orch_runtime_context)
+        parts.append(go_runtime_context)
         parts.append("```")
         parts.append("")
 
@@ -213,29 +213,31 @@ def build_prompt(task, worktree_dir, handoff_summaries=None):
     return "\n".join(parts)
 
 
-def _get_orch_runtime_context(worktree_dir, task):
+def _get_go_runtime_context(worktree_dir, task):
     """
-    当任务明显在实现 orch v2 本身时，注入 orch 运行时真源摘要，
-    确保执行路径真正消费 references，而不是只更新文档。
+    当任务明显在实现 go 编排 / family 路由本身时，注入 go references 真源摘要。
     """
     task_files = task.get("files", [])
     task_text = " ".join(
         str(x) for x in [task.get("name", ""), task.get("prompt", "")]
     ).lower()
-    touches_orch = any("skills/orch/" in f or "hooks/" in f for f in task_files)
-    mentions_orch = "orch" in task_text or "orchestrator" in task_text
-    if not (touches_orch or mentions_orch):
+    touches_go = any("skills/go/" in f or "hooks/" in f for f in task_files)
+    mentions_go = any(
+        token in task_text
+        for token in ["go", "family", "orch", "orchestrator", "编排"]
+    )
+    if not (touches_go or mentions_go):
         return None
 
     worktree_dir = Path(worktree_dir)
     refs = [
-        worktree_dir / "skills/orch/SKILL.md",
-        worktree_dir / "skills/orch/references/intent-schema.json",
-        worktree_dir / "skills/orch/references/capability-registry.yaml",
-        worktree_dir / "skills/orch/references/dag-rules.yaml",
-        worktree_dir / "skills/orch/references/executor-contracts/direct-skill.json",
-        worktree_dir / "skills/orch/references/executor-contracts/loop.json",
-        worktree_dir / "skills/orch/references/executor-contracts/go.json",
+        worktree_dir / "skills/go/SKILL.md",
+        worktree_dir / "skills/go/references/intent-schema.json",
+        worktree_dir / "skills/go/references/capability-registry.yaml",
+        worktree_dir / "skills/go/references/dag-rules.yaml",
+        worktree_dir / "skills/go/references/executor-contracts/direct-skill.json",
+        worktree_dir / "skills/go/references/executor-contracts/loop.json",
+        worktree_dir / "skills/go/references/executor-contracts/go.json",
     ]
     chunks = []
     for path in refs:

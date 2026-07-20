@@ -15,4 +15,4 @@ allowed-tools: Bash, Read, Edit, Write, TodoWrite, Grep, Glob
 
 - 多任务并行（用 `/go` 或 `subagent-driven-development`）
 - 纯调研（用 `deep-research`）
-- 多技能编排（用 `/orch`）
+- 跨模块工程（用 `/go`）

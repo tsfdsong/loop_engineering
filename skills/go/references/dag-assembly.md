@@ -1,7 +1,7 @@
 # DAG Assembly（吸收自 orch v2.0 · v2.0 整合 spec-E · D4.1）
 
 > 本文件承载原 orch 的 DAG 组装 + confidence gate 能力。
-> 真源（已删）：原 `skills/orch/references/dag-rules.yaml` + `skills/orch/SKILL.md > 执行流程`。
+> 运行时真源（v2.0 迁移）：`skills/go/references/dag-rules.yaml` + `skills/go/SKILL.md` Step 0 执行流程。
 
 ## rule-first DAG 组装
 

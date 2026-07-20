@@ -1,7 +1,7 @@
 # Family Routing（吸收自 orch v2.0 · v2.0 整合 spec-E · D4.1）
 
 > 本文件承载原 orch 的 family 识别能力。orch 已合并到 go（v2.0）。
-> 真源（已删）：原 `skills/orch/SKILL.md` + `skills/orch/references/dag-rules.yaml > global.allowed_combinations`。
+> 运行时真源（v2.0 迁移）：`skills/go/references/dag-rules.yaml` + `intent-schema.json` + `families/*.yaml`
 
 ## 8 场景家族
 

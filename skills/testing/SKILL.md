@@ -457,4 +457,4 @@ Step 6: 还 flaky？→ 标记为 known flaky，跳过 CI（但要修）
 - 内联：e2e-testing 49 行要点已融入 Layer 3 章节
 - 保留：tdd-full.md（371 行）+ e2e-playbook.md（531 行）
 - 内联：testing-patterns 270 行内容已融入 Layer 1 章节
-- orch 调度表已同步
+- go family 路由表已同步

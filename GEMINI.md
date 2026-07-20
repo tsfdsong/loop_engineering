@@ -1,1 +1,1 @@
-@./skills/orch/SKILL.md
+@./skills/go/SKILL.md

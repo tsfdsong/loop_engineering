@@ -923,7 +923,7 @@ common_deployment_check() {
             [[ -z "$entry" ]] && continue
             IFS='|' read -r label root_dir <<< "$entry"
             skill_total=$((skill_total + 1))
-            if [ -d "$root_dir/skills/orch" ] || [ -d "$root_dir/skills/loop" ]; then
+            if [ -d "$root_dir/skills/go" ] || [ -d "$root_dir/skills/loop" ]; then
                 skill_ok=$((skill_ok + 1))
             fi
         done < <(common_tool_root_dirs_for_platform "$pf" | common_filter_tool_root_dirs "$want_ids")
@@ -1008,6 +1008,6 @@ common_print_target_summary() {
     done
     echo ""
     echo -e "${_BOLD}💡 验证 (开新 AI 会话后发送):${_RESET}"
-    echo -e "  ${_CYAN}\"告诉我 LoopEngine 的核心价值，并说明 orch v2 的场景家族（family）有哪些\"${_RESET}"
+    echo -e "  ${_CYAN}\"告诉我 LoopEngine 的核心价值，并说明 go 的 8 个场景家族（family）有哪些\"${_RESET}"
     echo ""
 }

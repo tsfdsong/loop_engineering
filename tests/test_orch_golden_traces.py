@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""orch v2 golden-trace acceptance runner.
+"""go family golden-trace acceptance runner (assets migrated from orch v2).
 
-Validates that all golden-traces under skills/orch/references/golden-traces/
+Validates golden-traces under skills/go/references/golden-traces/
 satisfy the spec's acceptance criteria (docs/superpowers/specs/2026-07-02-
 orch-v2-c-lite-design.md §15.1-§15.5) and that handoff-orch-schema.json is
 a well-formed JSON Schema draft-07 file.
@@ -14,8 +14,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-GOLDEN_DIR = ROOT / "skills" / "orch" / "references" / "golden-traces"
-HANDOFF_SCHEMA = ROOT / "skills" / "orch" / "references" / "handoff-orch-schema.json"
+GOLDEN_DIR = ROOT / "skills" / "go" / "references" / "golden-traces"
+HANDOFF_SCHEMA = ROOT / "skills" / "go" / "references" / "handoff-orch-schema.json"
 
 # Spec resolution (v1.3.2 · 2026-07-02):
 #   1. External repo (~/.loopengine/specs/) — preferred after externalization
