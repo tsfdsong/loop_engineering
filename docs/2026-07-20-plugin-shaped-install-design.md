@@ -3,6 +3,7 @@
 > **日期**: 2026-07-20  
 > **状态**: Draft · 待用户审阅后进入 writing-plans  
 > **来源**: `/brainstorming` 会话决策  
+> **路径说明**: `docs/superpowers/` 已被 gitignore（设计文档外部化）；本文件落在 `docs/` 以便主仓版本化。  
 
 ## 1. 问题陈述
 
