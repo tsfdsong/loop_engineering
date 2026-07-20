@@ -1,9 +1,10 @@
 # Design: Plugin-Shaped Install（对齐 Superpowers 整包形态）
 
 > **日期**: 2026-07-20  
-> **状态**: Approved · 2026-07-20 · 实施计划见 `docs/2026-07-20-plugin-shaped-install-plan.md`  
-> **来源**: `/brainstorming` 会话决策  
+> **状态**: **Superseded** · 现行设计见 `docs/2026-07-20-plugin-shaped-install-design-v2.md`  
+> **来源**: `/brainstorming` 会话决策（v1 · Bash/PS 双轨）  
 > **路径说明**: `docs/superpowers/` 已被 gitignore（设计文档外部化）；本文件落在 `docs/` 以便主仓版本化。  
+> **说明**: v2 将运行时硬切为 Python，安装路径零业务 Shell；本文件仅保留历史决策 D1–D6 上下文。  
 
 ## 1. 问题陈述
 
