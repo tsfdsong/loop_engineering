@@ -7,7 +7,7 @@ import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
-from loopengine_install.adapters import get_adapters
+from loopengine_install.adapters import ALL_TOOLS, get_adapters
 from loopengine_install.adapters.base import AdapterContext
 from loopengine_install.adapters.helpers import list_skill_names
 from loopengine_install.detect import detect_agents, detect_mcp_binaries
@@ -29,9 +29,12 @@ def select_targets(
     only: list[str] | None,
     all_tools: bool,
 ) -> list[str]:
-    known = ["cursor", "claude", "zcode"]
+    known = list(ALL_TOOLS)
     if only:
-        return [t for t in only if t in known]
+        unknown = [t for t in only if t not in known]
+        if unknown:
+            raise ValueError(f"unknown tools: {unknown} (known: {known})")
+        return list(only)
     if all_tools:
         return list(known)
     detected = detect_agents(home)

@@ -10,28 +10,23 @@ go 在 Step 0 识别主 `scenario family`（review / debug_fix / design_build / 
 
 ## 安装方式
 
-### 一键安装（推荐 · 所有平台通用）
+### 一键安装（推荐 · 所有平台）
+
 ```bash
-curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
+curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.py | python3
+# 需要 Python ≥ 3.10；Windows 可用 python
 ```
 
-install.sh 自动检测已安装的 AI 工具并部署：plugin manifest 渲染 + skills/hooks/commands 复制 + MCP 配置 + 12 条红线注入（2 H2 sentinel 块）。
+`install.py` 自动 detect 本机 AI 工具，构建中央包，按官方插件路径部署 skills/hooks，并写入 MCP、AGENTS 规则与注册表（Claude / ZCode）。卸载：`python3 install.py uninstall`。
 
-### Windows PowerShell
-```powershell
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$le = "$env:TEMP\le-install-$([DateTime]::UtcNow.Ticks).ps1"
-irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 -OutFile $le
-& $le
-Remove-Item $le -Force
-```
+### 部署验证
 
-### 部署验证（v1.4 新增）
 ```bash
-python3 scripts/audit_tools.py    # 6 维度部署审计（A 工具部署/B 技能/C 红线/D MCP/E 版本/F Schema）
+python3 install.py install --check --json
+python3 scripts/audit_tools.py
 ```
 
-详见 [README.md](README.md)。
+详见 [docs/INSTALL.md](docs/INSTALL.md) 与 [README.md](README.md)。
 
 ## 贡献
 

@@ -1,260 +1,87 @@
 # LoopEngine 安装指南
 
-> **v2.1 安装（Python 统一入口 · 分支 `go-plugin-shaped-install-py`）**：一行 `install.py` 覆盖 macOS / Windows / Linux；按官方插件路径部署 skills/hooks，并写入 MCP / AGENTS / 注册表。旧 `install.sh` / `install.ps1` 将在本改造完成后删除。
+> **v2.1** — 唯一入口 `install.py`（Python ≥ 3.10），macOS / Windows / Linux 同一条命令。  
+> 按各 AI Agent **官方插件模式**部署 skills / hooks，并写入 MCP、AGENTS（规则）与插件注册表。  
+> 旧 `install.sh` / `install.ps1` 已退役。
 
-## 一行安装（推荐）
+## 一行安装
 
 ```bash
-# 已有本仓库 clone：
+# 远程（推荐）
+curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.py | python3
+
+# Windows 若命令是 python：
+curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.py | python
+
+# Fallback（管道编码异常时）
+curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.py -o install.py
 python3 install.py install
-# 或指定工具：
+```
+
+已有 clone：
+
+```bash
+python3 install.py install
 python3 install.py install --only=cursor,claude,zcode
-
-# 卸载（按 manifest 可逆）：
+python3 install.py install --all
 python3 install.py uninstall
-
-# 远程一行（需本机 Python ≥ 3.10）：
-curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/go-plugin-shaped-install-py/install.py | python3
-# Windows 可用 python；fallback：curl -o install.py … && python install.py
+python3 install.py install --check
 ```
 
-安装后检查：
-
-- Cursor：`~/.cursor/plugins/local/loopengine`（不再平铺 `~/.cursor/skills/<le-skill>/`）
-- Claude：`installed_plugins.json` 含 `loopengine@loopengine-local`
-- ZCode：`~/.zcode/skills/loopengine` + enabledPlugins
-- 清单：`~/.loopengine/install-manifest.json`
-
----
-
-## 旧版说明（Bash / PowerShell · 过渡期仍保留）
-
-> v1.3.2（2026-07-03）— 新增 `install.ps1`（Windows PowerShell 兄弟脚本，纯 PS 无需 Git Bash）；修复 3 个 install.sh bug（filter 分隔符 / Cursor 路径扁平 / macOS MCP fallback）；merge_mcp_config.py headroom 改可选。**v1.3.2+ 单模式：每次执行都强制覆盖所有文件，无 dry-run/无版本等待**。
-> v1.3.1 三平台 install 脚本合一（3 平台从 ~145 → ~18 行），merge_mcp_config.py 合并 ZCode + Cursor 双 schema。
-> v1.3.0 OS + AI Agent 全自动感知。
-
-### 一行安装（旧）
-
-#### macOS / Linux / Windows Git Bash
-
-```bash
-curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
-```
-
-### Windows PowerShell（v1.3.2 新增 · 纯 PS 无需 Git Bash）
-
-```powershell
-# PowerShell 5.1 需先强制 TLS 1.2（GitHub raw 要求），PowerShell 7+ 可省略此行
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-# 单模式：每次都强制覆盖所有文件（不要用 irm|iex，见下方说明）
-# 注意：文件名带时间戳避免 PS 5.1 irm -OutFile 不覆盖同名文件陷阱
-$le = "$env:TEMP\le-install-$([DateTime]::UtcNow.Ticks).ps1"
-irm https://github.com/tsfdsong/loop_engineering/raw/main/install.ps1 -OutFile $le
-& $le
-Remove-Item $le -Force
-```
-
-**装完即用**。无需重启 AI 工具，无需懂任何目录约定，无需手动选平台或工具。
-
-#### ⚠️ 为什么不用 `irm | iex`？
-
-`irm | iex`（`Invoke-RestMethod | Invoke-Expression`）在 PS 5.1 下有致命问题：**`irm` 把 install.ps1 的 UTF-8 BOM 当成内容字符保留，`iex` 执行时首行变成 `?# ═══...`，报"无法将 ?# 项识别为 cmdlet"**。临时文件模式（`irm -OutFile` + `&`）绕过这个限制：`&` 把文件当脚本执行，正确处理 BOM 和编码。
-
-#### 可选环境变量（控制部署范围）
-
-install.ps1 默认自动感知 + 强制覆盖，**不传参数也能用**。下面这些是可选的范围控制：
-
-| 环境变量 | 含义 | 示例 |
-|---------|------|------|
-| `LE_ALL=1` | 强制全量部署（绕过 detect，所有 9+ 工具） | `$env:LE_ALL=1; .\install.ps1` |
-| `LE_ONLY="zcode,cursor"` | 指定 agent id | `$env:LE_ONLY="zcode,cursor"; .\install.ps1` |
-
-> **执行策略提示**：若被阻止，先跑 `Set-ExecutionPolicy -Scope Process Bypass`（仅当前会话生效）。
-
-> **TLS/网络故障**：PowerShell 5.1 默认 TLS 1.0，GitHub raw 强制 TLS 1.2，不设置会报 `连接被意外关闭`。若设了 TLS 1.2 仍失败（GitHub raw 在中国不稳定），用本地执行：浏览器下载 `install.ps1` 后 `.\install.ps1`。
-
-## v1.3.2 核心改进
-
-| 改动 | 说明 |
+| Flag | 含义 |
 |------|------|
-| 🆕 **install.ps1 新增** | Windows PowerShell 兄弟脚本（~500 行），与 install.sh 行为契约一致，共用 3 个 Python helper（render_plugins.py / inject_rules.py / merge_mcp_config.py）。两个脚本并存，按平台选用 |
-| 🔧 **filter 分隔符 bug 修复** | `common_filter_tool_root_dirs` 入口标准化 want_ids（换行/逗号/制表符 → 空格），修复 detect 用换行输出但匹配用空格导致 7 个 agent 全被误拒的 bug |
-| 🔧 **Cursor skills 路径扁平** | Cursor 改走扁平模式 `~/.cursor/skills/<name>/SKILL.md`（逐 skill 覆盖，不清空公共目录，保护用户其他 skill）；原逻辑多两层 `loopengine/skills/` Cursor 扫不到 |
-| 🔧 **macOS MCP fallback 补全** | macOS fallback 表补 Homebrew（`/opt/homebrew/bin` / `/usr/local/bin`）+ npm global + volta；Linux 补 npm global；修复 macOS headroom 装在 Homebrew 路径找不到的问题 |
-| 🔧 **headroom 解耦** | `deploy_cursor_mcp` 把 headroom 从"写 Cursor MCP 的强制门槛"降级为可选；jcodemunch + repomix 必需，headroom 找不到仅告警不阻断；`merge_mcp_config.py` cursor schema 支持空 headroom（跳过 entry） |
+| （无参数） | 智能安装/升级；detect 本机已装 Agent |
+| `--only=a,b` | 只部署指定工具 |
+| `--all` | 部署全部已支持工具（Tier-1/2/3） |
+| `--force` | 同版也重装 |
+| `--dry-run` / `--json` | 只打印计划 |
+| `uninstall` | 按 `~/.loopengine/install-manifest.json` 逆序卸载 |
 
-### v1.3.2 PowerShell 特有处理
+**依赖**：Python ≥ 3.10；远程安装需 `git`（clone 到 `~/.loopengine/src`）。
 
-| 问题 | 根因 | 修复 |
+## 工具 Tier
+
+| Tier | 工具 | 行为 |
 |------|------|------|
-| 中文乱码（`ZCode 鍐呯疆鍖?`）| PowerShell 5.1 默认用 GBK 读 .ps1 | install.ps1 加 UTF-8 BOM |
-| `无法覆盖变量 HOME` | `$home` 是 PS 只读自动变量 | 改用 `$homeDir = $env:USERPROFILE` |
+| 1 原生插件 | Cursor、Claude、ZCode | 官方 plugin 路径 + registry + MCP + AGENTS |
+| 2 半插件 | Codex、Gemini | 整包目录 + AGENTS/等价规则注入 |
+| 3 注入型 | Copilot、Pi | skills 树 + AGENTS 注入 |
 
-## 更新
+## 安装后布局（要点）
 
-**v1.2.0 起，更新 = 重新跑 install.sh**（智能模式自动判断）：
+| 项 | 路径 |
+|----|------|
+| 中央包 | `~/.loopengine/plugins/loopengine/<version>/`（`current` 指向） |
+| 清单 | `~/.loopengine/install-manifest.json` |
+| Cursor | `~/.cursor/plugins/local/loopengine`（**不再**平铺 `~/.cursor/skills/<le-skill>/`） |
+| Claude | cache + `installed_plugins.json` 键 `loopengine@loopengine-local` |
+| ZCode | `~/.zcode/skills/loopengine` + enabledPlugins |
+| Cursor MCP | `~/.cursor/mcp.json`（仅 LE 管理的 jcodemunch/repomix/headroom） |
 
-```bash
-curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.sh | bash
-```
-
-智能模式行为：
-- **未装** → 首次安装
-- **已装同版** → 5 秒等待（防误触，`--force` 跳过）
-- **已装旧版** → 升级（直接执行，无需等待）
-
-### 参数
-
-| 参数 | 作用 |
-|------|------|
-| `bash install.sh` | 智能模式 + 自动感知本机 AI Agent（**v1.3.0 默认**） |
-| `bash install.sh --all` | 强制全量 11 目标部署（绕过 detect） |
-| `bash install.sh --only=zcode,cursor` | 只给指定 agent id 部署（逗号或空格分隔） |
-| `bash install.sh --force` | 跳过 5 秒等待，强制重装 |
-| `bash install.sh --dry-run` | 只检查版本不实际安装 |
-| `bash install.sh -h` | 显示帮助 |
-
-## 它做了什么（v1.1.0 全面同步 · v1.2.0 一体化 · v1.2.2 Cursor 兼容 · v1.3.0 自动感知）
-
-| 步骤 | 行为 |
-|------|------|
-| 0️⃣ 版本自检 | 读 `~/.loopengine/.installed_version`，已装同版本则 5 秒等待 |
-| 0️⃣.5 **AI Agent 自动感知**（v1.3.0） | 扫描本机 9 个特征路径，输出已检测列表；可用 `--all` / `--only` 覆盖 |
-| 1️⃣ 拉源码 | `git clone --depth 1` 到 `/tmp/loopengine-install-$$/`，自动清理 |
-| 2️⃣ 部署（5 子步） | **2a** 渲染 7 plugin manifest（去 _comment，version 同步；v1.2.2 加 Cursor）<br>**2b** 复制 `skills/` 到目标（**v1.3.0 平台分支** + agent filter）<br>**2c** 复制 `hooks/` 到目标<br>**2d** 部署 7 个 `plugin.json` / `marketplace.json` / `gemini-extension.json`<br>**2e** 复制 `AGENTS.md` + `README.md` 到目标 |
-| 3️⃣ MCP 三件套 | `pip install --user jcodemunch-mcp headroom` + `npm i -g repomix`（已装会跳过） |
-| 4️⃣ ZCode 桌面版 MCP | 自动写入 `~/.zcode/cli/config.json` 的 `mcp.servers`（**v1.0 根因**：桌面版真正入口） |
-| 5️⃣ 12 条红线 | 把 AGENTS.md 的 12 条规则（5 Core + 7 Verbal）以 **2 个 H2 sentinel 块**注入 7 个工具用户级规则文件（幂等） |
-| 5️⃣.5 **Cursor MCP 合并**（v1.3.0） | win/macOS/Linux 自动写入 `~/.cursor/mcp.json` 的 `mcpServers`（保留 drawio 等用户自有 server） |
-| 6️⃣ 自检 | 验证关键路径 + manifest 数 + 写入 `~/.loopengine/.installed_version`（**v1.3.0 阈值按平台 + agent 过滤自适应**） |
-
-### 同步目标一览
-
-`--all` 时取全量 11 路径（默认仅 detect 到本机已装工具，5-9 路径自适应）：
-- skills/ 8-9 路径
-- hooks/ 8-9 路径
-- AGENTS.md / README.md 8-9 路径
-- plugin manifest 5-7 路径
-- ZCode 桌面版 MCP 1 路径
-- Cursor MCP（v1.3.0+） 1 路径（仅 detect 到 cursor）
-- 2 个 H2 sentinel 块注入 7 工具用户级文件（承载 12 条规则）
-- 版本号文件 1 路径
-
-**v1.3.0+ 自适应**：`skill_ok >= 总目标的 80%` 即视为通过（v1.2.x 硬阈值 8/9 改为自适应）。
-
-## 工具部署目标（v1.3.0 按平台分支）
-
-| AI 工具 | Windows 路径 | macOS / Linux 路径 |
-|---------|-------------|---------------------|
-| **ZCode** | `~/.zcode/skills/loopengine/` | `~/.zcode/skills/loopengine/` |
-| Claude Code | `~/.claude/skills/loopengine/` | `~/.claude/skills/loopengine/` |
-| Codex | `~/.codex/skills/loopengine/` | `~/.codex/skills/loopengine/` |
-| Gemini CLI | `~/.gemini/extensions/loopengine/` | `~/.gemini/extensions/loopengine/` |
-| GitHub Copilot | `~/.copilot/skills/loopengine/` | `~/.copilot/skills/loopengine/` |
-| Pi | `~/.pi/skills/loopengine/` | `~/.pi/skills/loopengine/` |
-| Cursor | `~/.cursor/skills/loopengine/`（hooks/manifest）+ `~/.cursor/skills/<skill>/`（v1.3.2 扁平） | `~/.cursor/skills/loopengine/`（hooks/manifest）+ `~/.cursor/skills/<skill>/`（v1.3.2 扁平） |
-| **ZCode 内置包**（Windows 专属） | `~/AppData/Local/Programs/ZCode/resources/glm/packages/loopengine-plugin/` | ❌ 不部署（v1.3.0 修复：避免创建虚假 `$HOME/AppData`） |
-| **ZCode CLI 缓存** | `~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/` | `~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/` |
-| **Cursor MCP**（v1.3.0 新增） | `~/.cursor/mcp.json` | `~/.cursor/mcp.json` |
-
-> 🟢 ZCode 用户级 fallback 是关键 — 即使其他 ZCode 内部插件路径不动，技能也能加载。
-> 🟢 **Cursor 完整集成**（v1.2.2 + v1.3.0 + v1.3.2 扁平修复）：skills 扁平部署到 `~/.cursor/skills/<skill>/`（v1.3.2 改动，原 v1.3.1 多两层 `loopengine/skills/` Cursor 扫不到）；hooks/plugin.json 在 `~/.cursor/skills/loopengine/`（plugin 根）；红线注入 `~/.cursor/rules/loopengine-interaction.mdc`；**MCP 合并写入 `~/.cursor/mcp.json`**（保留 drawio 等用户自有 server，headroom 可选）。
-
-## 全局红线注入（Step 5）
-
-`install.sh` 自动把 AGENTS.md 中的 **12 条规则**（5 Core Instincts + 7 Verbal Rules）以 **2 个 H2 sentinel 块**注入到 7 个 AI 工具的**用户级**规则文件：
-
-- `~/.zcode/AGENTS.md`
-- `~/.claude/CLAUDE.md`
-- `~/.gemini/GEMINI.md`
-- `~/.codex/AGENTS.md`
-- `~/.cursor/rules/loopengine-interaction.mdc`
-- `~/.copilot/AGENTS.md`
-- `~/.pi/AGENTS.md`
-
-**保证**：
-- **幂等性**：重复执行不重复插入（sentinel markers 检测）
-- **用户保留**：你的其他自定义内容不会被覆盖
-- **自动同步**：重跑 `install.sh`（智能模式）时规则自动更新
-
-## Cursor MCP 合并（v1.3.0 新增 · Step 5.5 · v1.3.2 headroom 改可选）
-
-`install.sh` / `install.ps1` 自动把 MCP server 路径注入到 `~/.cursor/mcp.json` 的 `mcpServers`：
-
-- `jcodemunch`（指向 `jcodemunch-mcp.exe` / `.cmd`）— **必需**
-- `repomix`（指向 `repomix.exe` / `.cmd`）— **必需**
-- `headroom`（指向 `headroom.exe` / `.cmd`）— **可选**（v1.3.2 改动：找不到时跳过该 entry，不阻断写入）
-
-**关键差异**（[F] 来自本机 `.mcp.json` 实测）：
-- **Cursor IDE** schema：`mcpServers.<name>.{command, args}` （**无** `type` 字段）
-- **ZCode 桌面版** schema：`mcp.servers.<name>.{type: "stdio", command, args}`
-
-**保留策略**：用 `setdefault` 保留所有顶层字段和用户已有 server（如 `drawio`），仅强制覆写 LoopEngine 自己的 key。原子写（`.tmp` + `os.replace`）。
-
-**v1.3.2 headroom 解耦背景**：v1.3.1 及之前要求 jcodemunch + repomix + headroom **三个全找到**才写 Cursor mcp.json，但 macOS 上 headroom 常装在 Homebrew 路径（`/opt/homebrew/bin`，不在 fallback 表），导致整个 Cursor MCP 配置被跳过 → "macOS 不能用"。v1.3.2 把 headroom 降级为可选，并补全 macOS/Linux fallback 路径表。
-
-## 验证
-
-开新 AI 会话后发送：
-
-```
-"告诉我 LoopEngine 的核心价值，并说明 go 的 8 个场景家族（family）有哪些"
-```
-
-期望：
-- 解释出 "loop + go + supervisor" 核心价值
-- 列出 8 个 family（review / debug_fix / design_build / research_compare / web_qa / parallel_investigation / refactor / test）
-
-自动安装验证：
+## 自检
 
 ```bash
-# 1. 自检通过
-bash install.sh --dry-run
-
-# 2. 检查 skill 部署（go 含 family 路由 references）
-ls ~/.zcode/skills/loopengine/skills/go/references/family-routing.md
-ls ~/.cursor/skills/go/references/family-routing.md
-
-# 3. 检查 Cursor MCP 合并
-cat ~/.cursor/mcp.json                       # drawio + jcodemunch + repomix（+ 可选 headroom）
-
-# 4. 检查红线注入（2 sentinel 块）
-grep "LOOPENGINE-MANAGED" ~/.zcode/AGENTS.md
-
-# 5. 检查版本号
-cat ~/.loopengine/.installed_version         # 1.3.2
+python3 install.py install --check --json
+ls ~/.cursor/plugins/local/loopengine/skills/go/SKILL.md
+# Claude
+python3 -c "import json,pathlib;d=json.loads(pathlib.Path.home().joinpath('.claude/plugins/installed_plugins.json').read_text());print('loopengine@loopengine-local' in d.get('plugins',{}))"
 ```
 
-## 故障排查
+## 常见问题
 
-| 现象 | 解决 |
+| 问题 | 处理 |
 |------|------|
-| `git clone` 失败 | 检查网络/VPN；可手动下载 ZIP 解压后跑 `bash install.sh` |
-| **PowerShell `连接被意外关闭`** | PS 5.1 默认 TLS 1.0，GitHub raw 要求 TLS 1.2。修复：命令前加 `[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12`；或升级 PS 7+ |
-| **PowerShell `irm\|iex` 报 `?#` 或 `意外的属性 CmdletBinding`** | PS 5.1 下 `irm` 保留 UTF-8 BOM + `iex` 把脚本当表达式执行，遇 BOM/param() 报错。**修复：改用临时文件模式** `irm -OutFile $le; & $le`（见上方安装命令）。不要用 `irm \| iex` |
-| **PowerShell 参数怎么传** | install.ps1 默认就是强制模式，无需参数。可选范围控制走 env：`$env:LE_ALL=1; & $le`（全量）/ `$env:LE_ONLY="zcode,cursor"; & $le`（指定 agent） |
-| **PowerShell 执行被策略阻止** | 先 `Set-ExecutionPolicy -Scope Process Bypass`（仅当前会话）；或浏览器下载后 `.\install.ps1` |
-| **GitHub raw 连接不稳定**（中国网络） | 设了 TLS 1.2 仍失败时，浏览器手动下载 `install.ps1` 到本地，`.\install.ps1`；或用代理 |
-| **PowerShell 中文乱码**（v1.3.2） | install.ps1 已加 UTF-8 BOM；若仍乱码，确认用 PowerShell 5.1+ 且文件未被二次编码 |
-| **PowerShell 跑的是旧版 install.ps1** | PS 5.1 `irm -OutFile $le` 同路径同名**不覆盖已存在文件**，导致 `& $le` 跑的是缓存旧版（含已知 bug）。**修复：文件名带时间戳**（见上方推荐命令 `le-install-$([DateTime]::UtcNow.Ticks).ps1`）或 `Remove-Item $le -Force` 先删再下 |
-| `pip install` 失败 | 先 `pip install --upgrade pip`；用 `python -m pip install --user <pkg>` 替代 |
-| `npm install -g` 失败 | 检查 Node.js；Linux/macOS 上需要 sudo 或 `npm config set prefix` |
-| 装完 ZCode 还是看不到 loopengine 技能 | 重跑 `bash install.sh`（覆盖所有目标目录） |
-| **ZCode MCP 工具不显示** | 检查 `cat ~/.zcode/cli/config.json` 是否有 `mcp.servers` 三个 server；缺失就重跑 `bash install.sh` |
-| **Cursor MCP 工具不显示** | 检查 `cat ~/.cursor/mcp.json` 是否有 jcodemunch+repomix（headroom 可选）；缺失就重跑 `bash install.sh --force`（确保 detect 到 cursor） |
-| **macOS Cursor MCP 不写入**（v1.3.2 已修） | v1.3.1 macOS headroom 装在 Homebrew 路径找不到 → 整个跳过；v1.3.2 已补 fallback 表 + headroom 解耦，升级后重跑 `bash install.sh --force` |
-| **Cursor skills 看不到**（v1.3.2 已修） | v1.3.1 skills 部署在 `~/.cursor/skills/loopengine/skills/`（多两层，Cursor 扫不到）；v1.3.2 改扁平 `~/.cursor/skills/<skill>/`，升级后重跑 `--force` |
-| MCP 工具显示了但调用失败 | 命令路径要带 Windows 扩展名（`jcodemunch-mcp.exe` / `repomix.cmd` / `headroom.exe`），install.sh/ps1 已自动处理 |
-| 想强制重装最新版本 | `bash install.sh`（bash 智能模式自动判断升级）或 `.\install.ps1`（PS 单模式始终覆盖） |
-| **v1.3.0 detect 没识别某个工具** | 用 `bash install.sh --only=zcode,cursor --force` 显式指定；或用 `--all` 强制全量（PS: `-Only zcode,cursor -Force`） |
+| 无 Python / 版本过低 | 安装 Python 3.10+；不要回退 Bash 安装 |
+| `curl \| python3` 在 Windows 异常 | 用 `-o install.py && python install.py` |
+| Cursor 仍看到旧平铺 skill | 再跑 `python3 install.py install --only=cursor --force`（会清 LE 白名单平铺） |
+| 想干净卸载 | `python3 install.py uninstall`（保留用户自有 skill / 非 LE MCP） |
+| ZCode/Cursor MCP 缺失 | 确认 PATH 有 `jcodemunch`/`repomix` 后重装对应 `--only` |
 
-## 设计哲学
+## 开发者
 
-- **不依赖** ZCode 内部 `marketplace.json` / `.zcode-plugin/plugin.json` 注册（v2.0 重构后）
-- **不重启** AI 工具即可生效（直接 cp 到约定目录）
-- **不重复造轮子**：每个工具的"内部机制"对我们是黑盒；只关心"约定目录"
-- **覆盖 7 AI 工具**（ZCode + Claude Code + Codex + Gemini + Cursor + Copilot + Pi）+ ZCode 桌面版/内置包/CLI 缓存 3 路径；Kimi/OpenCode 走各自平台原生命令
-- **单一真源**：plugin manifest 改版本号 = 改 `.plugin-template.json` 的 `version` 字段（6 个 overlay 自动同步）
-- **v1.3.0+ 自动感知**：默认只给本机已装工具部署；显式 `--all` / `--only` 可覆盖
-- **v1.3.1 三平台合一**：3 平台脚本从 ~145 → ~18 行（-87%），共享 `common_run_platform_steps` 主驱动
-- **v1.3.2 PowerShell 兄弟**：新增 `install.ps1`（纯 PS 无需 Git Bash），与 `install.sh` 行为契约一致，共用 3 个 Python helper；两个脚本并存按平台选用
+```bash
+PYTHONPATH=scripts python3 -m unittest discover -s tests -p 'test_loopengine_install*.py' -v
+python3 -m loopengine_install install --dry-run --json
+```
+
+设计与计划：`docs/2026-07-20-plugin-shaped-install-design-v2.md`、`docs/2026-07-20-plugin-shaped-install-plan.md`。
