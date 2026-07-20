@@ -44,6 +44,7 @@
         "kind": {
           "type": "string",
           "enum": [
+            "copy-tree",
             "link-or-copy",
             "registry-write",
             "merge-json",

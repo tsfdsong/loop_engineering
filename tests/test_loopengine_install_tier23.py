@@ -38,7 +38,7 @@ class Tier23Test(unittest.TestCase):
             ops = adapter.install(ctx)
             root = home / ".codex" / "skills" / "loopengine"
             self.assertTrue((root / "skills").is_dir() or (root / "AGENTS.md").exists() or root.exists())
-            self.assertTrue(any(o.kind == "link-or-copy" for o in ops))
+            self.assertTrue(any(o.kind == "copy-tree" for o in ops))
             self.assertTrue((home / ".codex" / "AGENTS.md").is_file())
 
 

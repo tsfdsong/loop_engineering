@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import subprocess
 import sys
@@ -52,16 +51,13 @@ def _place_overlays(rendered: Path, dest: Path) -> None:
 
 
 def _set_current(loopengine_home: Path, version: str, dest: Path) -> None:
+    """Write current as a pointer file only (D13 — never a symlink)."""
     current = loopengine_home / "plugins" / "loopengine" / "current"
     if current.is_symlink() or current.is_file():
         current.unlink()
     elif current.is_dir():
         shutil.rmtree(current)
-    try:
-        os.symlink(dest, current, target_is_directory=True)
-    except OSError:
-        # Windows / no-symlink: write a pointer file
-        current.write_text(str(dest.resolve()) + "\n", encoding="utf-8")
+    current.write_text(str(dest.resolve()) + "\n", encoding="utf-8")
 
 
 def build_central_package(
@@ -98,8 +94,10 @@ def build_central_package(
 
 def resolve_current(loopengine_home: Path) -> Path | None:
     current = loopengine_home.expanduser() / "plugins" / "loopengine" / "current"
+    # Legacy symlink installs: resolve once; callers should rebuild to pointer.
     if current.is_symlink():
-        return current.resolve()
+        target = current.resolve()
+        return target if target.exists() else None
     if current.is_file():
         target = Path(current.read_text(encoding="utf-8").strip())
         return target if target.exists() else None

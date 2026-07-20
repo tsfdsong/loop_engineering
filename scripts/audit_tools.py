@@ -397,23 +397,57 @@ def dimension_g_registry_namespace(
             except (json.JSONDecodeError, OSError):
                 skill_names = []
             flat = os.path.join(home, ".cursor", "skills")
-            leaked = [
+            missing = [
                 n
                 for n in skill_names
-                if os.path.isdir(os.path.join(flat, n))
+                if not os.path.isfile(os.path.join(flat, n, "SKILL.md"))
             ]
-            if leaked:
+            if missing:
                 results.append(
                     AuditResult(
                         "G",
                         "error",
                         "cursor",
-                        f"仍有 LE 平铺 skills: {leaked[:8]}",
+                        f"Agent 平铺 skills 缺失: {missing[:8]}",
                     )
                 )
             else:
                 results.append(
-                    AuditResult("G", "ok", "cursor", "无 LE 平铺 skills")
+                    AuditResult(
+                        "G",
+                        "ok",
+                        "cursor",
+                        f"Agent 平铺 skills 齐全 ({len(skill_names)})",
+                    )
+                )
+            # Plugin must be a real directory, not symlink
+            if os.path.islink(local):
+                results.append(
+                    AuditResult(
+                        "G",
+                        "error",
+                        "cursor",
+                        "plugins/local/loopengine 是 symlink（技能可能加载不全）",
+                    )
+                )
+            elif os.path.isdir(local):
+                plugin_skills = os.path.join(local, "skills")
+                count = 0
+                if os.path.isdir(plugin_skills):
+                    count = sum(
+                        1
+                        for n in os.listdir(plugin_skills)
+                        if os.path.isfile(
+                            os.path.join(plugin_skills, n, "SKILL.md")
+                        )
+                    )
+                results.append(
+                    AuditResult(
+                        "G",
+                        "ok" if count >= max(1, len(skill_names) - 1) else "error",
+                        "cursor",
+                        f"plugin 内 skills 数: {count}",
+                    )
                 )
 
     # Claude installed_plugins

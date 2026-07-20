@@ -51,11 +51,11 @@ python3 install.py install --check
 
 | 项 | 路径 |
 |----|------|
-| 中央包 | `~/.loopengine/plugins/loopengine/<version>/`（`current` 指向） |
+| 中央包 | `~/.loopengine/plugins/loopengine/<version>/`（`current` 为 **pointer 文件**，禁止软链） |
 | 清单 | `~/.loopengine/install-manifest.json` |
-| Cursor | `~/.cursor/plugins/local/loopengine`（**不再**平铺 `~/.cursor/skills/<le-skill>/`） |
-| Claude | cache + `installed_plugins.json` 键 `loopengine@loopengine-local` |
-| ZCode | `~/.zcode/skills/loopengine` + enabledPlugins |
+| Cursor | `~/.cursor/plugins/local/loopengine`（真实拷贝）+ 平铺 `~/.cursor/skills/<skill>/`（Agent 发现）|
+| Claude | cache + marketplace **各自真实拷贝** + `installed_plugins.json` 键 `loopengine@loopengine-local` |
+| ZCode | `~/.zcode/skills/loopengine`（真实拷贝，禁止软链中央包）+ enabledPlugins |
 | Cursor MCP | `~/.cursor/mcp.json`（仅 LE 管理的 jcodemunch/repomix/headroom） |
 
 ## 自检
@@ -63,7 +63,7 @@ python3 install.py install --check
 ```bash
 python3 install.py install --check --json
 ls ~/.cursor/plugins/local/loopengine/skills/go/SKILL.md
-python3 scripts/audit_tools.py   # 含 G 维：registry / 禁止 Cursor 平铺
+python3 scripts/audit_tools.py   # 含 G 维：registry / 双部署 skills / 禁止 symlink
 ```
 
 ## 常见问题
@@ -72,7 +72,7 @@ python3 scripts/audit_tools.py   # 含 G 维：registry / 禁止 Cursor 平铺
 |------|------|
 | 无 Python / 版本过低 | 安装 Python 3.10+；不要回退 Bash 安装 |
 | `curl \| python3` 在 Windows 异常 | 用 `-o install.py && python install.py` |
-| Cursor 仍看到旧平铺 skill | 再跑 `python3 install.py install --only=cursor --force`（会清 LE 白名单平铺） |
+| Cursor 插件里只看见个别 skill | `python3 install.py install --only=cursor --force`（真实拷贝 + 平铺双部署） |
 | 想干净卸载 | `python3 install.py uninstall`（保留用户自有 skill / 非 LE MCP） |
 | ZCode/Cursor MCP 缺失 | 确认 PATH 有 `jcodemunch`/`repomix` 后重装对应 `--only` |
 

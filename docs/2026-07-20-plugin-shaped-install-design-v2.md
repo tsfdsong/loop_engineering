@@ -1,9 +1,10 @@
-# Design: Plugin-Shaped Install v2.1（简化修订）
+# Design: Plugin-Shaped Install v2.2（禁止软链 · 分工具实体存储）
 
 > **日期**: 2026-07-20  
 > **状态**: **Approved** · 2026-07-20 · 实施计划见 `docs/2026-07-20-plugin-shaped-install-plan.md`  
-> **取代**: v2 原稿同路径（本文件即为现行真源）；v1 见 `docs/2026-07-20-plugin-shaped-install-design.md`  
+> **取代**: v2.1 同路径（本文件即为现行真源）；v1 见 `docs/2026-07-20-plugin-shaped-install-design.md`  
 > **修订动机**: 对照核心目的审查后全面简化——抬一键生命周期与官方插件四件套，砍 ECC 运维表面积  
+> **v2.2 修订（2026-07-20）**: 安装路径 **禁止 symlink**；中央包与各工具 plugin 树 **各自真实拷贝**；Cursor 双部署（plugin + 平铺 skills）以保证 Agent 可发现全部技能  
 > **路径说明**: 落在 `docs/` 以便主仓版本化。
 
 ## 0. 核心目的（验收北极星）
@@ -17,7 +18,7 @@
 | AGENTS.md（及等价规则） | marker 注入，可逆 |
 | 插件注册表 | 有官方 registry 则写入（Claude / ZCode 等） |
 
-**一句话架构**：一个 `install.py` → 一个中央包 → 每工具一个 Adapter（四件套）→ 一份 manifest → 默认装/升、显式卸。
+**一句话架构**：一个 `install.py` → 一份中央真源包 → 每工具 **独立实体拷贝**（禁止软链共享）→ Adapter 四件套 → 一份 manifest → 默认装/升、显式卸。
 
 ## 1. 问题陈述
 
@@ -37,9 +38,9 @@
 |---|------|------|
 | D1 | 优先目标 | 官方插件形态管理 skills/hooks/MCP/AGENTS |
 | D2 | 工具范围 | **Tier 分期**（见 §6）：先 Tier-1，再 Tier-2/3 |
-| D3 | Cursor | `~/.cursor/plugins/local/loopengine`；**禁止**平铺 |
+| D3 | Cursor | `~/.cursor/plugins/local/loopengine` **真实目录**；并 **双部署** 平铺 `~/.cursor/skills/<skill>/`（Agent Skills 发现） |
 | D4 | 生命周期 | 一键 **install（含智能升级）/ uninstall**；`upgrade` 仅为别名 |
-| D5 | 架构 | 中央物理包 + Adapter 四件套 |
+| D5 | 架构 | 中央物理包 + Adapter 四件套；**各工具分存，禁止跨目录软链** |
 | D6 | Claude | **必须** `installed_plugins.json` + local marketplace |
 | D7 | 运行时 | Python only（`install.py` → `loopengine_install`） |
 | D8 | ECC 借鉴 | **精简纳入**（见 §3），非整包照搬 |
@@ -47,8 +48,9 @@
 | D10 | 入口 | **唯一 `install.py`**；删除 `install.sh` / `install.ps1` |
 | **D11** | 用户 CLI | **三命令心智**；运维能力延后或压成 flag |
 | **D12** | 真源 | **仅** `install-manifest.json`（取消 `.installed_version` 双真源） |
+| **D13** | 存储 | **禁止 symlink**：中央包 `current` 为 pointer 文件；`sync_plugin` 一律 `copy-tree`（`symlinks=False`） |
 
-否决备选：Bash/PS 双轨；双入口薄壳；首版 7 子命令运维套件；全工具同迭代假拉齐；Node 运行时。
+否决备选：Bash/PS 双轨；双入口薄壳；首版 7 子命令运维套件；全工具同迭代假拉齐；Node 运行时；中央包软链到各工具目录；工具间共用同一 inode 树。
 
 ## 3. ECC 借鉴（精简）
 
@@ -126,23 +128,28 @@ flags（挂在上述命令上）:
 
 默认 `install`：detect 本机已装工具并部署；`--only` / `--all` 覆盖。
 
-## 7. 中央包
+## 7. 中央包（构建真源 · 非运行时共享 inode）
 
 ```
 ~/.loopengine/
 ├── install-manifest.json          # 唯一真源（D12）
 └── plugins/
     └── loopengine/
-        ├── current -> <version>/  # 或原子目录切换；不维护复杂多版本浏览
-        └── <version>/
+        ├── current                # **pointer 文本文件**（一行绝对路径）；禁止 symlink
+        └── <version>/             # 中央构建产物（真实目录）
             ├── skills/ hooks/ commands/
             ├── .claude-plugin/ .zcode-plugin/ .cursor-plugin/ .codex-plugin/
             ├── AGENTS.md
             └── README.md
 ```
 
-升级：构建新 `<version>/` → 切换 `current` → 刷新各 Adapter → 写 manifest → 删除旧 version 目录。  
-**非目标**：用户级 rollback CLI。
+**铁律（D13）**：
+
+- 中央包只作 **构建与版本切换真源**；**不得**被各工具 `plugin_root` 以 symlink 指向。
+- 升级：构建新 `<version>/` → 写 `current` pointer → **对各 Adapter 重新 `copy-tree`** → 写 manifest → 删除旧 version 目录。
+- 遗留的 `current` symlink：安装时改写为 pointer 文件。
+
+**非目标**：用户级 rollback CLI；工具间硬链接/符号链接去重。
 
 ## 8. Adapter 四件套（一等公民）
 
@@ -150,7 +157,7 @@ flags（挂在上述命令上）:
 
 | 方法 | 职责 | 可逆 |
 |------|------|------|
-| `sync_plugin()` | 中央包 → 工具 plugin_root（symlink 优先，否则 copy） | 删/解链 plugin_root |
+| `sync_plugin()` | 中央包 → 本工具独立目录；**一律真实 `copy-tree`（禁止 symlink）** | 删除本工具目录树 |
 | `activate_registry()` | 写官方插件表（Claude installed_plugins、ZCode enabledPlugins 等） | 移除 LE key |
 | `merge_mcp()` | 合并 LE MCP keys（Cursor/ZCode 等） | 仅移除 LE keys |
 | `inject_agents()` | AGENTS.md / 等价规则 marker 块 | 按 marker 剥离 |
@@ -158,35 +165,47 @@ flags（挂在上述命令上）:
 统一编排：
 
 ```text
-ensure_central_package()
+ensure_central_package()          # 写 <version>/ + current pointer（非软链）
 for adapter in selected:
     sync_plugin → activate_registry → merge_mcp → inject_agents
     append operations to manifest
 write_manifest()
 ```
 
+### 8.0 分工具存储表（各自一份实体树）
+
+| 工具 | 独立存储根（真实目录，禁止指向中央包的软链） |
+|------|-----------------------------------------------|
+| Cursor | `~/.cursor/plugins/local/loopengine` + 平铺 `~/.cursor/skills/<skill>/` |
+| Claude | cache `…/plugins/cache/loopengine-local/loopengine/<ver>/` + marketplace `…/marketplaces/loopengine-local/plugins/loopengine/` |
+| ZCode | `~/.zcode/skills/loopengine` |
+| Codex / Gemini / Copilot / Pi | 各 Adapter 约定的本工具目录（同样 copy-tree） |
+
+磁盘占用 = 中央包 ×1 + 已选工具各 ×1（可接受；正确性优先于去重）。
+
 ### 8.1 Cursor（Tier-1）
 
-- 目标：`~/.cursor/plugins/local/loopengine`
-- 停止平铺 `~/.cursor/skills/<le-skill>/`；升级时按 `skill_names` 白名单清理旧平铺
-- MCP：`~/.cursor/mcp.json`（仅 LE keys）
-- P0：最小包验证 skill/hooks 可加载；**失败则阻断整计划**，不回退平铺
+- **Plugin 包**：`~/.cursor/plugins/local/loopengine` 为 **真实拷贝**（含 skills/hooks/commands、规范化 `hooks/hooks.json`、`mcp.json`、`rules/`）；安装前删除 `loopengine-spike` 与旧 symlink。
+- **双部署 skills**：每个 LE skill 再拷贝到 `~/.cursor/skills/<name>/`（Cursor Agent Skills 历史扫描路径；仅靠 plugin 目录时会出现「只看见 using-loopengine」类残缺）。
+- MCP：`~/.cursor/mcp.json`（仅 LE keys）+ plugin 内 `mcp.json` 同步。
+- AGENTS：`~/.cursor/rules/loopengine-interaction.mdc`，并镜像进 plugin `rules/`。
+- `--check`：plugin 非 symlink；plugin 与平铺 skill 数量均 ≥ manifest `skill_names`。
 
 ### 8.2 Claude（Tier-1 · D6）
 
 - Local marketplace + `installed_plugins.json`（`loopengine@loopengine-local`）
-- `installPath` 优先官方 cache 形；P0 spike 锁定
+- cache 与 marketplace 均为 **独立 copy-tree**（互不软链、也不链中央包）
 - AGENTS / MCP 按 Claude 实际支持面做；无则 no-op
 
 ### 8.3 ZCode（Tier-1）
 
-- `~/.zcode/skills/loopengine` 整包
+- `~/.zcode/skills/loopengine` **真实整包拷贝**（禁止软链到中央包）
 - 复用/迁入现有 marketplace + enabledPlugins 注册逻辑
 - MCP + AGENTS 注入纳入同一 uninstall 路径
 
 ### 8.4 Tier-2 / Tier-3
 
-按能力表降级实现四件套；文档如实写「半插件 / 注入型」，不承诺与 Cursor 同级体验。
+按能力表降级实现四件套；文档如实写「半插件 / 注入型」，不承诺与 Cursor 同级体验；存储仍遵守 D13。
 
 ## 9. Manifest 与 Operations
 
@@ -195,9 +214,10 @@ Schema：`schemas/install-manifest.schema.json`（单一文件）。
 
 概念字段：`schema_version`（= 2）、`product`、`version`、`installed_at`、`central_root`、`skill_names[]`、`components`、`operations[]`。
 
-Operation `kind`（首版仅四种，由 Adapter 生成）：
+Operation `kind`（由 Adapter 生成）：
 
-- `link-or-copy` — plugin 树  
+- `copy-tree` — 插件/技能目录真实拷贝（**唯一合法树同步方式**；`shutil.copytree(..., symlinks=False)`）  
+- `link-or-copy` — **遗留别名**（读旧 manifest 时与 `copy-tree` 同语义；新写入一律用 `copy-tree`）  
 - `registry-write` — 插件表  
 - `merge-json` — MCP 等  
 - `inject-markers` — AGENTS 等  
@@ -205,19 +225,20 @@ Operation `kind`（首版仅四种，由 Adapter 生成）：
 uninstall = 对 `ownership=managed` **逆序** revert。  
 不删：用户自有 skill、非 LE MCP、未入清单路径。
 
-无 manifest 旧机：首次 install 启发式清理已知 LE 平铺/旧路径后生成 manifest。
+无 manifest 旧机：首次 install 启发式清理已知坏 symlink / 旧 spike 后生成 manifest。
 
 ## 10. 验收标准（对齐 §0）
 
 1. 唯一入口 `install.py`；无 `install.sh` / `install.ps1` / `scripts/install/*.sh`。  
 2. `curl | python3` 完成装或升；`install.py uninstall` 干净卸载。  
-3. Cursor：无 LE 平铺 skill；`plugins/local/loopengine` 含 skills/hooks；会话可加载。  
-4. Claude：`installed_plugins.json` 含 LE 且 installPath 可读。  
-5. ZCode：整包 + registry 一致；卸载可逆。  
+3. Cursor：`plugins/local/loopengine` 为真实目录（非 symlink），含全部 skills/hooks；`~/.cursor/skills/` 下 LE skill 齐全；会话可加载。  
+4. Claude：`installed_plugins.json` 含 LE 且 installPath 为真实可读目录。  
+5. ZCode：真实整包 + registry 一致；卸载可逆；plugin_root 非 symlink。  
 6. MCP / AGENTS：安装写入、卸载剥离；用户非 LE 内容保留。  
 7. Tier-1 默认 detect 安装；`--only` 可用。  
 8. `--dry-run --json` 可机器解析；manifest 通过 schema。  
-9. macOS / Windows 同一入口与同一模块；核心路径有 unittest。
+9. macOS / Windows 同一入口与同一模块；核心路径有 unittest。  
+10. 安装后：`~/.loopengine/plugins/loopengine/current` 为 pointer 文件；各工具 plugin_root **均非**指向中央包的 symlink。
 
 ## 11. 实现分期
 
@@ -234,10 +255,10 @@ Tracer：先打通 **Cursor 四件套垂直切片**，再 Claude、ZCode。
 
 | 风险 | 缓解 |
 |------|------|
-| Cursor local 不加载 | P0 失败则停 |
+| Cursor local 不加载 / 只见单 skill | 真实拷贝 + 双部署平铺；删 spike；`--check` 验数量 |
 | Claude schema 不符 | P0 对照官方条目 |
 | 误删用户资产 | 白名单 + managed operations |
-| Windows symlink | `link-or-copy` 回退 copy |
+| 多份拷贝占盘 | D13 明确可接受；正确性优先 |
 | `curl \| python` 编码/别名 | 文档强制给出 `-o` fallback；探测 `python`/`python3` |
 | 范围回膨胀 | D11/D2 Tier；P3 前不加运维子命令 |
 
@@ -248,13 +269,13 @@ Tracer：先打通 **Cursor 四件套垂直切片**，再 Claude、ZCode。
 
 ## 14. 开放细节（plan 锁定）
 
-- Claude `installPath` 最终路径（P0）。  
+- Claude `installPath` 最终路径（P0）— 已采用 cache + marketplace 双真实拷贝。  
 - Cursor 是否需额外 enable 文件。  
-- 中央包用 `current` symlink 还是目录原子替换（Windows 友好优先）。  
+- ~~中央包 `current` symlink~~ → **已决（D13）**：pointer 文件。  
 - 现有 py helpers 迁入 vs 调用的目录整理粒度。
 
 ## 15. 文档关系
 
-- **本文件** = 现行设计真源（v2.1）。  
+- **本文件** = 现行设计真源（**v2.2**）。  
 - v1 design = Superseded。  
-- `docs/2026-07-20-plugin-shaped-install-plan.md`（Bash 版）在批准后 **整份重写为 v2.1 plan**。
+- `docs/2026-07-20-plugin-shaped-install-plan.md` 以本文件为准做差分修订（存储语义以 D13 / §7–§8 为准）。

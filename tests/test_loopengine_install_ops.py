@@ -18,7 +18,7 @@ from loopengine_install.ops import (
 
 
 class OpsTest(unittest.TestCase):
-    def test_link_or_copy_and_revert(self):
+    def test_copy_tree_and_revert(self):
         with tempfile.TemporaryDirectory() as td:
             td = Path(td)
             src, dst = td / "src", td / "dst"
@@ -26,16 +26,37 @@ class OpsTest(unittest.TestCase):
             (src / "a.txt").write_text("x", encoding="utf-8")
             op = Operation(
                 id="op-1",
+                kind="copy-tree",
+                ownership="managed",
+                source=str(src),
+                destination=str(dst),
+            )
+            apply_operation(op)
+            self.assertTrue(dst.is_dir())
+            self.assertFalse(dst.is_symlink())
+            self.assertEqual((dst / "a.txt").read_text(encoding="utf-8"), "x")
+            # Independent inode: mutating src must not change dst
+            (src / "a.txt").write_text("y", encoding="utf-8")
+            self.assertEqual((dst / "a.txt").read_text(encoding="utf-8"), "x")
+            revert_operation(op)
+            self.assertFalse(dst.exists())
+
+    def test_legacy_link_or_copy_alias_is_copy(self):
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            src, dst = td / "src", td / "dst"
+            src.mkdir()
+            (src / "a.txt").write_text("x", encoding="utf-8")
+            op = Operation(
+                id="op-legacy",
                 kind="link-or-copy",
                 ownership="managed",
                 source=str(src),
                 destination=str(dst),
             )
             apply_operation(op)
-            self.assertTrue(dst.exists())
-            self.assertEqual((dst / "a.txt").read_text(encoding="utf-8"), "x")
-            revert_operation(op)
-            self.assertFalse(dst.exists())
+            self.assertTrue(dst.is_dir())
+            self.assertFalse(dst.is_symlink())
 
     def test_manifest_roundtrip(self):
         with tempfile.TemporaryDirectory() as td:

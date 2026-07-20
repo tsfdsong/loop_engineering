@@ -22,12 +22,13 @@ def list_skill_names(central_or_repo: Path) -> list[str]:
     return names
 
 
-def link_or_copy_op(
+def copy_tree_op(
     op_id: str, source: Path, destination: Path, dry_run: bool
 ) -> Operation:
+    """Record + apply a real copy-tree (never symlink; D13)."""
     op = Operation(
         id=op_id,
-        kind="link-or-copy",
+        kind="copy-tree",
         ownership="managed",
         source=str(source),
         destination=str(destination),
@@ -35,6 +36,10 @@ def link_or_copy_op(
     if not dry_run:
         apply_operation(op)
     return op
+
+
+# Back-compat alias for older call sites / tests
+link_or_copy_op = copy_tree_op
 
 
 def cleanup_flat_skills(
@@ -48,7 +53,7 @@ def cleanup_flat_skills(
             continue
         op = Operation(
             id=f"{prefix}-rm-flat-{i:03d}-{name}",
-            kind="link-or-copy",
+            kind="copy-tree",
             ownership="managed",
             source=str(path),  # unused on revert after delete; we only delete now
             destination=str(path),
@@ -59,7 +64,7 @@ def cleanup_flat_skills(
             else:
                 shutil.rmtree(path)
         # For uninstall we should NOT restore flat skills; mark ownership so revert
-        # of link-or-copy would delete destination again — skip recording delete-only
+        # of copy-tree would delete destination again — skip recording delete-only
         # as reversible install ops. Flat cleanup is one-way migration.
         _ = op
     # Also remove semi-finished ~/.cursor/skills/loopengine if empty-ish hooks-only

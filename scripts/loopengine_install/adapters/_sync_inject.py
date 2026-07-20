@@ -6,9 +6,9 @@ from pathlib import Path
 
 from loopengine_install.adapters.base import Adapter, AdapterContext
 from loopengine_install.adapters.helpers import (
+    copy_tree_op,
     extract_redline_blocks,
     inject_agents_file,
-    link_or_copy_op,
 )
 from loopengine_install.ops import Operation
 
@@ -25,7 +25,7 @@ class SyncInjectAdapter(Adapter):
 
     def sync_plugin(self, ctx: AdapterContext) -> list[Operation]:
         return [
-            link_or_copy_op(
+            copy_tree_op(
                 f"{self.name}-sync-plugin",
                 ctx.central,
                 self.plugin_root(ctx),

@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 import json
-import os
 import shutil
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
+# copy-tree is canonical (D13); link-or-copy is a legacy alias with identical semantics.
 ALLOWED_KINDS = frozenset(
-    {"link-or-copy", "registry-write", "merge-json", "inject-markers"}
+    {"copy-tree", "link-or-copy", "registry-write", "merge-json", "inject-markers"}
 )
+TREE_KINDS = frozenset({"copy-tree", "link-or-copy"})
 
 
 @dataclass
@@ -122,30 +123,31 @@ def save_manifest(path: Path | str, m: Manifest) -> None:
     tmp.replace(path)
 
 
-def _link_or_copy(src: Path, dst: Path) -> None:
+def _copy_tree(src: Path, dst: Path) -> None:
+    """Real directory/file copy only — never create a symlink (D13)."""
     if dst.exists() or dst.is_symlink():
         if dst.is_symlink() or dst.is_file():
             dst.unlink()
         else:
             shutil.rmtree(dst)
     dst.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        os.symlink(src, dst, target_is_directory=src.is_dir())
-    except OSError:
-        if src.is_dir():
-            shutil.copytree(src, dst)
-        else:
-            shutil.copy2(src, dst)
+    if src.is_dir():
+        shutil.copytree(src, dst, symlinks=False)
+    else:
+        shutil.copy2(src, dst)
 
 
 def apply_operation(op: Operation) -> None:
-    if op.kind == "link-or-copy":
+    if op.kind in TREE_KINDS:
         if not op.source or not op.destination:
-            raise ValueError("link-or-copy requires source and destination")
-        _link_or_copy(Path(op.source).expanduser(), Path(op.destination).expanduser())
+            raise ValueError(f"{op.kind} requires source and destination")
+        _copy_tree(
+            Path(op.source).expanduser(),
+            Path(op.destination).expanduser(),
+        )
         return
     if op.kind in {"registry-write", "merge-json", "inject-markers"}:
-        # Applied by adapters during install; apply_operation is for link-or-copy / repair.
+        # Applied by adapters during install; apply_operation is for copy-tree / repair.
         return
     raise ValueError(f"unknown kind: {op.kind}")
 
@@ -153,7 +155,7 @@ def apply_operation(op: Operation) -> None:
 def revert_operation(op: Operation) -> None:
     if op.ownership != "managed":
         return
-    if op.kind == "link-or-copy":
+    if op.kind in TREE_KINDS:
         if not op.destination:
             return
         dst = Path(op.destination).expanduser()

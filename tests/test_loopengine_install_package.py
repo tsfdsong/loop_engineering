@@ -20,7 +20,9 @@ class PackageTest(unittest.TestCase):
             self.assertTrue(any((dest / "skills").iterdir()))
             self.assertTrue((dest / ".cursor-plugin" / "plugin.json").is_file())
             current = home / "plugins" / "loopengine" / "current"
-            self.assertTrue(current.exists())
+            self.assertTrue(current.is_file())
+            self.assertFalse(current.is_symlink())
+            self.assertEqual(current.read_text(encoding="utf-8").strip(), str(dest.resolve()))
 
 
 if __name__ == "__main__":

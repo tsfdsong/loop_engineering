@@ -42,7 +42,7 @@ class ClaudeAdapter(Adapter):
         ops.append(
             Operation(
                 id="claude-sync-cache",
-                kind="link-or-copy",
+                kind="copy-tree",
                 ownership="managed",
                 source=str(ctx.central),
                 destination=str(cache),
@@ -74,7 +74,7 @@ class ClaudeAdapter(Adapter):
         ops.append(
             Operation(
                 id="claude-sync-marketplace",
-                kind="link-or-copy",
+                kind="copy-tree",
                 ownership="managed",
                 source=str(ctx.central),
                 destination=str(plugin_dir),

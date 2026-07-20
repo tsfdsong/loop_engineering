@@ -23,10 +23,19 @@ class CheckTest(unittest.TestCase):
             home = Path(td)
             central = home / ".loopengine" / "plugins" / "loopengine" / "1.0.0"
             central.mkdir(parents=True)
+            current = home / ".loopengine" / "plugins" / "loopengine" / "current"
+            current.write_text(str(central.resolve()) + "\n", encoding="utf-8")
             dest = home / ".cursor" / "plugins" / "local" / "loopengine"
             dest.parent.mkdir(parents=True)
             dest.mkdir()
             (dest / "ok.txt").write_text("x", encoding="utf-8")
+            plugin_skill = dest / "skills" / "go"
+            plugin_skill.mkdir(parents=True)
+            (plugin_skill / "SKILL.md").write_text("# go\n", encoding="utf-8")
+            # dual-deploy stub so cursor-flat check does not fail
+            flat = home / ".cursor" / "skills" / "go"
+            flat.mkdir(parents=True)
+            (flat / "SKILL.md").write_text("# go\n", encoding="utf-8")
             m = Manifest(
                 schema_version=2,
                 product="loopengine",
@@ -38,7 +47,7 @@ class CheckTest(unittest.TestCase):
                 operations=[
                     Operation(
                         id="op1",
-                        kind="link-or-copy",
+                        kind="copy-tree",
                         ownership="managed",
                         source=str(central),
                         destination=str(dest),

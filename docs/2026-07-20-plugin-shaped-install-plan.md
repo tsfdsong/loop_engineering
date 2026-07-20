@@ -1,5 +1,9 @@
 # Plugin-Shaped Install v2.1 Implementation Plan
 
+> **Storage (D13 · design v2.2):** No symlinks. Central `current` is a pointer file.
+> Each tool gets its own real `copy-tree`. Cursor dual-deploys plugin + flat skills.
+> Spec truth: `docs/2026-07-20-plugin-shaped-install-design-v2.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `subagent-driven-development` (recommended) or `executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace Bash/PS install with a single `install.py` that deploys LoopEngine as official-style plugins (skills/hooks/MCP/AGENTS) with install/upgrade/uninstall for Tier-1 agents first.
