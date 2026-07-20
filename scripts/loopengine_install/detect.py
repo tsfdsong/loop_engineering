@@ -28,8 +28,15 @@ def detect_agents(home: Path | None = None) -> list[str]:
 
 
 def detect_mcp_binaries() -> dict[str, str | None]:
+    def _which(*names: str) -> str | None:
+        for n in names:
+            path = shutil.which(n)
+            if path:
+                return path
+        return None
+
     return {
-        "jcodemunch": shutil.which("jcodemunch"),
-        "repomix": shutil.which("repomix"),
-        "headroom": shutil.which("headroom"),
+        "jcodemunch": _which("jcodemunch", "jcodemunch-mcp"),
+        "repomix": _which("repomix"),
+        "headroom": _which("headroom"),
     }

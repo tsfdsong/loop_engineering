@@ -87,11 +87,10 @@ def _discover_repo(explicit: Path | None) -> Path:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     if args.check and args.command == "install":
-        path = Path.home() / ".loopengine" / "install-manifest.json"
-        ok = path.is_file()
-        payload = {"ok": ok, "manifest": str(path)}
-        print(json.dumps(payload) if args.json_out else f"check: {'ok' if ok else 'missing manifest'}")
-        return 0 if ok else 1
+        from loopengine_install import lifecycle
+
+        report = lifecycle.do_check(json_out=args.json_out)
+        return 0 if report.get("ok") else 1
 
     from loopengine_install import lifecycle
 

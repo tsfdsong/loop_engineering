@@ -4,15 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from merge_mcp_config import merge_cursor
-
 from loopengine_install.adapters.base import Adapter, AdapterContext
 from loopengine_install.adapters.helpers import (
     cleanup_flat_skills,
     extract_redline_blocks,
     inject_agents_file,
     link_or_copy_op,
-    merge_json_keys,
 )
 from loopengine_install.ops import Operation
 
@@ -47,21 +44,28 @@ class CursorAdapter(Adapter):
         jcode = ctx.mcp_bins.get("jcodemunch") or ""
         repo = ctx.mcp_bins.get("repomix") or ""
         hdrm = ctx.mcp_bins.get("headroom") or ""
-        if not jcode and not repo:
+        if not jcode and not repo and not hdrm:
             return []
         cfg = ctx.home / ".cursor" / "mcp.json"
-        keys = ["jcodemunch", "repomix"]
+        keys: list[str] = []
+        if jcode:
+            keys.append("jcodemunch")
+        if repo:
+            keys.append("repomix")
         if hdrm:
             keys.append("headroom")
+        if not keys:
+            return []
 
-        def mutator(data):
-            # merge_cursor expects path then mutates via read — adapt:
-            tmp = dict(data)
-            # replicate merge_cursor logic on in-memory dict
-            from copy import deepcopy
+        if not ctx.dry_run:
+            cfg.parent.mkdir(parents=True, exist_ok=True)
+            if not cfg.exists():
+                cfg.write_text("{}\n", encoding="utf-8")
+            # merge_cursor requires jcode+repo args; call inline when partial
+            from _lib.json_io import atomic_write_json, read_json
 
-            # write temp then call merge_cursor by mocking — simpler inline:
-            servers = tmp.setdefault("mcpServers", {})
+            data = read_json(str(cfg))
+            servers = data.setdefault("mcpServers", {})
             if jcode:
                 servers["jcodemunch"] = {"command": jcode, "args": ["serve"]}
             if repo:
@@ -70,28 +74,15 @@ class CursorAdapter(Adapter):
                 servers["headroom"] = {"command": hdrm, "args": ["mcp", "serve"]}
             else:
                 servers.pop("headroom", None)
-            return tmp
-
-        # Prefer calling merge_cursor for fidelity when not dry_run
-        if not ctx.dry_run and jcode and repo:
-            cfg.parent.mkdir(parents=True, exist_ok=True)
-            if not cfg.exists():
-                cfg.write_text("{}\n", encoding="utf-8")
-            data = merge_cursor(str(cfg), jcode, repo, hdrm)
-            from _lib.json_io import atomic_write_json
-
             atomic_write_json(str(cfg), data)
-            return [
-                Operation(
-                    id="cursor-mcp",
-                    kind="merge-json",
-                    ownership="managed",
-                    destination=str(cfg),
-                    merge_keys=keys,
-                )
-            ]
         return [
-            merge_json_keys("cursor-mcp", cfg, keys, mutator, ctx.dry_run)
+            Operation(
+                id="cursor-mcp",
+                kind="merge-json",
+                ownership="managed",
+                destination=str(cfg),
+                merge_keys=keys,
+            )
         ]
 
     def inject_agents(self, ctx: AdapterContext) -> list[Operation]:

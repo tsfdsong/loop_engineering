@@ -63,8 +63,7 @@ python3 install.py install --check
 ```bash
 python3 install.py install --check --json
 ls ~/.cursor/plugins/local/loopengine/skills/go/SKILL.md
-# Claude
-python3 -c "import json,pathlib;d=json.loads(pathlib.Path.home().joinpath('.claude/plugins/installed_plugins.json').read_text());print('loopengine@loopengine-local' in d.get('plugins',{}))"
+python3 scripts/audit_tools.py   # 含 G 维：registry / 禁止 Cursor 平铺
 ```
 
 ## 常见问题

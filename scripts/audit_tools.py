@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # ────────────────────────────────────────────────────────────
-# scripts/audit_tools.py — 6 维度部署审计
+# scripts/audit_tools.py — 7 维度部署审计
 # ────────────────────────────────────────────────────────────
 # 用法：
 #   python3 scripts/audit_tools.py             # 人友好输出
@@ -10,13 +10,14 @@
 #
 # 退出码：0=OK/warnings, 1=有 error, 2=参数错误
 #
-# 6 维度：
+# 7 维度：
 #   A. 工具部署完整性（高）
 #   B. 技能完整性（info — 仅哨兵）
 #   C. 红线一致性（info — 仅哨兵）
 #   D. MCP 健康（中 — 全部未装→warning）
 #   E. 版本一致性（中）
 #   F. Schema 合法性（低）
+#   G. 插件 registry / 命名空间（中 — v2.1）
 # ────────────────────────────────────────────────────────────
 
 import json
@@ -50,9 +51,9 @@ class AuditResult:
 # 单一真源（红线 9 R5.2 减法）：避免 hardcode 3 个 adapter → 跟随 TOOL_ADAPTERS 增减自动更新
 # 推导规则：adapter.id → 用户级部署根（~/.{id}/skills/loopengine 或 ~/.{id}/）
 _DEPLOY_ROOT_BY_ID = {
-    "claude-code": "~/.claude/skills/loopengine",
+    "claude-code": "~/.claude/plugins/cache/loopengine-local/loopengine",
     "zcode": "~/.zcode/skills/loopengine",
-    "cursor": "~/.cursor/skills/loopengine",
+    "cursor": "~/.cursor/plugins/local/loopengine",
     "codex": "~/.codex/skills/loopengine",
     "gemini-cli": "~/.gemini/extensions/loopengine",
 }
@@ -78,7 +79,13 @@ def dimension_a_tool_deploy(
             )
             continue
         path = os.path.join(home, rel.lstrip("~/").replace("/", os.sep))
-        if os.path.isdir(path):
+        if adapter.id == "claude-code":
+            ok = os.path.isdir(path) and any(
+                os.path.isdir(os.path.join(path, d)) for d in os.listdir(path)
+            )
+        else:
+            ok = os.path.isdir(path) or os.path.islink(path)
+        if ok:
             results.append(
                 AuditResult("A", "ok", adapter.id, f"部署目录存在: {path}")
             )
@@ -326,7 +333,7 @@ def dimension_f_schema(
                 "F",
                 "info",
                 "all",
-                "无渲染产物可检查（先跑 install.sh）",
+                "无渲染产物可检查（先跑 install.py）",
             )
         ]
     for adapter in TOOL_ADAPTERS:
@@ -359,7 +366,129 @@ def dimension_f_schema(
     return results
 
 
-# ── 维度分发（B/C/E/F 在 PR-3 实现）──────────────────
+# ── G 维度：插件 registry / 命名空间（v2.1）─────────────
+
+
+def dimension_g_registry_namespace(
+    tool_filter: Optional[str] = None,
+) -> List[AuditResult]:
+    """G 维度：官方 registry 键 + Cursor 禁止 LE 平铺。"""
+    results: List[AuditResult] = []
+    home = os.path.expanduser("~")
+
+    # Cursor: plugins/local present; flat LE skills should not exist if manifest lists them
+    if not tool_filter or tool_filter in ("cursor", "all"):
+        local = os.path.join(home, ".cursor", "plugins", "local", "loopengine")
+        if os.path.isdir(local) or os.path.islink(local):
+            results.append(
+                AuditResult("G", "ok", "cursor", f"plugins/local/loopengine 存在")
+            )
+        else:
+            results.append(
+                AuditResult(
+                    "G", "warning", "cursor", "plugins/local/loopengine 不存在"
+                )
+            )
+        manifest = os.path.join(home, ".loopengine", "install-manifest.json")
+        if os.path.isfile(manifest):
+            try:
+                with open(manifest, encoding="utf-8") as f:
+                    skill_names = json.load(f).get("skill_names") or []
+            except (json.JSONDecodeError, OSError):
+                skill_names = []
+            flat = os.path.join(home, ".cursor", "skills")
+            leaked = [
+                n
+                for n in skill_names
+                if os.path.isdir(os.path.join(flat, n))
+            ]
+            if leaked:
+                results.append(
+                    AuditResult(
+                        "G",
+                        "error",
+                        "cursor",
+                        f"仍有 LE 平铺 skills: {leaked[:8]}",
+                    )
+                )
+            else:
+                results.append(
+                    AuditResult("G", "ok", "cursor", "无 LE 平铺 skills")
+                )
+
+    # Claude installed_plugins
+    if not tool_filter or tool_filter in ("claude-code", "claude", "all"):
+        ip = os.path.join(home, ".claude", "plugins", "installed_plugins.json")
+        key = "loopengine@loopengine-local"
+        if os.path.isfile(ip):
+            try:
+                with open(ip, encoding="utf-8") as f:
+                    plugins = json.load(f).get("plugins") or {}
+                if key in plugins:
+                    results.append(
+                        AuditResult("G", "ok", "claude-code", f"registry 含 {key}")
+                    )
+                else:
+                    results.append(
+                        AuditResult(
+                            "G", "warning", "claude-code", f"registry 缺 {key}"
+                        )
+                    )
+            except (json.JSONDecodeError, OSError) as exc:
+                results.append(
+                    AuditResult(
+                        "G", "warning", "claude-code", f"无法读 installed_plugins: {exc}"
+                    )
+                )
+        else:
+            results.append(
+                AuditResult(
+                    "G", "info", "claude-code", "无 installed_plugins.json（未装 Claude？）"
+                )
+            )
+
+    # ZCode enabledPlugins
+    if not tool_filter or tool_filter in ("zcode", "all"):
+        cfg = os.path.join(home, ".zcode", "cli", "config.json")
+        key = "loopengine@zcode-plugins-official"
+        if os.path.isfile(cfg):
+            try:
+                with open(cfg, encoding="utf-8") as f:
+                    enabled = (
+                        json.load(f).get("plugins", {}).get("enabledPlugins") or {}
+                    )
+                if enabled.get(key) is True:
+                    results.append(
+                        AuditResult("G", "ok", "zcode", f"enabledPlugins 含 {key}")
+                    )
+                else:
+                    results.append(
+                        AuditResult(
+                            "G", "warning", "zcode", f"enabledPlugins 缺 {key}"
+                        )
+                    )
+            except (json.JSONDecodeError, OSError) as exc:
+                results.append(
+                    AuditResult("G", "warning", "zcode", f"无法读 config: {exc}")
+                )
+        else:
+            results.append(
+                AuditResult("G", "info", "zcode", "无 zcode cli config（未装？）")
+            )
+
+    # Manifest presence
+    mf = os.path.join(home, ".loopengine", "install-manifest.json")
+    if os.path.isfile(mf):
+        results.append(AuditResult("G", "ok", "all", "install-manifest.json 存在"))
+    else:
+        results.append(
+            AuditResult("G", "warning", "all", "缺少 install-manifest.json")
+        )
+
+    return results
+
+
+# ── 维度分发 ──────────────────────────────────────────
 
 
 def run_dimension(
@@ -373,6 +502,7 @@ def run_dimension(
         "D": dimension_d_mcp_health,
         "E": dimension_e_version_consistency,
         "F": dimension_f_schema,
+        "G": dimension_g_registry_namespace,
     }
     handler = dispatch.get(dim)
     if handler:
@@ -413,7 +543,7 @@ def main():
         idx = args.index("--tool")
         tool_filter = args[idx + 1] if idx + 1 < len(args) else None
 
-    dimensions = ["A", "B", "C", "D", "E", "F"]
+    dimensions = ["A", "B", "C", "D", "E", "F", "G"]
     all_results: List[AuditResult] = []
     for dim in dimensions:
         all_results.extend(run_dimension(dim, verbose, tool_filter))

@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from merge_mcp_config import merge_zcode
-
 from loopengine_install.adapters.base import Adapter, AdapterContext
 from loopengine_install.adapters.helpers import (
     extract_redline_blocks,
@@ -100,21 +98,34 @@ class ZCodeAdapter(Adapter):
         if not jcode and not repo:
             return []
         cfg = ctx.home / ".zcode" / "cli" / "config.json"
-        keys = ["jcodemunch", "repomix"]
-        if not ctx.dry_run and jcode and repo and cfg.exists():
-            data = merge_zcode(str(cfg), jcode, repo)
-            from _lib.json_io import atomic_write_json
+        keys: list[str] = []
+        if jcode:
+            keys.append("jcodemunch")
+        if repo:
+            keys.append("repomix")
+        if not ctx.dry_run and cfg.exists():
+            from _lib.json_io import atomic_write_json, read_json
 
+            data = read_json(str(cfg))
+            # ZCode schema: mcp.servers may be dict (preferred) or list
+            mcp = data.setdefault("mcp", {})
+            servers = mcp.get("servers")
+            if not isinstance(servers, dict):
+                servers = {}
+                mcp["servers"] = servers
+            if jcode:
+                servers["jcodemunch"] = {
+                    "type": "stdio",
+                    "command": jcode,
+                    "args": ["serve"],
+                }
+            if repo:
+                servers["repomix"] = {
+                    "type": "stdio",
+                    "command": repo,
+                    "args": ["--mcp"],
+                }
             atomic_write_json(str(cfg), data)
-            return [
-                Operation(
-                    id="zcode-mcp",
-                    kind="merge-json",
-                    ownership="managed",
-                    destination=str(cfg),
-                    merge_keys=keys,
-                )
-            ]
         return [
             Operation(
                 id="zcode-mcp",
