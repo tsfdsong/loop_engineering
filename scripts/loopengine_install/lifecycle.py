@@ -45,6 +45,72 @@ def select_targets(
     return [t for t in known if t in detected] or ["cursor"]
 
 
+def _skip_blocked_reason(
+    home: Path, targets: list[str], existing: Manifest
+) -> str | None:
+    """Return why same-version skip must NOT happen; None → safe to skip.
+
+    Incomplete manifest (e.g. cursor-only) or broken ZCode discovery must
+    trigger repair without requiring --force.
+    """
+    installed = set((existing.components or {}).keys())
+    missing = [t for t in targets if t not in installed]
+    if missing:
+        return f"manifest missing targets: {', '.join(missing)}"
+
+    if "zcode" in targets:
+        key = "loopengine@zcode-plugins-official"
+        mp = (
+            home
+            / ".zcode"
+            / "cli"
+            / "plugins"
+            / "marketplaces"
+            / "zcode-plugins-official"
+            / "marketplace.json"
+        )
+        if not mp.is_file():
+            return "zcode marketplace.json missing"
+        try:
+            data = json.loads(mp.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return "zcode marketplace.json invalid"
+        plugins = data.get("plugins") or []
+        if not any(
+            isinstance(p, dict) and p.get("name") == "loopengine" for p in plugins
+        ):
+            return "zcode marketplace.json missing loopengine entry"
+
+        cfg = home / ".zcode" / "cli" / "config.json"
+        if cfg.is_file():
+            try:
+                cdata = json.loads(cfg.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                return "zcode config.json invalid"
+            plugins_obj = cdata.get("plugins") or {}
+            enabled = plugins_obj.get("enabledPlugins") or {}
+            if enabled.get(key) is not True:
+                return f"zcode enabledPlugins missing {key}"
+            suppressed = plugins_obj.get("suppressedBuiltins") or []
+            if isinstance(suppressed, list) and key in suppressed:
+                return f"zcode suppressedBuiltins contains {key}"
+
+        cache = (
+            home
+            / ".zcode"
+            / "cli"
+            / "plugins"
+            / "cache"
+            / "zcode-plugins-official"
+            / "loopengine"
+            / existing.version
+        )
+        if not (cache / ".zcode-plugin" / "plugin.json").is_file():
+            return f"zcode cache missing plugin.json under {cache}"
+
+    return None
+
+
 def do_install(
     *,
     repo_root: Path,
@@ -71,21 +137,26 @@ def do_install(
         "skill_count": len(skill_names),
     }
 
-    # D4: same version → tip unless --force
+    # D4: same version → tip unless --force or install incomplete / unhealthy
     mpath = manifest_path(home)
     if mpath.is_file() and not force:
         try:
             existing = load_manifest(mpath)
             if existing.version == version and not dry_run:
-                plan["skipped"] = True
-                plan["message"] = (
-                    f"already installed v{version}; pass --force to reinstall"
-                )
-                if json_out:
-                    print(json.dumps(plan, ensure_ascii=False, indent=2))
-                else:
-                    print(f"ℹ️  {plan['message']}")
-                return plan
+                reason = _skip_blocked_reason(home, targets, existing)
+                if reason is None:
+                    plan["skipped"] = True
+                    plan["message"] = (
+                        f"already installed v{version}; pass --force to reinstall"
+                    )
+                    if json_out:
+                        print(json.dumps(plan, ensure_ascii=False, indent=2))
+                    else:
+                        print(f"ℹ️  {plan['message']}")
+                    return plan
+                plan["repair"] = reason
+                if not json_out:
+                    print(f"🔧 repairing install: {reason}")
         except Exception:  # noqa: BLE001
             pass
 

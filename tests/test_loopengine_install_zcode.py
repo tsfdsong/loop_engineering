@@ -57,6 +57,46 @@ class ZCodeAdapterTest(unittest.TestCase):
             self.assertEqual(le_entries[0]["version"], ver)
             self.assertEqual(le_entries[0]["cachePath"], str(cache))
 
+    def test_activate_clears_suppressed_builtins(self):
+        repo = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as td:
+            home = Path(td)
+            key = "loopengine@zcode-plugins-official"
+            cfg = home / ".zcode" / "cli" / "config.json"
+            cfg.parent.mkdir(parents=True)
+            cfg.write_text(
+                json.dumps(
+                    {
+                        "plugins": {
+                            "enabledPlugins": {key: False},
+                            "suppressedBuiltins": [key, "other@zcode-plugins-official"],
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+            km = home / ".zcode" / "cli" / "plugins" / "known_marketplaces.json"
+            km.parent.mkdir(parents=True)
+            km.write_text('{"marketplaces":[]}\n', encoding="utf-8")
+
+            ctx = AdapterContext(
+                home=home,
+                repo_root=repo,
+                central=repo,
+                version="9.9.9",
+                skill_names=["go"],
+                dry_run=False,
+                mcp_bins={},
+            )
+            ZCodeAdapter().activate_registry(ctx)
+            data = json.loads(cfg.read_text(encoding="utf-8"))
+            plugins = data["plugins"]
+            self.assertTrue(plugins["enabledPlugins"][key])
+            self.assertNotIn(key, plugins["suppressedBuiltins"])
+            self.assertIn(
+                "other@zcode-plugins-official", plugins["suppressedBuiltins"]
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

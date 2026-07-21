@@ -503,9 +503,8 @@ def dimension_g_registry_namespace(
         if os.path.isfile(cfg):
             try:
                 with open(cfg, encoding="utf-8") as f:
-                    enabled = (
-                        json.load(f).get("plugins", {}).get("enabledPlugins") or {}
-                    )
+                    plugins_obj = json.load(f).get("plugins") or {}
+                enabled = plugins_obj.get("enabledPlugins") or {}
                 if enabled.get(key) is True:
                     results.append(
                         AuditResult("G", "ok", "zcode", f"enabledPlugins 含 {key}")
@@ -514,6 +513,16 @@ def dimension_g_registry_namespace(
                     results.append(
                         AuditResult(
                             "G", "warning", "zcode", f"enabledPlugins 缺 {key}"
+                        )
+                    )
+                suppressed = plugins_obj.get("suppressedBuiltins") or []
+                if isinstance(suppressed, list) and key in suppressed:
+                    results.append(
+                        AuditResult(
+                            "G",
+                            "error",
+                            "zcode",
+                            f"suppressedBuiltins 含 {key}（会压制插件加载）",
                         )
                     )
             except (json.JSONDecodeError, OSError) as exc:

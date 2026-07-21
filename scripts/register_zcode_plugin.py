@@ -54,13 +54,22 @@ def main():
     plugins = cfg.setdefault("plugins", {})
     enabled = plugins.setdefault("enabledPlugins", {})
 
-    if enabled.get(plugin_key) is True:
-        # 已注册，不重复写
+    changed = False
+    if enabled.get(plugin_key) is not True:
+        enabled[plugin_key] = True
+        changed = True
+
+    # R3.5：enabled=true 仍可能被 suppressedBuiltins 压制
+    suppressed = plugins.get("suppressedBuiltins")
+    if isinstance(suppressed, list) and plugin_key in suppressed:
+        plugins["suppressedBuiltins"] = [x for x in suppressed if x != plugin_key]
+        changed = True
+
+    if not changed:
         return 0
 
-    enabled[plugin_key] = True
     write_json(cfg_path, cfg)
-    print(f"  ✅ 已注册: {plugin_key} → enabled")
+    print(f"  ✅ 已注册: {plugin_key} → enabled（已清除 suppressedBuiltins）")
     return 0
 
 

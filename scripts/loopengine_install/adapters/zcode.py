@@ -200,6 +200,11 @@ class ZCodeAdapter(Adapter):
             plugins = data.setdefault("plugins", {})
             enabled = plugins.setdefault("enabledPlugins", {})
             enabled[key] = True
+            # ZCode may list a plugin in suppressedBuiltins even when
+            # enabledPlugins=true; that blocks UI load (observed 2026-07-21).
+            suppressed = plugins.get("suppressedBuiltins")
+            if isinstance(suppressed, list) and key in suppressed:
+                plugins["suppressedBuiltins"] = [x for x in suppressed if x != key]
             return data
 
         if cfg.exists() or not ctx.dry_run:
