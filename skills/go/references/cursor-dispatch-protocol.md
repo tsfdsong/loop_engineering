@@ -35,12 +35,20 @@ orchestrator
     └── T1.result.json      # WorkerResult（宿主 agent 写入）
 ```
 
+## 并行前沿多派
+
+同一 **并行前沿**（见 `dag-assembly.md` §并行前沿）内可有多个 `WorkerTaskPacket` 同时处于 `pending`。
+宿主 agent **应一次派齐** 该前沿内所有 pending 请求（多个 **Task** 调用，各读对应 `prompt_path`），
+而非等单个 subagent 完成再派下一个。orchestrator 按 `task_id` 分别 poll 各 `result_path`。
+
+降级：宿主无法并发多 Task 时，按 queue 顺序串行派发（`runtime_meta.execution_mode` 可标 `sequential_degraded`）。
+
 ## 宿主 Agent 操作清单
 
 1. 发现 dispatch：stdout 含 `GO_WORKER_DISPATCH_REQUEST`，或扫描 `queue/*request.json` 中 `status=pending`
-2. 读取 `prompt_path`，用 **Task** 工具派发 subagent（`generalPurpose` 或自定义 role）
-3. 确保 subagent 仅在 `workspace_root` 内修改文件
-4. 将 subagent 产出转为 `WorkerResult` JSON，写入 `result_path`
+2. 对同一前沿内 **全部** pending 项：读取各 `prompt_path`，用 **Task** 工具 **并行** 派发 subagent（`generalPurpose` 或自定义 role）
+3. 确保每个 subagent 仅在各自 `workspace_root`（worktree）内修改文件
+4. 将各 subagent 产出转为 `WorkerResult` JSON，分别写入对应 `result_path`
 
 可用 CLI 辅助（项目根目录）：
 

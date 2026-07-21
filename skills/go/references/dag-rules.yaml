@@ -1,3 +1,4 @@
+# 节点可选字段（Step ③ 输出）：parallel_safe, write_set — 见 dag-assembly.md §并行前沿
 global:
   multi_family: clarify
   single_skill: exit_go

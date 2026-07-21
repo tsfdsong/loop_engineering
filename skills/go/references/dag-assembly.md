@@ -86,3 +86,67 @@ Step ⑤ 调度（Agent 多 subagent · 见 SKILL.md Step ⑤ 改版）
 | `web_qa_then_refactor` | `[web_qa, refactor]` | `handoff.review_findings` |
 
 桥接语义：前置 family 的 append 输出写入 handoff 的 bridge 字段，后置 family 读取该字段作为输入 scope。
+
+## 并行前沿（parallel frontier）
+
+> 调度真源：Approved `docs/2026-07-21-go-dag-parallel-frontier-design.md` §§4–5。
+> go Step ⑤ 按前沿迭代派发；Subagent 仅为执行器，**不设**角色注册表。
+
+### 算法
+
+DAG 组装 + confidence gate 通过后：
+
+1. **初始化**：`frontier` = 所有依赖已满足（入度为 0 或前置节点 `DONE`）且状态为 `pending` 的节点。
+2. **并行安全判定**：对 `frontier` 内候选写码节点，两两检查写集是否冲突（见下）。
+3. **派发**：对通过判定的子集，每个节点 → 独立 worktree + 短任务包 → 宿主并行派执行器（loop 闭环 via 任务包 SKILL 指针）。
+4. **汇合**：前沿内全部 `DONE` 或失败策略触发后 → merge/handoff → 重算下一 `frontier`，直到 DAG 耗尽。
+
+```text
+family → DAG 组装 → confidence gate
+    ↓
+frontier = { deps 满足 ∧ pending }
+    ↓
+并行安全过滤（写集 / worktree）
+    ↓
+一次派齐可并行节点 → 汇合 → 下一 frontier
+```
+
+### 并行安全条件
+
+节点可同前沿并行，当且仅当满足其一：
+
+| 条件 | 说明 |
+|---|---|
+| **写集不交** | 各节点 `write_set`（或 scope 推断路径）两两无交集 |
+| **worktree 隔离** | 各节点在独立 worktree，且无共享可写路径（V4） |
+
+**冲突 → 串行**：写集重叠且无法 worktree 隔离的节点 **禁止** 同前沿；保留依赖序，改串行派发。
+
+可选节点字段（`dag-rules` / Step ③ 输出，最小标注）：
+
+- `parallel_safe: true|false` — 显式声明是否允许与同前沿其他节点并行
+- `write_set: [path, ...]` — 预期修改路径，供冲突检测
+
+未标注时：由 scope + family 推断写集；推断不确定 → 保守串行。
+
+### 默认开启与降级
+
+| 场景 | 行为 |
+|---|---|
+| **≥2 无依赖写码子任务** | 默认尝试并行派发（非仅文档建议） |
+| **L1 / 单写码节点** | 跳过并行调度税，直通 loop |
+| **宿主无法多 Task** | 降级顺序执行（见 `cursor-dispatch-protocol.md` degradation） |
+| **写集冲突** | 同前沿剔除冲突对，按拓扑序串行 |
+
+进度汇报（V5）：前沿并行中须在状态/日志可见「frontier parallel: N nodes」。
+
+### 测修多域并行（P1）
+
+写码前沿之外，**测修（C）** 按独立失败域切片后复用同一前沿概念（设计 doc §5）：
+
+- **触发**：测试门禁或多文件失败，且失败可分成独立域（不同包/用例/子系统，无共享根因假设）。
+- **行为**：每域一个短任务包（`systematic-debugging` 或 loop-fix 指针 + 复现命令）→ 并行派执行器；**禁止**多域改同一 worktree。
+- **汇合**：全域完成后 **一次** 聚合验证（脚本跑测试）。
+- **不并行**：失败明显同源、或修复会互相覆盖 → 单执行器串行。
+
+P0 先落地写码前沿；测修多域并行为 P1 指针，调度接口与写码前沿相同。
