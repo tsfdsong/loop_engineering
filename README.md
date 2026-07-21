@@ -185,6 +185,7 @@ loopengine/
 │   └── ...                  # 其余技能
 ├── commands/                # Slash commands（plugin 包组件）
 │   ├── audit.md             # /audit 6 维度部署审计
+│   ├── git-commit.md        # /git-commit 智能 stage+commit
 │   ├── go.md                # /go 全自动编排（含 family 路由）
 │   └── loop.md              # /loop 闭环编码
 ├── hooks/                   # 会话启动钩子

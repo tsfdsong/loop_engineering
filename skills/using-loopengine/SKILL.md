@@ -43,6 +43,13 @@ description: |
 ```
 自动：意图识别（8 family）→ 深度需求分析 → 拆分子任务 → worktree 并发 → 回归 → 交付。
 
+### `/git-commit` — 智能提交（防漏 untracked）
+```
+/git-commit -m "feat: ..."
+# 或: python3 scripts/smart_commit.py -m "feat: ..." [--dry-run] [--push]
+```
+本地脚本按规则+启发式过滤后 `git add` + `commit`（不靠模型选文件）。详见 `docs/2026-07-21-smart-git-commit-design.md`。
+
 ### 自然语言 family 路由（v2.0 · 由 go 承担）
 
 | 你说 | 系统行为 |

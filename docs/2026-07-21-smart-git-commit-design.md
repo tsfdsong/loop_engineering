@@ -1,7 +1,7 @@
 # Design: `/git-commit` — 智能 Stage + Commit（规则+启发式）
 
 > **日期**: 2026-07-21  
-> **状态**: Draft · 待用户审阅后转 Approved  
+> **状态**: **Approved** · 2026-07-21 · `/loop` 跳过计划直接实现  
 > **路径说明**: 落在 `docs/` 以便主仓版本化（与 plugin-shaped install 设计同级）。  
 > **动机**: IDE 手工提交常漏 **untracked 新文件**，导致部署缺文件；需要一条明确、快速、确定性的提交命令。
 
