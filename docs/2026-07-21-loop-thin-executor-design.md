@@ -1,7 +1,7 @@
 # Design: loop 纯化为薄执行环（对齐流行 closed-loop）
 
 > **日期**: 2026-07-21  
-> **状态**: Draft · 待用户审阅后转 Approved  
+> **状态**: **Approved** · 2026-07-21  
 > **动机**: loop 被定位为「执行层」，却承载需求确认 + writing-plans 级计划，与 go / brainstorming 重叠，且偏离业界「loop = 编码↔验证↔自愈」语义。  
 > **相关**: `docs/2026-07-21-go-dag-parallel-frontier-design.md`（并行调度）；本设计只收窄 **loop 职责**。
 
