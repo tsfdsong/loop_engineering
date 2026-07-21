@@ -38,6 +38,25 @@ The OpenSpec three-phase method structures spec-driven work as three artifacts t
 ### 3. tasks.md（任务清单）
 - 拆分为可独立执行的任务（bite-sized · 2-5 分钟）
 - 每任务含验收条件 + commit 指令
+- **继承 spec 的 Loop Execution Contract**；plan 级补充 Verification / Termination / Escalation（见下文）
+
+## Loop Execution Contract（plan 级 · 与 brainstorming 衔接）
+
+> 单点真源：`skills/shared/references/loop-execution-contract.md`  
+> brainstorming spec 提供 Goal + Acceptance + Non-goals + Stop Escalation；本 skill 在 plan **头部写一次**下列三块，**禁止**在每个 task 重复 Termination 矩阵。
+
+| Plan 级块 | 内容 |
+|-----------|------|
+| **Verification Contract** | 验收条目 → 验证命令/动作 → 预期结果 |
+| **Termination Contract** | 仅 `done` / `blocked` / `degraded` / `handoff-required` |
+| **Escalation Mapping** | 何时 `/loop`、`/goal`、`/go`；何时 handoff 回上游 |
+
+**硬规则**：
+- Verification 表必须覆盖 spec 中全部 Acceptance Contract 条目
+- Termination 术语与 `go` handoff、`goal-first` 降级枚举对齐，不发明新终态名
+- **不复制** `loop` 的 G0–G9 / self-healing 全文；执行器细节见 `skills/loop/references/gate-matrix.md`
+
+Task 内引用 Verification ID（如 `V1`），不重复写终态四表。
 
 ## Scope Check
 
@@ -78,6 +97,28 @@ This structure informs the task decomposition. Each task should produce self-con
 
 **Tech Stack:** [Key technologies/libraries]
 
+## Verification Contract
+
+| ID | 来源验收 | 命令/动作 | 预期 |
+|----|----------|-----------|------|
+| V1 | … | … | … |
+
+## Termination Contract
+
+**Done when:** …  
+**Blocked when:** …  
+**Degraded when:** …（无则写「本轮不适用」）  
+**Handoff-required when:** …
+
+## Escalation Mapping
+
+- 执行路径：`/loop` | `/goal` | `/go` — …
+- Goal→loop 降级：见 `docs/2026-07-21-goal-first-executor-routing-design.md`（plan 只写本任务触发条件）
+
+## Non-goals
+
+[继承 spec · 本轮不做 …]
+
 ---
 ```
 
@@ -85,6 +126,8 @@ This structure informs the task decomposition. Each task should produce self-con
 
 ````markdown
 ### Task N: [Component Name]
+
+**Verifies:** V1, V2（引用 Verification Contract ID，不重复终态矩阵）
 
 **Files:**
 - Create: `exact/path/to/file.py`
@@ -143,11 +186,12 @@ Every step must contain the actual content an engineer needs. These are **plan f
 ## 与其他 skill 的衔接
 
 ### 上游：brainstorming
-- brainstorming 产出 spec → spec-driven-development 接收为 requirements.md 输入
+- brainstorming 产出 spec（含 Goal / Acceptance / Non-goals / Stop Escalation）→ 本 skill 接收并写入 plan 头部契约块
 
-### 下游：executing-plans / subagent-driven-development
-- spec-driven-development 产出 tasks.md → executing-plans 按 task 执行
-- 或 subagent-driven-development 按 task 派 subagent
+### 下游：executing-plans / subagent-driven-development / loop / go
+- 本 skill 产出 plan → executing-plans 或 subagent-driven-development 按 task 执行
+- 单任务、验收齐全 → `/loop` 或宿主 `/goal`（见 Escalation Mapping）
+- 多 task / 跨模块 → `/go`（thin-loop 任务包须带齐 goal + acceptance）
 
 ## §N. 跨工具 handoff 提示（v2.0 借鉴 ECC/ORCH · 深度 1.5）
 
@@ -173,6 +217,8 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 **2. Placeholder scan:** Search your plan for red flags — any of the patterns from the "No Placeholders" section above. Fix them.
 
 **3. Type consistency:** Do the types, method signatures, and property names you used in later tasks match what you defined in earlier tasks? A function called `clearLayers()` in Task 3 but `clearFullLayers()` in Task 7 is a bug.
+
+**4. Loop execution contract:** Does Verification cover every Acceptance from the spec? Termination uses only done/blocked/degraded/handoff-required? Escalation names the right executor (loop/goal/go)? No G0–G9 copy-paste in the plan?
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.
 

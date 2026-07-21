@@ -45,19 +45,21 @@ loop              编码 ↔ 门禁 ↔ 自愈 ↔ 交付
 | Skill | 做什么 | 不做什么 | 典型触发 |
 |-------|--------|----------|----------|
 | **brainstorming** | 未定型探索、选型、设计草稿 | 编码落地、门禁闭环、多模块编排 | 「要不要做 X」「A vs B」「先帮我想清楚」 |
+| **spec-driven-development** | 产出书面实施计划 + **Verification/Termination/Escalation 契约** | 运行时 DAG/worktree 编排 | 「写实施计划」「spec → plan」 |
 | **go** | family 路由、DAG 组装、worktree 并发、派发/汇合 | 替代单任务薄执行环；不做产品级 brainstorm | 「开发整站 / 多模块」「跨模块编排」`/go …` |
-| **loop** | 已有可执行目标+验收 → 编码↔门禁↔自愈↔交付 | 需求分析、writing-plans 级拆分、长确认流 | 「实现/修复 X，验收…」`/loop …` |
+| **loop** | 已有可执行目标+验收 → 编码↔门禁↔自愈↔交付 | 需求分析、plan 级拆分、长确认流 | 「实现/修复 X，验收…」`/loop …` |
 | **supervisor** | 多子任务并发监控、R1–R4 干预链 | 自己写码或替代 go 调度 | go 派发后看门狗 / 子任务卡住 |
-| **writing-plans** | 产出书面实施计划（可独立 session 执行） | 运行时 DAG/worktree 编排 | 「写实施计划」「spec → plan」 |
+
+**上游契约**：brainstorming spec 与 spec-driven-development plan 共享 `skills/shared/references/loop-execution-contract.md`（验收 + 终止 + 升级路径），供 `/goal` / `/loop` / `/go` 消费。
 
 可选一句话：
 
 - **product-manager** — PRD / 优先级 / 用户故事（产品规格，非执行环）。
 - **executing-plans** — 在独立 session 按已有书面计划逐步执行（含审查检查点）。
 
-### go ↔ writing-plans
+### go ↔ spec-driven-development
 
-**go** = 运行时 DAG / worktree 编排；**writing-plans** = 书面计划产物 / 独立 session 规划——**二者互不替代**。
+**go** = 运行时 DAG / worktree 编排；**spec-driven-development** = 书面计划产物 + 执行契约 / 独立 session 规划——**二者互不替代**。
 
 ### 加速路径（非角色产品）
 

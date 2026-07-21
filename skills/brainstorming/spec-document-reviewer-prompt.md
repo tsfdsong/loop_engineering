@@ -23,6 +23,7 @@ Task tool (general-purpose):
     | Clarity | Requirements ambiguous enough to cause someone to build the wrong thing |
     | Scope | Focused enough for a single plan — not covering multiple independent subsystems |
     | YAGNI | Unrequested features, over-engineering |
+    | **Loop Execution Contract** | Goal + Acceptance Contract (observable pass/fail) + Non-goals + Stop Escalation present; no G0–G9 / self-healing copy-paste |
 
     ## Calibration
 

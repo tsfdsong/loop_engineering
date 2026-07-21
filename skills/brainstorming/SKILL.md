@@ -29,10 +29,10 @@ You MUST create a task for each of these items and complete them in order:
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
-6. **Write design doc** — save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit
-7. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope (see below)
+6. **Write design doc** — save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit（**含 Loop Execution Contract · spec 级字段**，见下文）
+7. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope, **acceptance 可判定性** (see below)
 8. **User reviews written spec** — ask user to review the spec file before proceeding
-9. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+9. **Transition to implementation** — invoke **spec-driven-development** skill（writing-plans 继任）to create implementation plan
 
 ## Process Flow
 
@@ -66,7 +66,7 @@ digraph brainstorming {
 }
 ```
 
-**The terminal state is invoking writing-plans.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill. The ONLY skill you invoke after brainstorming is writing-plans.
+**The terminal state is invoking spec-driven-development.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill. The ONLY skill you invoke after brainstorming is spec-driven-development.
 
 ## The Process
 
@@ -92,6 +92,7 @@ digraph brainstorming {
 - Scale each section to its complexity: a few sentences if straightforward, up to 200-300 words if nuanced
 - Ask after each section whether it looks right so far
 - Cover: architecture, components, data flow, error handling, testing
+- **Cover: Loop Execution Contract（spec 级）** — Goal、Acceptance Contract、Non-goals、Stop Escalation（详见 `skills/shared/references/loop-execution-contract.md`）
 - Be ready to go back and clarify if something doesn't make sense
 
 **Design for isolation and clarity:**
@@ -116,6 +117,30 @@ digraph brainstorming {
 - Use elements-of-style:writing-clearly-and-concisely skill if available
 - Commit the design document to git
 
+**Spec 必含章节（Loop Execution Contract · spec 级）**
+
+> 单点真源：`skills/shared/references/loop-execution-contract.md` §2  
+> **只写可判定性**；禁止复制 `loop` 的 G0–G9、自愈轮次、Goal→loop 降级链。
+
+每个 design spec **必须**包含以下四节（简单项目可各 1–3 句，不可省略标题）：
+
+```markdown
+## Goal
+[一句话可执行目标]
+
+## Acceptance Contract
+- [ ] [可观察、可判定的验收 1]
+- [ ] [验收 2]
+
+## Non-goals
+- [本轮不做 …]
+
+## Stop Escalation
+- [何种未知/冲突出现时停止假设，回问或拆 spec]
+```
+
+**Acceptance 硬规则**：禁止「正常工作」「体验良好」；每条应能映射到未来 verification 命令或检查动作。
+
 **Spec Self-Review:**
 After writing the spec document, look at it with fresh eyes:
 
@@ -123,6 +148,7 @@ After writing the spec document, look at it with fresh eyes:
 2. **Internal consistency:** Do any sections contradict each other? Does the architecture match the feature descriptions?
 3. **Scope check:** Is this focused enough for a single implementation plan, or does it need decomposition?
 4. **Ambiguity check:** Could any requirement be interpreted two different ways? If so, pick one and make it explicit.
+5. **Acceptance contract:** Every acceptance item observable and pass/fail? Non-goals present? Stop Escalation lists real blockers? No gate-matrix copy-paste?
 
 Fix any issues inline. No need to re-review — just fix and move on.
 
@@ -135,8 +161,8 @@ Wait for the user's response. If they request changes, make them and re-run the 
 
 **Implementation:**
 
-- Invoke the writing-plans skill to create a detailed implementation plan
-- Do NOT invoke any other skill. writing-plans is the next step.
+- Invoke the **spec-driven-development** skill to create a detailed implementation plan（plan 须含 Verification / Termination / Escalation · 见共享契约 §3）
+- Do NOT invoke any other skill. spec-driven-development is the next step.
 
 ## Key Principles
 
