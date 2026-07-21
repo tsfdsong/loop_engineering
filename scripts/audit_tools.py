@@ -79,12 +79,22 @@ def dimension_a_tool_deploy(
             )
             continue
         path = os.path.join(home, rel.lstrip("~/").replace("/", os.sep))
+        if os.path.islink(path):
+            results.append(
+                AuditResult(
+                    "A",
+                    "error",
+                    adapter.id,
+                    f"部署路径是 symlink（D13 禁止）: {path}",
+                )
+            )
+            continue
         if adapter.id == "claude-code":
             ok = os.path.isdir(path) and any(
                 os.path.isdir(os.path.join(path, d)) for d in os.listdir(path)
             )
         else:
-            ok = os.path.isdir(path) or os.path.islink(path)
+            ok = os.path.isdir(path)
         if ok:
             results.append(
                 AuditResult("A", "ok", adapter.id, f"部署目录存在: {path}")
@@ -109,16 +119,20 @@ def dimension_d_mcp_health(
     全部未装 → warning；部分未装 → 逐个 skip（info）。
     """
     mcp_tools = [
-        ("jcodemunch-mcp", ["jcodemunch-mcp", "--version"]),
-        ("repomix", ["repomix", "--version"]),
-        ("headroom", ["headroom", "--version"]),
+        ("jcodemunch-mcp", ["jcodemunch-mcp", "--version"], False),
+        ("repomix", ["repomix", "--version"], False),
+        ("headroom", ["headroom", "mcp", "serve", "--help"], True),
     ]
     results = []
     missing = []
-    for name, cmd in mcp_tools:
+    for name, cmd, no_stdin in mcp_tools:
         try:
             subprocess.run(
-                cmd, capture_output=True, timeout=10, check=True
+                cmd,
+                capture_output=True,
+                timeout=10,
+                check=True,
+                stdin=subprocess.DEVNULL if no_stdin else None,
             )
             results.append(AuditResult("D", "ok", "all", f"{name} 可用"))
         except (
@@ -379,7 +393,16 @@ def dimension_g_registry_namespace(
     # Cursor: plugins/local present; flat LE skills should not exist if manifest lists them
     if not tool_filter or tool_filter in ("cursor", "all"):
         local = os.path.join(home, ".cursor", "plugins", "local", "loopengine")
-        if os.path.isdir(local) or os.path.islink(local):
+        if os.path.islink(local):
+            results.append(
+                AuditResult(
+                    "G",
+                    "error",
+                    "cursor",
+                    "plugins/local/loopengine 是 symlink（D13 禁止）",
+                )
+            )
+        elif os.path.isdir(local):
             results.append(
                 AuditResult("G", "ok", "cursor", f"plugins/local/loopengine 存在")
             )
@@ -420,17 +443,7 @@ def dimension_g_registry_namespace(
                         "无 LE 平铺 skills（plugin-only）",
                     )
                 )
-            # Plugin must be a real directory, not symlink
-            if os.path.islink(local):
-                results.append(
-                    AuditResult(
-                        "G",
-                        "error",
-                        "cursor",
-                        "plugins/local/loopengine 是 symlink（D13 禁止）",
-                    )
-                )
-            elif os.path.isdir(local):
+            if os.path.isdir(local) and not os.path.islink(local):
                 plugin_skills = os.path.join(local, "skills")
                 count = 0
                 if os.path.isdir(plugin_skills):
