@@ -6,7 +6,7 @@ scanOfficialCache/loadPlugin requires:
   1) ~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/<ver>/
   2) .zcode-plugin/plugin.json (+ .zcode-plugin-seed.json)
   3) marketplaces/.../marketplace.json plugins[] entry with cachePath
-See scripts/install_zcode_plugin.py (verified against zcode.cjs 2026-07-14).
+See loopengine_install.adapters.zcode (verified against zcode.cjs 2026-07-14).
 """
 
 from __future__ import annotations
@@ -25,22 +25,6 @@ from loopengine_install.ops import Operation
 
 MARKETPLACE_ID = "zcode-plugins-official"
 PLUGIN_NAME = "loopengine"
-
-# Match official ZCode plugin payload (install_zcode_plugin.WHITELIST_TOP_LEVEL)
-_PAYLOAD_TOP = frozenset(
-    {
-        ".mcp.json",
-        ".zcode-plugin",
-        "README.md",
-        "commands",
-        "dist",
-        "hooks",
-        "output-styles",
-        "package.json",
-        "skills",
-        "templates",
-    }
-)
 
 
 class ZCodeAdapter(Adapter):
@@ -79,7 +63,6 @@ class ZCodeAdapter(Adapter):
         if not ctx.dry_run:
             self._deploy_cache_payload(ctx.central, dest)
             self._write_seed(dest, ctx.version)
-            # Remove legacy skills-tree deploy so UI is plugin-managed, not flat
             legacy = self._legacy_skills_root(ctx)
             if legacy.exists():
                 if legacy.is_symlink() or legacy.is_file():
@@ -142,40 +125,15 @@ class ZCodeAdapter(Adapter):
         return ops
 
     def _deploy_cache_payload(self, central: Path, dest: Path) -> None:
+        """Full central copy-tree (D13; aligned with Cursor adapter)."""
         if dest.exists():
             shutil.rmtree(dest)
-        dest.mkdir(parents=True, exist_ok=True)
-        for name in sorted(_PAYLOAD_TOP):
-            src = central / name
-            if not src.exists():
-                continue
-            dst = dest / name
-            if src.is_dir():
-                shutil.copytree(src, dst, symlinks=False)
-            else:
-                shutil.copy2(src, dst)
-        # Ensure .zcode-plugin/plugin.json exists (from central overlay)
-        plugin_json = dest / ".zcode-plugin" / "plugin.json"
-        if not plugin_json.is_file():
-            plugin_json.parent.mkdir(parents=True, exist_ok=True)
-            plugin_json.write_text(
-                json.dumps(
-                    {"name": PLUGIN_NAME, "version": dest.name, "skills": "skills"},
-                    indent=2,
-                )
-                + "\n",
-                encoding="utf-8",
-            )
+        shutil.copytree(central, dest, symlinks=False)
 
     def _write_seed(self, dest: Path, version: str) -> None:
-        # Prefer install_zcode_plugin hash helper when available
-        hash_val = "0" * 64
-        try:
-            from install_zcode_plugin import compute_seed_hash
+        from loopengine_install.zcode_seed import compute_seed_hash
 
-            hash_val, _status = compute_seed_hash(dest)
-        except Exception:  # noqa: BLE001
-            pass
+        hash_val, _status = compute_seed_hash(dest)
         seed = {
             "hash": hash_val,
             "marketplace": MARKETPLACE_ID,

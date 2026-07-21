@@ -25,12 +25,19 @@ import os
 import subprocess
 import sys
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import List, Optional
 
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPTS_DIR)
 sys.path.insert(0, SCRIPTS_DIR)
 
+from loopengine_install.health import (  # noqa: E402
+    check_central_and_pointer,
+    check_cursor_plugin,
+    is_real_dir,
+)
+from loopengine_install.ops import load_manifest  # noqa: E402
 from render_plugins import TOOL_ADAPTERS  # noqa: E402
 
 
@@ -412,54 +419,60 @@ def dimension_g_registry_namespace(
                     "G", "warning", "cursor", "plugins/local/loopengine 不存在"
                 )
             )
-        manifest = os.path.join(home, ".loopengine", "install-manifest.json")
-        if os.path.isfile(manifest):
+        manifest_file = os.path.join(home, ".loopengine", "install-manifest.json")
+        if os.path.isfile(manifest_file):
             try:
-                with open(manifest, encoding="utf-8") as f:
-                    skill_names = json.load(f).get("skill_names") or []
-            except (json.JSONDecodeError, OSError):
-                skill_names = []
-            flat = os.path.join(home, ".cursor", "skills")
-            leftover = [
-                n
-                for n in skill_names
-                if os.path.isfile(os.path.join(flat, n, "SKILL.md"))
-            ]
-            if leftover:
-                results.append(
-                    AuditResult(
-                        "G",
-                        "error",
-                        "cursor",
-                        f"仍有 LE 平铺 skills（D3 禁止）: {leftover[:8]}",
+                manifest = load_manifest(manifest_file)
+                for issue in check_central_and_pointer(Path(home), manifest):
+                    results.append(
+                        AuditResult("G", issue.severity, "all", issue.message)
                     )
-                )
-            else:
-                results.append(
-                    AuditResult(
-                        "G",
-                        "ok",
-                        "cursor",
-                        "无 LE 平铺 skills（plugin-only）",
+                cursor_issues = check_cursor_plugin(Path(home), manifest)
+                for issue in cursor_issues:
+                    if issue.id == "cursor-symlink":
+                        continue
+                    results.append(
+                        AuditResult("G", "error", "cursor", issue.message)
                     )
-                )
-            if os.path.isdir(local) and not os.path.islink(local):
-                plugin_skills = os.path.join(local, "skills")
-                count = 0
-                if os.path.isdir(plugin_skills):
-                    count = sum(
-                        1
-                        for n in os.listdir(plugin_skills)
-                        if os.path.isfile(
-                            os.path.join(plugin_skills, n, "SKILL.md")
+                if not any(i.id == "cursor-flat" for i in cursor_issues):
+                    results.append(
+                        AuditResult(
+                            "G",
+                            "ok",
+                            "cursor",
+                            "无 LE 平铺 skills（plugin-only）",
                         )
                     )
+                if is_real_dir(Path(local)) and not any(
+                    i.id == "cursor-plugin-skills" for i in cursor_issues
+                ):
+                    plugin_skills = os.path.join(local, "skills")
+                    count = 0
+                    if os.path.isdir(plugin_skills):
+                        count = sum(
+                            1
+                            for n in os.listdir(plugin_skills)
+                            if os.path.isfile(
+                                os.path.join(plugin_skills, n, "SKILL.md")
+                            )
+                        )
+                    results.append(
+                        AuditResult(
+                            "G",
+                            "ok"
+                            if count >= max(1, len(manifest.skill_names) - 1)
+                            else "error",
+                            "cursor",
+                            f"plugin 内 skills 数: {count}",
+                        )
+                    )
+            except Exception as exc:  # noqa: BLE001
                 results.append(
                     AuditResult(
                         "G",
-                        "ok" if count >= max(1, len(skill_names) - 1) else "error",
+                        "warning",
                         "cursor",
-                        f"plugin 内 skills 数: {count}",
+                        f"无法读 install-manifest: {exc}",
                     )
                 )
 

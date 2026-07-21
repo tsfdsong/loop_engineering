@@ -17,6 +17,8 @@
 
 **Replaces:** Previous Bash-centric plan content in this file.
 
+**Implementation status (2026-07-21):** Tier-1 Python install landed (`install.py` + `loopengine_install`). Legacy `install.sh`/`install.ps1` removed. Remaining: P3 doctor/repair productization; optional Tier-2/3 polish.
+
 ---
 
 ## File map
@@ -45,9 +47,9 @@
 | `tests/test_loopengine_install_zcode.py` | ZCode official cache + marketplace |
 | `tests/test_loopengine_install_check.py` | `install --check` mini-doctor |
 | `tests/test_loopengine_install_cli.py` / `package.py` / `tier23.py` | CLI / central package / Tier-2·3 |
-| Delete after P2 | `install.sh`, `install.ps1`, `scripts/install/*.sh` |
+| Delete after P2 | ~~`install.sh`, `install.ps1`, `scripts/install/*.sh`~~ **done** |
 
-**Reuse (call, do not fork blindly):** `scripts/render_plugins.py`, `scripts/merge_mcp_config.py`, `scripts/inject_rules.py`, `scripts/register_zcode_*.py`, `scripts/_lib/json_io.py`.
+**Reuse (call, do not fork blindly):** `scripts/render_plugins.py`, `scripts/merge_mcp_config.py`, `scripts/inject_rules.py`, `scripts/_lib/json_io.py`. Legacy `register_zcode_*.py` / `install_zcode_plugin.py` are **deprecated emergency CLI**; canonical logic lives in `loopengine_install/`.
 
 **Locked plan defaults (spec §14):**
 
@@ -64,16 +66,16 @@
 - Modify: `docs/2026-07-20-plugin-shaped-install-design-v2.md` (status—already Approved if committed)
 - Create branch: `go-plugin-shaped-install-py`
 
-- [ ] **Step 1: Confirm spec header says Approved**
+- [x] **Step 1: Confirm spec header says Approved**
 
-- [ ] **Step 2: Create branch**
+- [x] **Step 2: Create branch**
 
 ```bash
 git checkout -b go-plugin-shaped-install-py
 git status
 ```
 
-- [ ] **Step 3: Commit plan + approved spec if dirty**
+- [x] **Step 3: Commit plan + approved spec if dirty**
 
 ```bash
 git add docs/2026-07-20-plugin-shaped-install-design-v2.md docs/2026-07-20-plugin-shaped-install-plan.md

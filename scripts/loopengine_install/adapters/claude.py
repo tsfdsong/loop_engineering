@@ -135,6 +135,10 @@ class ClaudeAdapter(Adapter):
         ]
 
     def merge_mcp(self, ctx: AdapterContext) -> list[Operation]:
+        """Intentional no-op: Claude MCP is user/project managed (design v2 §8.2).
+
+        Plugin cache + AGENTS marker injection are handled by other adapter methods.
+        """
         return []
 
     def inject_agents(self, ctx: AdapterContext) -> list[Operation]:

@@ -3,7 +3,7 @@
 > **v2.3** — 唯一入口 `install.py`（Python ≥ 3.10），macOS / Windows / Linux 同一条命令。  
 > 按各 AI Agent **官方插件模式**部署 skills / hooks，并写入 MCP、AGENTS（规则）与插件注册表。  
 > Cursor：**仅** `plugins/local/loopengine`（禁止 LE 平铺）；存储：**禁止 symlink**（D13）。  
-> 旧 `install.sh` / `install.ps1` 已退役。
+> 旧 `install.sh` / `install.ps1` 已退役。历史安装事故见 [lessons-learned.md](lessons-learned.md)（归档参考）。
 
 ## 一行安装
 
@@ -44,7 +44,7 @@ python3 install.py install --check
 
 | Tier | 工具 | 行为 |
 |------|------|------|
-| 1 原生插件 | Cursor、Claude、ZCode | 官方 plugin 路径 + registry + MCP + AGENTS |
+| 1 原生插件 | Cursor、Claude、ZCode | 官方 plugin 路径 + registry + MCP（Claude 除外，见下）+ AGENTS |
 | 2 半插件 | Codex、Gemini | 整包目录 + AGENTS/等价规则注入 |
 | 3 注入型 | Copilot、Pi | skills 树 + AGENTS 注入 |
 
@@ -58,6 +58,7 @@ python3 install.py install --check
 | Claude | cache + marketplace **各自真实拷贝** + `installed_plugins.json` 键 `loopengine@loopengine-local` |
 | ZCode | 官方 cache `…/plugins/cache/zcode-plugins-official/loopengine/<ver>/` + marketplace.json + enabledPlugins（清理遗留 `~/.zcode/skills/loopengine`） |
 | Cursor MCP | `~/.cursor/mcp.json`（仅 LE 管理的 jcodemunch/repomix/headroom） |
+| Claude MCP | **不注入**（设计 v2 §8.2：由用户/项目自行配置 `~/.claude/settings.json` 或 `.mcp.json`） |
 
 ## 自检
 

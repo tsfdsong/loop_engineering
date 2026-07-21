@@ -118,60 +118,12 @@ class ToolAdapter:
 
 
 def activate_zcode_plugin(project_root: str, out_dir: str) -> bool:
-    """ZCode plugin 激活：注册 marketplace + 写入 enabledPlugins。
-
-    调用 register_zcode_marketplace.py + register_zcode_plugin.py。
-    返回 True 表示成功。失败时回滚 config.json（R7 风险缓解）。
-    """
-    config_path = os.path.expanduser("~/.zcode/cli/config.json")
-    known_mp_path = os.path.expanduser(
-        "~/.zcode/cli/plugins/known_marketplaces.json"
+    """DEPRECATED: ZCode activation is owned by `install.py` / ZCodeAdapter only."""
+    _status_print(
+        "  ⚠️ activate_zcode_plugin 已废弃；请使用 python3 install.py install",
+        error=True,
     )
-    backup = config_path + ".loopengine-bak"
-
-    # 先备份 config.json
-    if os.path.isfile(config_path):
-        shutil.copy2(config_path, backup)
-
-    try:
-        # 1. 注册 marketplace
-        subprocess.run(
-            [
-                sys.executable,
-                os.path.join(project_root, "scripts/register_zcode_marketplace.py"),
-                known_mp_path,
-                "zcode-plugins-official",
-            ],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        # 2. 注册 plugin 到 enabledPlugins
-        subprocess.run(
-            [
-                sys.executable,
-                os.path.join(project_root, "scripts/register_zcode_plugin.py"),
-                config_path,
-                "loopengine",
-                "zcode-plugins-official",
-            ],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        _status_print(f"  ✅ ZCode plugin 激活成功")
-        return True
-    except subprocess.CalledProcessError as e:
-        _status_print(
-            f"  ⚠️ ZCode plugin 激活失败: {e.stderr or e.stdout}", error=True
-        )
-        # 回滚
-        if os.path.isfile(backup):
-            shutil.move(backup, config_path)
-        return False
-    finally:
-        if os.path.isfile(backup):
-            os.remove(backup)
+    return False
 
 
 TOOL_ADAPTERS: List[ToolAdapter] = [

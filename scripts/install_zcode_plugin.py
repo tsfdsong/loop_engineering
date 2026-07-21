@@ -6,7 +6,7 @@
 # DEPRECATED: production install is `python3 install.py install` via
 # loopengine_install.adapters.zcode. Prefer that path.
 #
-# Still used as a library: adapters import compute_seed_hash().
+# Still used as a library: re-exports compute_seed_hash from loopengine_install.zcode_seed.
 # CLI below is emergency fallback only (debug / offline recovery).
 #
 # 根因验证（zcode.cjs 逆向，2026-07-14）：
@@ -99,53 +99,10 @@ def render_zcode_manifest(repo_root: Path) -> dict:
 
 
 def compute_seed_hash(plugin_dir: Path) -> tuple[str, str]:
-    """计算 seed hash（近似 zcode.cjs 算法）。返回 (hash, status)。
-    status='exact' 若 node 可用并成功；'placeholder' 若 node 不可用（回退确定性占位）。
+    """Re-export from loopengine_install (canonical)."""
+    from loopengine_install.zcode_seed import compute_seed_hash as _compute
 
-    注意：hash 在加载时不被校验（已逆向验证），故近似/占位均不影响插件加载。
-    本实现尽力复现官方算法，但未与官方 bit-for-bit 对齐（官方内部 stringify 细节未公开）。
-    """
-    node = shutil.which("node")
-    if node:
-        try:
-            script = r'''
-const fs=require("fs"),path=require("path"),crypto=require("crypto");
-const dir=process.argv[1];
-const allow=new Set([".mcp.json",".zcode-plugin","README.md","commands","dist","hooks","output-styles","package.json","skills","templates"]);
-const skipDir=new Set(["node_modules",".turbo","coverage"]);
-let arr=[];
-(function walk(base,rel){
-  for(const e of fs.readdirSync(base,{withFileTypes:true})){
-    const r=rel?rel+"/"+e.name:e.name;
-    if(rel===""){ if(!allow.has(e.name)) continue; }
-    if(e.isDirectory()){ if(skipDir.has(e.name)) continue; walk(path.join(base,e.name),r); }
-    else {
-      if(e.name===".zcode-plugin-seed.json") continue;
-      const buf=fs.readFileSync(path.join(base,e.name));
-      const sha=crypto.createHash("sha256").update(buf).digest("hex");
-      const st=fs.statSync(path.join(base,e.name)).mode;
-      const mode=((st&73)!==0)||/dist\/mcp\/server\.js$/.test(r)||(/^hooks\//.test(r)&&!/\.(json|md|txt)$/.test(r))?493:420;
-      arr.push([r,sha,mode]);
-    }
-  }
-})(dir,"");
-arr.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
-process.stdout.write(crypto.createHash("sha256").update(Buffer.from(JSON.stringify(arr))).digest("hex"));
-'''
-            out = subprocess.run(
-                [node, "-e", script, "--", str(plugin_dir)],
-                capture_output=True, text=True, check=True, timeout=15,
-            )
-            return out.stdout.strip(), "exact"
-        except Exception as e:
-            print(f"  ⚠️  node hash 计算失败（{e}），回退占位 hash", file=sys.stderr)
-    # 占位：对目录树取确定性 sha256（加载时不校验，仅作标记）
-    h = hashlib.sha256()
-    for p in sorted(plugin_dir.rglob("*")):
-        if p.is_file() and ".zcode-plugin-seed.json" not in str(p):
-            h.update(str(p.relative_to(plugin_dir)).encode())
-            h.update(p.read_bytes())
-    return h.hexdigest(), "placeholder"
+    return _compute(plugin_dir)
 
 
 def copy_payload(repo_root: Path, dest: Path) -> int:

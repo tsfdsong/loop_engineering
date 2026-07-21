@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # ────────────────────────────────────────────────────────────
-# scripts/register_zcode_marketplace.py — 注册 zcode-plugins-official marketplace
+# scripts/register_zcode_marketplace.py — DEPRECATED CLI（emergency only）
+# ────────────────────────────────────────────────────────────
+# Production path: python3 install.py install → loopengine_install.adapters.zcode
 # ────────────────────────────────────────────────────────────
 # 用法: python register_zcode_marketplace.py <known_marketplaces.json> <marketplace_id>
 #   - known_marketplaces.json: 默认 ~/.zcode/cli/plugins/known_marketplaces.json

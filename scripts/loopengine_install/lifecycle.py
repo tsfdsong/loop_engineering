@@ -12,6 +12,7 @@ from loopengine_install.adapters.base import AdapterContext
 from loopengine_install.adapters.helpers import list_skill_names
 from loopengine_install.detect import detect_agents, detect_mcp_binaries
 from loopengine_install.ops import Manifest, load_manifest, revert_operation, save_manifest
+from loopengine_install.health import issues_as_dicts, run_health_checks
 from loopengine_install.package import (
     build_central_package,
     prune_old_versions,
@@ -275,103 +276,10 @@ def do_check(
     report["version"] = manifest.version
     report["operations"] = len(manifest.operations)
 
-    central = Path(manifest.central_root).expanduser()
-    if not central.exists():
+    health_issues = run_health_checks(manifest, home)
+    if health_issues:
         report["ok"] = False
-        report["issues"].append(
-            {"id": "central", "message": f"central_root missing: {central}"}
-        )
-
-    # D13: current must be a pointer file, not a symlink
-    current = home / ".loopengine" / "plugins" / "loopengine" / "current"
-    if current.is_symlink():
-        report["ok"] = False
-        report["issues"].append(
-            {
-                "id": "current-symlink",
-                "message": "plugins/loopengine/current is a symlink; must be pointer file (D13)",
-            }
-        )
-    elif current.is_file():
-        pass
-    elif central.exists():
-        report["ok"] = False
-        report["issues"].append(
-            {
-                "id": "current-missing",
-                "message": "plugins/loopengine/current pointer file missing",
-            }
-        )
-
-    # D3: LE flat skills must be absent (plugin-only)
-    flat = home / ".cursor" / "skills"
-    if flat.is_dir() and manifest.skill_names:
-        leftover_flat = [
-            n
-            for n in manifest.skill_names
-            if (flat / n / "SKILL.md").is_file()
-        ]
-        if leftover_flat:
-            report["ok"] = False
-            report["issues"].append(
-                {
-                    "id": "cursor-flat",
-                    "message": (
-                        "LE skills still under ~/.cursor/skills "
-                        f"(D3 forbids flat): {leftover_flat[:8]}"
-                    ),
-                }
-            )
-
-    plugin = home / ".cursor" / "plugins" / "local" / "loopengine"
-    if "cursor" in (manifest.components or {}) or any(
-        str(op.destination or "").endswith("plugins/local/loopengine")
-        for op in manifest.operations
-    ):
-        if plugin.is_symlink():
-            report["ok"] = False
-            report["issues"].append(
-                {
-                    "id": "cursor-symlink",
-                    "message": (
-                        "plugins/local/loopengine is a symlink; "
-                        "D13 requires a real copy — reinstall"
-                    ),
-                }
-            )
-        elif plugin.is_dir():
-            skill_dirs = list((plugin / "skills").glob("*/SKILL.md")) if (plugin / "skills").is_dir() else []
-            if len(skill_dirs) < max(1, len(manifest.skill_names) - 1):  # allow shared/ without SKILL
-                report["ok"] = False
-                report["issues"].append(
-                    {
-                        "id": "cursor-plugin-skills",
-                        "message": (
-                            f"plugin skills count low: {len(skill_dirs)} "
-                            f"(expected ~{len(manifest.skill_names)})"
-                        ),
-                    }
-                )
-            for rel, cid in (
-                (".cursor-plugin/plugin.json", "cursor-plugin-json"),
-                ("hooks/hooks.json", "cursor-hooks"),
-            ):
-                if not (plugin / rel).is_file():
-                    report["ok"] = False
-                    report["issues"].append(
-                        {
-                            "id": cid,
-                            "message": f"missing {rel} under plugins/local/loopengine",
-                        }
-                    )
-
-    for op in manifest.operations:
-        if op.ownership != "managed":
-            continue
-        issue = _check_operation(op, home)
-        if issue:
-            report["ok"] = False
-            report["issues"].append(issue)
+        report["issues"].extend(issues_as_dicts(health_issues))
 
     _emit_check(report, json_out)
     return report
@@ -389,99 +297,6 @@ def _emit_check(report: dict, json_out: bool) -> None:
         print(f"check: FAIL ({len(report['issues'])} issues)")
         for iss in report["issues"]:
             print(f"  - [{iss.get('id')}] {iss.get('message')}")
-
-
-def _check_operation(op, home: Path) -> dict | None:
-    kind = op.kind
-    if kind in {"copy-tree", "link-or-copy"}:
-        if not op.destination:
-            return None
-        dst = Path(op.destination).expanduser()
-        if not dst.exists():
-            return {"id": op.id, "message": f"{kind} destination missing: {dst}"}
-        if dst.is_symlink():
-            return {
-                "id": op.id,
-                "message": f"{kind} destination is a symlink (D13 forbids): {dst}",
-            }
-        return None
-    if kind == "merge-json":
-        if not op.destination or not op.merge_keys:
-            return None
-        path = Path(op.destination).expanduser()
-        if not path.is_file():
-            return {"id": op.id, "message": f"merge-json file missing: {path}"}
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            return {"id": op.id, "message": f"merge-json invalid JSON: {exc}"}
-        missing = []
-        for key in op.merge_keys:
-            in_cursor = key in (data.get("mcpServers") or {})
-            servers = (data.get("mcp") or {}).get("servers")
-            in_zcode = isinstance(servers, dict) and key in servers
-            if isinstance(servers, list):
-                in_zcode = any(
-                    isinstance(x, dict) and x.get("name") == key for x in servers
-                )
-            if not (in_cursor or in_zcode):
-                missing.append(key)
-        if missing:
-            return {
-                "id": op.id,
-                "message": f"merge-json keys missing: {missing}",
-            }
-        return None
-    if kind == "inject-markers":
-        if not op.destination or not op.payload:
-            return None
-        path = Path(op.destination).expanduser()
-        if not path.is_file():
-            return {"id": op.id, "message": f"inject target missing: {path}"}
-        text = path.read_text(encoding="utf-8")
-        missing = [
-            m
-            for m in (op.payload.get("markers") or [])
-            if f"BEGIN LOOPENGINE-MANAGED {m}" not in text
-        ]
-        if missing:
-            return {"id": op.id, "message": f"markers missing: {missing}"}
-        return None
-    if kind == "registry-write":
-        if not op.destination or not op.key:
-            return None
-        path = Path(op.destination).expanduser()
-        if not path.is_file():
-            return {"id": op.id, "message": f"registry file missing: {path}"}
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            return {"id": op.id, "message": f"registry invalid JSON: {exc}"}
-        key = op.key
-        plugins = data.get("plugins")
-        # Claude installed_plugins: plugins is a dict of keys
-        if isinstance(plugins, dict) and key in plugins:
-            return None
-        # ZCode marketplace.json: plugins is a list of {name,...}
-        if isinstance(plugins, list) and any(
-            isinstance(x, dict) and x.get("name") == key for x in plugins
-        ):
-            return None
-        # ZCode config: plugins.enabledPlugins
-        if isinstance(plugins, dict):
-            enabled = plugins.get("enabledPlugins")
-            if isinstance(enabled, dict) and enabled.get(key) is True:
-                return None
-        if key in data:
-            return None
-        # zcode known_marketplaces list by id
-        mps = data.get("marketplaces")
-        if isinstance(mps, list) and any(
-            isinstance(x, dict) and x.get("id") == key for x in mps
-        ):
-            return None
-        return {"id": op.id, "message": f"registry key missing: {key}"}
-    return None
 
 
 def do_uninstall(

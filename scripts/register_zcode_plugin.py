@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # ────────────────────────────────────────────────────────────
-# scripts/register_zcode_plugin.py — 注册 loopengine 到 ZCode enabledPlugins
+# scripts/register_zcode_plugin.py — DEPRECATED CLI（emergency only）
+# ────────────────────────────────────────────────────────────
+# Production path: python3 install.py install → loopengine_install.adapters.zcode
 # ────────────────────────────────────────────────────────────
 # 用法: python register_zcode_plugin.py <config.json> <plugin_name> <marketplace_id>
 #   - config.json:    ZCode CLI config (默认 ~/.zcode/cli/config.json)
