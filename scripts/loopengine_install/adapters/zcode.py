@@ -7,6 +7,10 @@ scanOfficialCache/loadPlugin requires:
   2) .zcode-plugin/plugin.json (+ .zcode-plugin-seed.json)
   3) marketplaces/.../marketplace.json plugins[] entry with cachePath
 See loopengine_install.adapters.zcode (verified against zcode.cjs 2026-07-14).
+
+Root cause (2026-07-22): enabledPlugins=true alone still shows default-off in UI.
+zcode.cjs resolveEnabled = enabledPlugins[id] ?? defaultEnabled, and UI
+installedPlugins only lists installed_plugins.json — must register there too.
 """
 
 from __future__ import annotations
@@ -148,9 +152,15 @@ class ZCodeAdapter(Adapter):
         )
 
     def activate_registry(self, ctx: AdapterContext) -> list[Operation]:
+        from datetime import datetime, timezone
+
         cfg = ctx.home / ".zcode" / "cli" / "config.json"
-        km = ctx.home / ".zcode" / "cli" / "plugins" / "known_marketplaces.json"
+        plugins_root = ctx.home / ".zcode" / "cli" / "plugins"
+        km = plugins_root / "known_marketplaces.json"
+        ip = plugins_root / "installed_plugins.json"
         key = f"{PLUGIN_NAME}@{MARKETPLACE_ID}"
+        install_path = str(self.plugin_root(ctx))
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
         ops: list[Operation] = []
 
         def mut_enabled(data):
@@ -177,6 +187,70 @@ class ZCodeAdapter(Adapter):
                 )
             )
 
+        def mut_installed(data):
+            # zcode.cjs: installedPlugins UI uses
+            #   enabledPlugins[id] ?? false
+            # and only lists records from installed_plugins.json. Cache-only
+            # deploy without this file → plugin appears default-off.
+            data = dict(data or {})
+            data.setdefault("version", 1)
+            entry = {
+                "id": key,
+                "name": PLUGIN_NAME,
+                "marketplace": MARKETPLACE_ID,
+                "version": ctx.version,
+                "installPath": install_path,
+                "installedAt": now,
+                "updatedAt": now,
+                "scope": "user",
+                "source": "filesystem",
+            }
+            plugins = data.get("plugins")
+            if isinstance(plugins, dict):
+                # dict form also accepted by zcode fEo / Claude-style
+                plugins[key] = [
+                    {
+                        "scope": "user",
+                        "installPath": install_path,
+                        "version": ctx.version,
+                        "installedAt": now,
+                        "lastUpdated": now,
+                    }
+                ]
+                data["plugins"] = plugins
+                return data
+            if not isinstance(plugins, list):
+                plugins = []
+            idx = next(
+                (
+                    i
+                    for i, p in enumerate(plugins)
+                    if isinstance(p, dict) and p.get("id") == key
+                ),
+                None,
+            )
+            if idx is None:
+                plugins.append(entry)
+            else:
+                prev = plugins[idx]
+                entry["installedAt"] = prev.get("installedAt") or now
+                plugins[idx] = {**prev, **entry}
+            data["plugins"] = plugins
+            return data
+
+        if ip.parent.exists() or not ctx.dry_run:
+            ip.parent.mkdir(parents=True, exist_ok=True)
+            ops.append(
+                write_registry_json(
+                    "zcode-installed-plugins",
+                    ip,
+                    key,
+                    "zcode.installed_plugins",
+                    mut_installed,
+                    ctx.dry_run,
+                )
+            )
+
         def mut_km(data):
             data = dict(data or {})
             mps = data.setdefault("marketplaces", [])
@@ -184,6 +258,13 @@ class ZCodeAdapter(Adapter):
             cache_path = str(
                 ctx.home / ".zcode" / "cli" / "plugins" / "cache" / mid
             )
+            # Drop stale Claude-style marketplace id under ZCode home — it
+            # surfaces a second loopengine@loopengine-local that stays off.
+            mps[:] = [
+                x
+                for x in mps
+                if not (isinstance(x, dict) and x.get("id") == "loopengine-local")
+            ]
             if not any(isinstance(x, dict) and x.get("id") == mid for x in mps):
                 mps.append(
                     {

@@ -96,6 +96,25 @@ def _skip_blocked_reason(
             if isinstance(suppressed, list) and key in suppressed:
                 return f"zcode suppressedBuiltins contains {key}"
 
+        ip = home / ".zcode" / "cli" / "plugins" / "installed_plugins.json"
+        if ip.is_file():
+            try:
+                ip_data = json.loads(ip.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                return "zcode installed_plugins.json invalid"
+            ip_plugins = ip_data.get("plugins")
+            found = False
+            if isinstance(ip_plugins, list):
+                found = any(
+                    isinstance(p, dict) and p.get("id") == key for p in ip_plugins
+                )
+            elif isinstance(ip_plugins, dict):
+                found = key in ip_plugins
+            if not found:
+                return f"zcode installed_plugins missing {key}"
+        else:
+            return "zcode installed_plugins.json missing"
+
         cache = (
             home
             / ".zcode"

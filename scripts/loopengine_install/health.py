@@ -189,9 +189,16 @@ def check_operation(op: Operation, home: Path) -> HealthIssue | None:
             isinstance(x, dict) and x.get("name") == key for x in plugins
         ):
             return None
+        if isinstance(plugins, list) and any(
+            isinstance(x, dict) and x.get("id") == key for x in plugins
+        ):
+            return None
         if isinstance(plugins, dict):
             enabled = plugins.get("enabledPlugins")
             if isinstance(enabled, dict) and enabled.get(key) is True:
+                return None
+            # Claude / ZCode dict-form installed_plugins keyed by plugin id
+            if key in plugins:
                 return None
         if key in data:
             return None

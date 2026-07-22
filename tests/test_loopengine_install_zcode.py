@@ -97,6 +97,79 @@ class ZCodeAdapterTest(unittest.TestCase):
                 "other@zcode-plugins-official", plugins["suppressedBuiltins"]
             )
 
+    def test_activate_registers_installed_plugins_enabled_by_default(self):
+        """ZCode UI: enabled = enabledPlugins[id] ?? false, and only lists
+        installed_plugins.json records as installedPlugins. Missing that
+        registration leaves the plugin looking default-off.
+        """
+        repo = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as td:
+            home = Path(td)
+            key = "loopengine@zcode-plugins-official"
+            ver = "9.9.9"
+            cfg = home / ".zcode" / "cli" / "config.json"
+            cfg.parent.mkdir(parents=True)
+            cfg.write_text("{}", encoding="utf-8")
+            plugins_root = home / ".zcode" / "cli" / "plugins"
+            plugins_root.mkdir(parents=True)
+            km = plugins_root / "known_marketplaces.json"
+            km.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "marketplaces": [
+                            {
+                                "id": "loopengine-local",
+                                "name": "loopengine-local",
+                                "source": {"source": "local", "path": "/tmp/x"},
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            ip = plugins_root / "installed_plugins.json"
+            ip.write_text(
+                json.dumps({"version": 1, "plugins": []}),
+                encoding="utf-8",
+            )
+
+            ctx = AdapterContext(
+                home=home,
+                repo_root=repo,
+                central=repo,
+                version=ver,
+                skill_names=["go"],
+                dry_run=False,
+                mcp_bins={},
+            )
+            ops = ZCodeAdapter().activate_registry(ctx)
+            self.assertTrue(any(o.id == "zcode-installed-plugins" for o in ops))
+
+            enabled = json.loads(cfg.read_text(encoding="utf-8"))["plugins"][
+                "enabledPlugins"
+            ]
+            self.assertTrue(enabled[key])
+
+            installed = json.loads(ip.read_text(encoding="utf-8"))
+            records = installed["plugins"]
+            self.assertIsInstance(records, list)
+            match = [p for p in records if p.get("id") == key]
+            self.assertEqual(len(match), 1)
+            self.assertEqual(match[0]["name"], "loopengine")
+            self.assertEqual(match[0]["marketplace"], "zcode-plugins-official")
+            self.assertEqual(match[0]["version"], ver)
+            self.assertEqual(match[0]["scope"], "user")
+            self.assertTrue(match[0]["installPath"].endswith(f"loopengine/{ver}"))
+
+            km_data = json.loads(km.read_text(encoding="utf-8"))
+            self.assertFalse(
+                any(
+                    isinstance(x, dict) and x.get("id") == "loopengine-local"
+                    for x in km_data.get("marketplaces", [])
+                )
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
