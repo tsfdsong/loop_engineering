@@ -1,12 +1,8 @@
-# Installing LoopEngine for OpenCode
+# 在 OpenCode 安装 LoopEngine
 
-## Prerequisites
+需要已安装 [OpenCode](https://opencode.ai)。
 
-- [OpenCode.ai](https://opencode.ai) installed
-
-## Installation
-
-Add loopengine to the `plugin` array in your `opencode.json`:
+在 `opencode.json` 的 `plugin` 里加入：
 
 ```json
 {
@@ -14,30 +10,15 @@ Add loopengine to the `plugin` array in your `opencode.json`:
 }
 ```
 
-Restart OpenCode. The plugin installs through OpenCode's plugin manager and registers all 53 skills.
+重启 OpenCode。用 skill 工具加载 `loop` / `go` 等即可。
 
-Verify by asking: "Tell me about LoopEngine"
+验证：问「LoopEngine 能做什么」。
 
-## Usage
-
-Use OpenCode's native `skill` tool:
-
-```
-use skill tool to list skills
-use skill tool to load loop
-use skill tool to load go
-```
-
-## Tool Mapping
-
-| Action | OpenCode Tool |
-|--------|--------------|
-| Create a todo | `todowrite` |
-| Dispatch a subagent | `task` tool |
-| Invoke a skill | `skill` tool |
-| Read a file | `read` |
-| Create/edit/delete files | `apply_patch` |
-| Run a shell command | `bash` |
-| Search file contents | `grep` |
-| Find files by pattern | `glob` |
-| Fetch a URL | `webfetch` |
+| 动作 | 工具 |
+|------|------|
+| 待办 | `todowrite` |
+| 派 subagent | `task` |
+| 加载技能 | `skill` |
+| 读文件 | `read` |
+| 改文件 | `apply_patch` |
+| 跑命令 | `bash` |

@@ -1,12 +1,7 @@
-# Design: Plugin-Shaped Install v2.3（禁止软链 · Cursor 仅官方插件路径）
+# Design: Plugin-Shaped Install（官方插件形态安装）
 
-> **日期**: 2026-07-20  
-> **状态**: **Approved** · 2026-07-20 · 实施计划见 `docs/2026-07-20-plugin-shaped-install-plan.md`  
-> **取代**: v2.2 同路径（本文件即为现行真源）；v1 见 `docs/2026-07-20-plugin-shaped-install-design.md`  
-> **修订动机**: 对照核心目的审查后全面简化——抬一键生命周期与官方插件四件套，砍 ECC 运维表面积  
-> **v2.2**：禁止 symlink；各工具实体拷贝（D13）  
-> **v2.3（2026-07-20）**: **撤销** Cursor「双部署平铺」；恢复 D3 = **仅** `plugins/local/loopengine` 真实拷贝，并 **清理** `~/.cursor/skills/<le-skill>/`（对齐 §0 官方插件形态；v2.2 双部署属症状绕过，已废止）  
-> **路径说明**: 落在 `docs/` 以便主仓版本化。
+> **状态**: 已落地 · 现行安装真源（配合 `install.py` / `docs/INSTALL.md`）  
+> **要点**: 禁止软链；Cursor 仅 `plugins/local/loopengine`；各工具实体拷贝。
 
 ## 0. 核心目的（验收北极星）
 
@@ -284,4 +279,4 @@ Tracer：先打通 **Cursor 四件套垂直切片**，再 Claude、ZCode。
 
 - **本文件** = 现行设计真源（**v2.3**）。  
 - v1 design = Superseded。  
-- `docs/2026-07-20-plugin-shaped-install-plan.md` 以本文件为准（D3/D13 / §7–§8）。
+- 用户安装说明以 `docs/INSTALL.md` / `README.md` 为准。

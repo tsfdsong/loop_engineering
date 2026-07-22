@@ -1,25 +1,26 @@
-# LoopEngine 安装指南
+# 📥 LoopEngine 安装指南
 
-> **v2.3** — 唯一入口 `install.py`（Python ≥ 3.10），macOS / Windows / Linux 同一条命令。  
-> 按各 AI Agent **官方插件模式**部署 skills / hooks，并写入 MCP、AGENTS（规则）与插件注册表。  
-> Cursor：**仅** `plugins/local/loopengine`（禁止 LE 平铺）；存储：**禁止 symlink**（D13）。  
-> 旧 `install.sh` / `install.ps1` 已退役。历史安装事故见 [lessons-learned.md](lessons-learned.md)（归档参考）。
+唯一入口：`install.py`（Python ≥ 3.10）。按各 AI 工具的**官方插件路径**部署，并写入 MCP、AGENTS 规则与注册表。
+
+- Cursor：只装到 `~/.cursor/plugins/local/loopengine`（不要平铺到 `~/.cursor/skills/`）
+- 存储：禁止用 symlink 做中央包指针
+
+---
 
 ## 一行安装
 
 ```bash
-# 远程（推荐）
 curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.py | python3
 
 # Windows 若命令是 python：
 curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.py | python
 
-# Fallback（管道编码异常时）
+# 管道异常时：
 curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.py -o install.py
 python3 install.py install
 ```
 
-已有 clone：
+本地已有 clone：
 
 ```bash
 python3 install.py install
@@ -29,60 +30,71 @@ python3 install.py uninstall
 python3 install.py install --check
 ```
 
-| Flag | 含义 |
+| 参数 | 含义 |
 |------|------|
-| （无参数） | 智能安装/升级；detect 本机已装 Agent |
-| `--only=a,b` | 只部署指定工具 |
-| `--all` | 部署全部已支持工具（Tier-1/2/3） |
-| `--force` | 同版也重装 |
-| `--dry-run` / `--json` | 只打印计划 |
-| `uninstall` | 按 `~/.loopengine/install-manifest.json` 逆序卸载 |
+| （默认） | 检测本机已装工具，智能安装/升级 |
+| `--only=a,b` | 只装指定工具 |
+| `--all` | 装全部已支持工具 |
+| `--force` | 同版本也重装 |
+| `--dry-run` / `--json` | 只看计划 |
+| `uninstall` | 按清单逆序卸载 |
 
-**依赖**：Python ≥ 3.10；远程安装需 `git`（clone 到 `~/.loopengine/src`）。
+远程安装需要 `git`（clone 到 `~/.loopengine/src`）。
 
-## 工具 Tier
+---
+
+## 工具分层
 
 | Tier | 工具 | 行为 |
 |------|------|------|
-| 1 原生插件 | Cursor、Claude、ZCode | 官方 plugin 路径 + registry + MCP（Claude 除外，见下）+ AGENTS |
-| 2 半插件 | Codex、Gemini | 整包目录 + AGENTS/等价规则注入 |
-| 3 注入型 | Copilot、Pi | skills 树 + AGENTS 注入 |
+| 1 原生插件 | Cursor · Claude · ZCode | 官方 plugin 路径 + 注册表 + MCP（Claude 除外）+ AGENTS |
+| 2 半插件 | Codex · Gemini | 整包目录 + 规则注入 |
+| 3 注入型 | Copilot · Pi | skills 树 + AGENTS 注入 |
 
-## 安装后布局（要点）
+---
+
+## 装完在哪
 
 | 项 | 路径 |
 |----|------|
-| 中央包 | `~/.loopengine/plugins/loopengine/<version>/`（`current` 为 **pointer 文件**，禁止软链） |
+| 中央包 | `~/.loopengine/plugins/loopengine/<version>/`（`current` 是指针文件，不是软链） |
 | 清单 | `~/.loopengine/install-manifest.json` |
-| Cursor | **仅** `~/.cursor/plugins/local/loopengine`（真实拷贝；**禁止** LE 平铺到 `~/.cursor/skills/`） |
-| Claude | cache + marketplace **各自真实拷贝** + `installed_plugins.json` 键 `loopengine@loopengine-local` |
-| ZCode | 官方 cache `…/plugins/cache/zcode-plugins-official/loopengine/<ver>/` + marketplace.json + enabledPlugins（清理遗留 `~/.zcode/skills/loopengine`） |
-| Cursor MCP | `~/.cursor/mcp.json`（仅 LE 管理的 jcodemunch/repomix/headroom） |
-| Claude MCP | **不注入**（设计 v2 §8.2：由用户/项目自行配置 `~/.claude/settings.json` 或 `.mcp.json`） |
+| Cursor | `~/.cursor/plugins/local/loopengine` |
+| Claude | cache + marketplace 各一份拷贝；键 `loopengine@loopengine-local` |
+| ZCode | `~/.zcode/cli/plugins/cache/zcode-plugins-official/loopengine/<ver>/` |
+| Cursor MCP | `~/.cursor/mcp.json`（仅管理 jcodemunch / repomix / headroom） |
+| Claude MCP | **不自动注入**（自行配 `~/.claude/settings.json` 或项目 `.mcp.json`） |
+
+---
 
 ## 自检
 
 ```bash
 python3 install.py install --check --json
 ls ~/.cursor/plugins/local/loopengine/skills/go/SKILL.md
-python3 scripts/audit_tools.py   # 含 G 维：registry / plugin-only / 禁止 symlink
+python3 scripts/audit_tools.py
 ```
+
+---
 
 ## 常见问题
 
 | 问题 | 处理 |
 |------|------|
-| 无 Python / 版本过低 | 安装 Python 3.10+；不要回退 Bash 安装 |
-| `curl \| python3` 在 Windows 异常 | 用 `-o install.py && python install.py` |
-| Cursor 插件里只看见个别 skill | `python3 install.py install --only=cursor --force`（真实拷贝、清 spike/平铺）；仍不全则查 Cursor 是否启用 local plugin，**不要**手动平铺兜底 |
-| 想干净卸载 | `python3 install.py uninstall`（保留用户自有 skill / 非 LE MCP） |
-| ZCode/Cursor MCP 缺失 | 确认 PATH 有 `jcodemunch`/`repomix` 后重装对应 `--only` |
+| 没有 Python / 版本低 | 装 Python 3.10+ |
+| Windows 管道异常 | `-o install.py && python install.py` |
+| Cursor 里技能不全 | `python3 install.py install --only=cursor --force` |
+| 想干净卸掉 | `python3 install.py uninstall` |
+| MCP 缺失 | PATH 有 `jcodemunch` / `repomix` 后重装对应 `--only` |
 
-## 开发者
+MCP 详规：[`mcp-setup-guide.md`](mcp-setup-guide.md)  
+事故教训：[`lessons-learned.md`](lessons-learned.md)
+
+---
+
+## 开发自测
 
 ```bash
 PYTHONPATH=scripts python3 -m unittest discover -s tests -p 'test_loopengine_install*.py' -v
 python3 -m loopengine_install install --dry-run --json
 ```
-
-设计与计划：`docs/2026-07-20-plugin-shaped-install-design-v2.md`、`docs/2026-07-20-plugin-shaped-install-plan.md`。

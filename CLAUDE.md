@@ -2,32 +2,24 @@
 
 ## 如果你是 AI 代理
 
-你拥有 LoopEngine —— 一个包含 **32** 个技能的开发引擎全家桶（**v2.0**：`go` Step 0 · family-first 路由）。
+你有 LoopEngine：约 32 个技能。
 
-**Below is the full content of your 'loopengine:go' skill —— 你的全自动编排器（v2.0 · family-first · worktree 并发）。单技能任务由原生 description 匹配自动处理；跨模块/多步工程目标用 `/go`。**
+- **单技能** → 靠 description 自动匹配  
+- **跨模块 / 多步** → `/go`（Step 0 做 family-first 路由）  
+- **单任务落地** → `/loop`（目标 + 验收 → 编码 ↔ 门禁 ↔ 自愈）
 
-go 在 Step 0 识别主 `scenario family`（review / debug_fix / design_build / research_compare / web_qa / parallel_investigation / refactor / test），组装 DAG，按 side-effect-first 委托 direct_skill / loop / go 自身。
+family 示例：`review` · `debug_fix` · `design_build` · `research_compare` · `web_qa` · `parallel_investigation` · `refactor` · `test`。
 
-## 安装方式
+只读节点可直调技能；写节点委托 `loop` / `go`。
 
-### 一键安装（推荐 · 所有平台）
+## 安装
 
 ```bash
 curl -fsSL https://github.com/tsfdsong/loop_engineering/raw/main/install.py | python3
-# 需要 Python ≥ 3.10；Windows 可用 python
+# Python ≥ 3.10；Windows 可用 python
 ```
 
-`install.py` 自动 detect 本机 AI 工具，构建中央包，按官方插件路径部署 skills/hooks，并写入 MCP、AGENTS 规则与注册表（Claude / ZCode）。卸载：`python3 install.py uninstall`。
+卸载：`python3 install.py uninstall`  
+自检：`python3 install.py install --check --json` · `python3 scripts/audit_tools.py`
 
-### 部署验证
-
-```bash
-python3 install.py install --check --json
-python3 scripts/audit_tools.py
-```
-
-详见 [docs/INSTALL.md](docs/INSTALL.md) 与 [README.md](README.md)。
-
-## 贡献
-
-详见 CONTRIBUTING.md。
+详见 [`docs/INSTALL.md`](docs/INSTALL.md)、[`README.md`](README.md)。贡献见 [`CONTRIBUTING.md`](CONTRIBUTING.md)。
