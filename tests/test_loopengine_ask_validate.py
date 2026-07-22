@@ -50,6 +50,23 @@ class ValidateAskArgsTest(unittest.TestCase):
                 ],
             })
 
+    def test_reject_non_dict_option(self):
+        with self.assertRaises(ValidationError):
+            validate_ask_args({
+                "question": "Q",
+                "options": ["not a dict", {"label": "B (推荐)"}],
+            })
+
+    def test_ok_recommended_english_marker(self):
+        out = validate_ask_args({
+            "question": "Q",
+            "options": [
+                {"label": "X (Recommended)"},
+                {"label": "Y"},
+            ],
+        })
+        self.assertTrue(out["options"][0]["recommended"])
+
 
 if __name__ == "__main__":
     unittest.main()

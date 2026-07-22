@@ -11,15 +11,24 @@ def _has_recommended_marker(label: str) -> bool:
     return any(marker in label for marker in RECOMMENDED_MARKERS)
 
 
-def _normalize_option(raw: dict) -> dict:
-    label = raw.get("label", "")
+def _normalize_option(raw) -> dict:
+    if not isinstance(raw, dict):
+        raise ValidationError("validation_error: each option must be an object")
+
+    label = str(raw.get("label", "")).strip()
     if not label:
         raise ValidationError("validation_error: option label is required")
+
+    id_raw = raw.get("id")
+    if id_raw is None:
+        option_id = label
+    else:
+        option_id = str(id_raw).strip() or label
 
     recommended = bool(raw.get("recommended", False)) or _has_recommended_marker(label)
 
     return {
-        "id": raw.get("id", label),
+        "id": option_id,
         "label": label,
         "description": raw.get("description", ""),
         "recommended": recommended,
