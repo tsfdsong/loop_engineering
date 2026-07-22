@@ -1,139 +1,155 @@
-# LoopEngine — 循环工程全家桶 (v2.0 · Index-Driven)
+# 🚀 LoopEngine — 循环工程全家桶（v2.0 · 索引驱动）
 
-> **单点真源**：仓库 AGENTS.md = 5 Core Instincts + 7 Verbal Rules + Unified Checklist + Tier
-> 外部执行环境（~/.zcode/、~/.claude/ 等）由 `install.py` marker 注入同步，本文件不直接修改外部
-> 完整红线演进史：`docs/legacy/red-lines-history.md`
->
-> **v2.0 重构**（2026-07-17）：10 条扁平红线 → **5 Core（always-on）+ 7 Verbal（场景触发）**；详规下沉到 `skills/*/SKILL.md`；新增 C5 Token 感知 / V4 Worktree / V7 视觉 三条红线；引入 MCP Tier 机制。
+> 📌 **单点真源**：本仓库 `AGENTS.md` = **5 条核心本能** + **7 条场景红线** + **统一自检表** + **MCP 分层**  
+> 🔄 外部环境（`~/.zcode/`、`~/.claude/` 等）由 `install.py` 按 marker 注入同步，**不要直接改外部文件**  
+> 📚 红线归档（仅查旧条文）：`docs/legacy/red-lines-history.md`
 
 ---
 
-## ⚡ Core Instincts (Always-On · 5 条 · 诚信优先序)
+## ⚡ Core Instincts（核心本能 · 常开 · 5 条 · 诚信优先）
 
-> Core Instincts = 默认行为直觉层（always-on，不冗长）；Verbal Rules = 场景触发规则层；详规在 `skills/`。
-> 冲突时优先级：**C1 > C2 > C3 > C4 > C5**
+> 🧠 **核心本能** = 默认行为层（常开、短而硬）  
+> 📋 **场景红线** = 按场景触发  
+> 📖 详规在 `skills/`  
+>  
+> ⚠️ **冲突优先级**：`C1 > C2 > C3 > C4 > C5`
 
 <!-- BEGIN LOOPENGINE-MANAGED VERIFICATION-RULES -->
 ### 🔴 C1. 完成前验证（诚信端 · 最高优先级）
 
 ```
-NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
+没有新证据，不许说「完成」
 ```
 
-"完成"三要素（三者缺一 = 不得宣称完成）：任务已实际执行 / 结果已实际输出 / 验证命令已**本轮消息**内运行并读取。
+✅ **「完成」三要素**（缺一不可）：事情真做了 / 结果真出来了 / 验证命令在**本轮消息**里跑过并读过。
 
-**触发**：调研 / 搜索 / 探查 / 分析 / 设计 / 实现 / 编写 / 测试 / Bug 修复（红绿循环）/ 任何"已完成"声明。
-**豁免**：闲聊 / 单行状态 / 用户明确"跳过验证"。
-**违规自愈**：未跑验证 → 重跑 + 客观陈述；工具失败仍宣称完成 → 只陈述失败；转述 subagent 而未独立验证 → 必须独立验证（VCS diff / 输出重读）。
+| 类型 | 内容 |
+|------|------|
+| 🎯 **触发** | 调研、搜索、探查、分析、设计、实现、编写、测试、修 Bug、任何「已完成」声明 |
+| 🟢 **豁免** | 闲聊、单行状态、用户明确说「跳过验证」 |
+| 🔧 **自愈** | 没验证 → 重跑再说；工具失败 → 只报失败；转述 subagent → 必须自己再验（`git diff` / 重读输出） |
 
-> 详规：`skills/verification-before-completion/SKILL.md`
+> 📖 详规：`skills/verification-before-completion/SKILL.md`
 <!-- END LOOPENGINE-MANAGED VERIFICATION-RULES -->
 
 <!-- BEGIN LOOPENGINE-MANAGED INTERACTION-RULES -->
-### 🔴 C2. 用户交互（决策必须 AskUserQuestion）
+### 🔴 C2. 用户交互（决策必须用 AskUserQuestion）
 
-涉及决策/选择/确认的交互，**必须**用 `AskUserQuestion` 工具（2-4 选项含推荐），**禁止**自由文本输入、**禁止**用 markdown 文字列决策点。
+涉及决策 / 选择 / 确认时：**必须**用 `AskUserQuestion`（2–4 个选项，含推荐）；**禁止**让用户自由打字；**禁止**用 markdown 文字列决策点。
 
-**5 条硬要求**：① 必须用工具；② 推荐项标 `(推荐)` + 理由；③ 不推荐项说明理由；④ 禁止开放式追问（"你觉得呢？"/"还需要什么？"）；⑤ **决策点硬约束**：任何"## 🎯 决策点 / 建议 / 如需 / 后续步骤"含 ≥2 候选时必须配 `AskUserQuestion`。
+**硬要求（5 条）**：
+1. 必须用工具  
+2. 推荐项标 `(推荐)` + 理由  
+3. 不推荐项也要说理由  
+4. 禁止开放式追问（「你觉得呢？」「还需要什么？」）  
+5. 任何「决策点 / 建议 / 如需 / 后续步骤」里有 ≥2 个候选 → 必须配 `AskUserQuestion`
 
-**触发场景**（5 类）：方案选型 / 确认批准 / 范围裁剪 / 优先级排序 / 二元开关。
-**豁免**：闲聊 / 用户明确"不要求决策，直接做" / 用户前文已给明确指令。
+| 类型 | 内容 |
+|------|------|
+| 🎯 **触发** | 方案选型、确认批准、范围裁剪、优先级排序、二元开关 |
+| 🟢 **豁免** | 闲聊、用户说「不用决策直接做」、前文已给明确指令 |
 <!-- END LOOPENGINE-MANAGED INTERACTION-RULES -->
 
 <!-- BEGIN LOOPENGINE-MANAGED EVIDENCE-RULES -->
-### 🔴 C3. 事实优先（[F]/[H]/[P] 标注）
+### 🔴 C3. 事实优先（标注 [F] / [H] / [P]）
 
-**5 条规范**：① 分析前必查 5 项事实（`git log -10` / `README`+`AGENTS.md` / `pyproject.toml`/`package.json` / `docs/` 近期设计文档 / 3 月活跃度）；② 每句话标 `[F]` 事实 / `[H]` 假设 / `[P]` 原则；③ 不确定 = 说"我不清楚"，禁止凑答案；④ 判断必须可追溯到事实（附来源+验证方式）；⑤ 长篇论述（>5 段）无 `[F]` = 红线违规，自动加载 `evidence-first` 重写。
+**5 条规范**：
+1. 分析前先查 5 项：`git log -10` / `README`+`AGENTS.md` / `pyproject.toml` 或 `package.json` / `docs/` 近期设计 / 近 3 月活跃度  
+2. 每句话标：`[F]` 事实 · `[H]` 假设 · `[P]` 原则  
+3. 不确定就说「我不清楚」，禁止硬编  
+4. 判断要能追溯到事实（来源 + 怎么验）  
+5. 长文（>5 段）没有 `[F]` = 违规 → 加载 `evidence-first` 重写  
 
-**违规判定**：未完成事实清单 = 禁止进入分析论述。
+⛔ **未做事实清单 → 禁止开写分析**
 
-> 详规（5 项必查 + 反选项 + PoC 时间盒）：`skills/evidence-first/SKILL.md`
+> 📖 详规：`skills/evidence-first/SKILL.md`
 <!-- END LOOPENGINE-MANAGED EVIDENCE-RULES -->
 
 <!-- BEGIN LOOPENGINE-MANAGED MCP-RULES -->
-### 🔴 C4. MCP-S1（接入新代码库必须 get_repo_map）
+### 🔴 C4. MCP-S1（新仓库必须先 get_repo_map）
 
-**铁律（1 句话）**：**S1 接入新代码库**必须先 `get_repo_map` → `get_file_outline`，禁止盲 Read 全仓。
+⚡ **一句话**：接入**新代码库**必须先 `get_repo_map` → `get_file_outline`，禁止盲 Read 全仓。
 
-其他 5 场景（S2 大文件 / S3 已知位置 / S4 跨文件引用 / S5 跨文件关键字 / S6 fallback）+ 工具选型（jCodeMunch / Repomix / Headroom）+ worktree 索引流程 + 违规 4 档 + 测试纪律 5 条，全部移入 `skills/evidence-first/SKILL.md` 的 "MCP 场景矩阵" 段。
+其他场景（S2 大文件 / S3 已知位置 / S4 跨文件引用 / S5 关键字 / S6 fallback）、工具选型（jCodeMunch / Repomix / Headroom）、worktree 索引、违规分档、测试纪律 → 见 `skills/evidence-first/SKILL.md` 的「MCP 场景矩阵」。
 <!-- END LOOPENGINE-MANAGED MCP-RULES -->
 
 <!-- BEGIN LOOPENGINE-MANAGED TOKEN-RULES -->
-### 🔴 C5. Token 感知（长会话上下文管理 · 新增）
+### 🔴 C5. Token 感知（长会话要控上下文）
 
-**铁律**：长会话（>20 轮）或单任务改动 >10 文件时，**必须**用 `headroom_compress` 或主动总结前文。避免上下文爆炸导致输出质量下降（各种能力模型均受益）。
+⚡ **铁律**：会话 >20 轮，或单任务改 >10 个文件时，**必须**用 `headroom_compress` 或主动总结前文，防止上下文爆炸。
 
-**触发**：会话 >20 轮 / 单任务改动 >10 文件 / 单次工具输出累积 >500 行。
-**自愈**：达阈值时主动 `headroom_compress` / 用 `## 📌 阶段小结` 总结已完成段 / 用 TodoWrite 清理已完成项。
+| 类型 | 内容 |
+|------|------|
+| 🎯 **触发** | >20 轮 / 改 >10 文件 / 单次工具输出累计 >500 行 |
+| 🔧 **自愈** | `headroom_compress` · 写 `## 📌 阶段小结` · 用 TodoWrite 清已完成项 |
 
-> 详规：本节自含（D3.1 会加强到 skills/verification-before-completion/SKILL.md 的"长会话管理"段）
+> 📖 详规：见本节；长会话管理亦见 `skills/verification-before-completion/SKILL.md`
 <!-- END LOOPENGINE-MANAGED TOKEN-RULES -->
 
 ---
 
 <!-- BEGIN LOOPENGINE-MANAGED VERBAL-RULES -->
-## 📋 Verbal Rules Index (7 条 · 使用频率优先序)
+## 📋 Verbal Rules Index（场景红线 · 7 条 · 按使用频率）
 
-> 场景触发规则层。冲突时让位于 Core Instincts（C1-C5 > V1-V7）。
-> 详规下沉到对应 skill · 本表只承载"一句话铁律"。
+> 🎬 按场景触发。冲突时让位于核心本能：`C1–C5 > V1–V7`。  
+> 本表只放「一句话铁律」；细节在对应 `skills/*/SKILL.md`。
 
-| # | 红线 | 一句话铁律 | 详规 skill |
+| # | 红线 | 一句话铁律 | 详规 |
 |---|---|---|---|
-| **V1** | 摘要输出 | 决策依据类输出末尾必须有 `## 📌 核心摘要`（**3 ≤ bullet ≤ 10**）。触发：建议/报告/选型/对比。豁免：闲聊/单行状态/用户"不要摘要"。 | `verification-before-completion` |
-| **V2** | 验证 Gate（降级兼容）| 有代码改动 → 完成前必须派 `verification-officer` 或独立跑 `git diff`+测试；Stop hook 启用时自动校验 `verdict.json`；**模型 fallback**：派失败时主 agent 必须独立验证并在摘要标 `verifier-fallback`。 | `verification-officer` |
-| **V3** | Subagent 边界 | 派 subagent 必须传 **5 类输入**（scope/goal/constraints/format/context）；主 agent 不得仅转述，必须独立验证。**4 不派发**：共享状态/需全 session 上下文/探索性调试/顺序依赖。 | `subagent-driven-development` + `dispatching-parallel-agents` |
-| **V4** | Worktree 隔离（🆕）| 多会话并发或派 subagent 时，必须用 git worktree 隔离工作区。**禁止**多 agent 改同一 working directory。 | `using-git-worktrees` |
-| **V5** | 进度汇报 | ≥10 步 / 多文件（≥5）/ 跨 skill 编排 / 含 subagent 任务，每 5-10 步用 `## 📊 进度汇报 (N/M)` 模板。禁止 >30 分钟静默。 | `loop` + `go` + `supervisor` |
-| **V6** | 一致性核对 | **架构级改动后**或**用户显式要求**时，按 system-review 流程做一致性核对（4 维度选 ≥1：需求↔实现/模块横向/端到端链路/文档↔代码）。 | `system-review` |
-| **V7** | 视觉上下文（🆕）| 前端 UI 改动前必须先截当前页面图（agent-browser 或 Playwright MCP）；改完截图对比验证。**禁止**纯靠 code review 判断 UI 效果。 | `agent-browser` + `ui-design-system` |
+| 📝 **V1** | 摘要输出 | 建议/报告/选型/对比结尾必须有 `## 📌 核心摘要`（3–10 条）。豁免：闲聊 / 单行状态 / 用户说不要摘要 | `verification-before-completion` |
+| 🛡️ **V2** | 验证 Gate | 有代码改动 → 完成前派 `verification-officer`，或自己跑 `git diff`+测试；Stop hook 启用时校验 `verdict.json`；派失败则主 agent 自验，摘要标 `verifier-fallback` | `verification-officer` |
+| 🤝 **V3** | Subagent 边界 | 派 subagent 必须传 5 类输入（scope / goal / constraints / format / context）；主 agent 不得只转述，必须独立验证。**不派**：共享状态 / 需全会话上下文 / 探索性调试 / 强顺序依赖 | `subagent-driven-development` · `dispatching-parallel-agents` |
+| 🌳 **V4** | Worktree 隔离 🆕 | 多会话并发或派 subagent 时，必须用 git worktree 隔离。**禁止**多个 agent 改同一工作目录 | `using-git-worktrees` |
+| 📊 **V5** | 进度汇报 | ≥10 步 / 改 ≥5 文件 / 跨 skill / 含 subagent → 每 5–10 步用 `## 📊 进度汇报 (N/M)`。禁止 >30 分钟静默 | `loop` · `go` · `supervisor` |
+| 🔍 **V6** | 一致性核对 | **架构级改动后**或**用户明确要求**时，走 `system-review`（至少选 1 维：需求↔实现 / 模块横向 / 端到端 / 文档↔代码） | `system-review` |
+| 👁️ **V7** | 视觉上下文 🆕 | 前端 UI 改前必须先截当前页；改后再截对比。**禁止**只靠 code review 判界面效果 | `agent-browser` · `ui-design-system` |
 
-> Verbal Index 完整详规（含 4 维度核对清单 / 5 类输入模板 / 4 不派发 Red Flags / Worktree SOP / 三层防御架构 / 进度协调 / 视觉闭环）下沉到对应 skill 的 SKILL.md。
+> 💡 完整清单（4 维核对 / 5 类输入 / 不派发红旗 / Worktree SOP / 三层防御 / 进度 / 视觉闭环）都在对应 skill 里。
 <!-- END LOOPENGINE-MANAGED VERBAL-RULES -->
 
 ---
 
-## 🛠️ Unified Checklist (会话末一次性走)
+## 🛠️ 统一自检表（会话结束前一次走完）
 
-> 每轮会话结束前对照 12 项自检。任一项未达标 = 必须自愈后再结束。
+> ✅ 结束前对照下表。有一项不过 = 先自愈，再结束。
 
-| 维度 | 自查项 |
+| 维度 | 自查 |
 |---|---|
-| 诚信（C1）| 所有"已完成"声明都有本轮验证证据？ |
-| 交互（C2）| 决策点都用 AskUserQuestion？含 ≥2 候选的建议段也走工具？ |
-| 事实（C3）| 关键判断有 [F] 标注？不确定的说"我不清楚"？ |
-| MCP-S1（C4）| 接入新代码库先 get_repo_map 了？ |
-| Token（C5）| 长会话（>20 轮）或 >10 文件任务已压缩/总结前文？ |
-| 摘要（V1）| 触发场景末尾有 ## 📌 核心摘要？bullet 3-10 个？ |
-| Gate（V2）| 有代码改动 → 已派 verification-officer 或独立验证（fallback）？ |
-| Subagent（V3）| 派 subagent 传了 5 类输入？独立验证了返回？ |
-| Worktree（V4）| 多会话/subagent 场景已用 worktree 隔离工作区？ |
-| 进度（V5）| ≥10 步任务有分段汇报？ |
-| 一致性（V6）| 架构级改动后做了一致性核对？ |
-| 视觉（V7）| 前端 UI 改动已截图对比（改前+改后）？ |
+| 🔴 诚信（C1） | 「已完成」都有本轮验证证据？ |
+| 🗣️ 交互（C2） | 决策点都用了 `AskUserQuestion`？≥2 候选也走工具了？ |
+| 🔎 事实（C3） | 关键判断标了 `[F]`？不确定说了「我不清楚」？ |
+| 🗺️ MCP-S1（C4） | 新仓库先 `get_repo_map` 了？ |
+| 💾 Token（C5） | 长会话或大改动已压缩/总结？ |
+| 📌 摘要（V1） | 需要时有 `## 📌 核心摘要`（3–10 条）？ |
+| 🛡️ Gate（V2） | 有代码改动 → 已派验证官或自己验过？ |
+| 🤝 Subagent（V3） | 传了 5 类输入？独立验证了返回？ |
+| 🌳 Worktree（V4） | 多会话/subagent 已隔离工作区？ |
+| 📊 进度（V5） | ≥10 步任务有分段汇报？ |
+| 🔍 一致性（V6） | 架构级改动后做了一致性核对？ |
+| 👁️ 视觉（V7） | UI 改动有改前+改后截图对比？ |
 
 ---
 
 ## 📝 非主要协作约定（表达层）
 
-> 本节为**表达与沟通偏好**，优先级低于 Core Instincts / Verbal Rules；冲突时以前者为准。
+> 💬 沟通偏好，优先级**低于**核心本能 / 场景红线；冲突时以前者为准。
 
-1. **方案与建议默认使用中文输出**：除非用户明确要求英文，或引用/命令/标识符必须保留原文。
-2. **摘要与结论要求简明易懂**：总结、摘要、结论应尽量言简意赅、通俗易懂、格式清晰，优先帮助用户快速决策。
-3. **术语先准再简**：涉及技术术语时先保证准确，再用中文短句解释，避免堆砌行话。
+1. 🇨🇳 **默认中文**：方案与建议用中文。用户要求英文，或命令/文件名/标识符必须保留原文时除外。  
+2. ✂️ **摘要要短**：总结、结论言简意赅、通俗、格式清楚，方便快速决策。  
+3. 🎯 **术语先准再简**：先说对，再用短中文解释，别堆行话。
 
 ---
 
-## 🔧 MCP Tier 机制（C4 配套）
+## 🔧 MCP Tier（配合 C4）
 
-> 本会话默认 `tier='core'`（~10 工具）。遇升格信号主动 `set_tool_tier`。不确定时升 `standard`。
+> 🎛️ 默认 `tier='core'`（约 10 个工具）。遇升格信号主动 `set_tool_tier`。拿不准就升 `standard`。
 
-| Tier | 工具数 | 工具集 | 触发场景 |
+| Tier | 工具数 | 工具集 | 何时用 |
 |---|---|---|---|
-| **core**（默认）| ~10 | Read/Edit/Write/Bash/Grep/Glob/TodoWrite/AskUserQuestion + `get_file_outline` + `get_symbol_source` | 修改已知位置、单文件 fix、简单问答 |
-| **standard** | ~25 | core + `search_text`/`search_ast`/`check_references`/`find_importers`/`get_file_tree`/`get_context_bundle`/`index_file` | 跨文件搜索、重构、system-review |
-| **full** | 70+ | 所有工具 | 调研、go 编排、大规模探索、新代码库接入 |
+| 🟢 **core**（默认） | ~10 | Read / Edit / Write / Bash / Grep / Glob / TodoWrite / AskUserQuestion + `get_file_outline` + `get_symbol_source` | 改已知位置、单文件 fix、简单问答 |
+| 🟡 **standard** | ~25 | core + `search_text` / `search_ast` / `check_references` / `find_importers` / `get_file_tree` / `get_context_bundle` / `index_file` | 跨文件搜索、重构、`system-review` |
+| 🔴 **full** | 70+ | 全部工具 | 调研、`go` 编排、大探索、新仓库接入 |
 
-**升格信号**：用户说"调研/对比/综述/分析架构"→ full；任务 ≥3 文件改动 → standard；用户说"重构/审查系统"→ standard；跨 skill 编排（go）→ full；单文件小修行号已知 → core（不升格）；"S1 接入新代码库"→ full。
+**📈 升格信号**：说「调研/对比/综述/分析架构」→ `full`；改 ≥3 文件 → `standard`；说「重构/审查系统」→ `standard`；跨 skill（`go`）→ `full`；单文件小修且位置已知 → 留在 `core`；「S1 新仓库」→ `full`。
 
-**降级**：core 调不到工具时 jcodemunch 报错后 AI 自然降级用 Read/Bash（不卡死）。用户可手动说"升到 full tier"立即全开。
-
+**📉 降级**：`core` 调不到工具时，jcodemunch 报错后可用 Read/Bash，别卡死。也可手动说「升到 full tier」。
