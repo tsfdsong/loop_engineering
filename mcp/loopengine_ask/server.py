@@ -12,34 +12,33 @@ from loopengine_ask.ui import AskUIServer, open_browser
 from loopengine_ask.validate import validate_ask_args
 
 mcp = FastMCP("loopengine-ask")
+_MANAGER = AskSessionManager(timeout_sec=600)
 
 
 def run_ask_user_question(raw: dict) -> dict:
     """Validate args, open browser UI, wait for user selection, return result."""
     payload = validate_ask_args(raw)
 
-    mgr = AskSessionManager(timeout_sec=600)
-    token = mgr.new_token()
-    ui = AskUIServer(mgr)
+    token = _MANAGER.new_token()
+    ui = AskUIServer(_MANAGER)
 
-    ui.start(payload, token)
     try:
-        if not open_browser(ui.url):
-            raise RuntimeError("browser_error: failed to open browser")
-
-        with mgr.session(token=token) as session:
-            selected = session.wait_result(mgr.timeout_sec)
-
-        return {
-            "question": payload["question"],
-            "selectedOptions": selected,
-        }
+        with _MANAGER.session(token=token) as session:
+            ui.start(payload, token)
+            if not open_browser(ui.url):
+                raise RuntimeError("browser_error: failed to open browser")
+            selected = session.wait_result(_MANAGER.timeout_sec)
     except SessionTimeoutError:
         raise
     except BusyError:
         raise RuntimeError("busy")
     finally:
         ui.stop()
+
+    return {
+        "question": payload["question"],
+        "selectedOptions": selected,
+    }
 
 
 @mcp.tool(name="AskUserQuestion")

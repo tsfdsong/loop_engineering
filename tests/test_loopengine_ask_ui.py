@@ -111,6 +111,49 @@ class UITest(unittest.TestCase):
         finally:
             ui.stop()
 
+    def test_forged_option_id_is_rejected_without_completing_session(self):
+        mgr = AskSessionManager(timeout_sec=5)
+        token = mgr.new_token()
+        payload = {
+            "question": "选？",
+            "options": [
+                {"id": "a", "label": "A (推荐)", "recommended": True},
+                {"id": "b", "label": "B"},
+            ],
+            "multiSelect": False,
+        }
+        ui = AskUIServer(mgr, host="127.0.0.1", port=0)
+        ui.start(payload, token)
+        try:
+            result_holder: list[list[str] | None] = [None]
+            session_ready = threading.Event()
+
+            def run() -> None:
+                with mgr.session(token=token) as session:
+                    session_ready.set()
+                    result_holder[0] = session.wait_result(5)
+
+            thread = threading.Thread(target=run)
+            thread.start()
+            self.assertTrue(session_ready.wait(2))
+
+            url = f"http://127.0.0.1:{ui.port}/submit?token={urllib.parse.quote(token)}"
+            forged = urllib.parse.urlencode({"selected": "forged"}).encode()
+            request = urllib.request.Request(url, data=forged, method="POST")
+            with self.assertRaises(urllib.error.HTTPError) as ctx:
+                urllib.request.urlopen(request, timeout=2)
+            self.assertEqual(ctx.exception.code, 400)
+            self.assertTrue(thread.is_alive())
+
+            valid = urllib.parse.urlencode({"selected": "a"}).encode()
+            request = urllib.request.Request(url, data=valid, method="POST")
+            with urllib.request.urlopen(request, timeout=2) as response:
+                self.assertEqual(response.status, 200)
+            thread.join(5)
+            self.assertEqual(result_holder[0], ["a"])
+        finally:
+            ui.stop()
+
 
 if __name__ == "__main__":
     unittest.main()

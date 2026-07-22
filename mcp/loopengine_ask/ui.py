@@ -171,7 +171,12 @@ class AskUIServer:
                 raw = self.rfile.read(length).decode("utf-8")
                 selected = urllib.parse.parse_qs(raw).get("selected", [])
 
-                if payload.get("multiSelect") and not selected:
+                option_ids = {option["id"] for option in payload["options"]}
+                if (
+                    any(option_id not in option_ids for option_id in selected)
+                    or (not payload.get("multiSelect") and len(selected) > 1)
+                    or (payload.get("multiSelect") and not selected)
+                ):
                     self._send_plain(400, b"Bad Request")
                     return
 
