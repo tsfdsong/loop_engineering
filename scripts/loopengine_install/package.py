@@ -87,7 +87,7 @@ def build_central_package(
     dest = loopengine_home / "plugins" / "loopengine" / version
     dest.mkdir(parents=True, exist_ok=True)
 
-    for name in ("skills", "hooks", "commands"):
+    for name in ("skills", "hooks", "commands", "mcp"):
         _copy_tree(repo_root / name, dest / name)
 
     for doc in ("AGENTS.md", "README.md"):

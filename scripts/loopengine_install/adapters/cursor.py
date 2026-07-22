@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import sys
 from pathlib import Path
 
 from loopengine_install.adapters.base import Adapter, AdapterContext
@@ -109,18 +110,20 @@ class CursorAdapter(Adapter):
         jcode = ctx.mcp_bins.get("jcodemunch") or ""
         repo = ctx.mcp_bins.get("repomix") or ""
         hdrm = ctx.mcp_bins.get("headroom") or ""
-        if not jcode and not repo and not hdrm:
-            return []
         cfg = ctx.home / ".cursor" / "mcp.json"
-        keys: list[str] = []
+        keys = ["loopengine-ask"]
         if jcode:
             keys.append("jcodemunch")
         if repo:
             keys.append("repomix")
         if hdrm:
             keys.append("headroom")
-        if not keys:
-            return []
+        central_mcp = ctx.central / "mcp"
+        ask_mcp_root = (
+            central_mcp
+            if (central_mcp / "loopengine_ask").is_dir()
+            else self.plugin_root(ctx) / "mcp"
+        )
 
         if not ctx.dry_run:
             cfg.parent.mkdir(parents=True, exist_ok=True)
@@ -130,6 +133,11 @@ class CursorAdapter(Adapter):
 
             data = read_json(str(cfg))
             servers = data.setdefault("mcpServers", {})
+            servers["loopengine-ask"] = {
+                "command": sys.executable,
+                "args": ["-m", "loopengine_ask"],
+                "env": {"PYTHONPATH": str(ask_mcp_root.resolve())},
+            }
             if jcode:
                 servers["jcodemunch"] = {"command": jcode, "args": ["serve"]}
             if repo:
