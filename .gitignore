@@ -16,10 +16,15 @@ test-page/
 docs/loopengineering-design/
 docs/superpowers/
 
-# IDE 配置
+# IDE / 本机 AI 工具项目级配置（非插件打包内容）
 .idea/
+.vscode/
+.claude/
 .zcode/
 .worktrees/
+
+# 本机 MCP 路径（可选；勿提交含绝对路径的本机配置；写法见 docs/mcp-setup-guide.md）
+.mcp.json
 
 # 验证 Gate 状态目录（运行时产物，不入库）
 # 包含 verdict.json / evidence-log.jsonl / has_code_changes 等会话级证据
@@ -27,3 +32,6 @@ docs/superpowers/
 
 # 临时调试产物（不入库）
 err.txt
+
+# 本地 spike / 实验产物（不入库）
+.spike-zcode-goal/
