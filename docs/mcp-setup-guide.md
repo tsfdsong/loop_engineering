@@ -10,6 +10,15 @@ LoopEngine 靠三个 MCP 少读废话、少烧 token：
 
 推荐先跑 `install.py`，它会检测本机工具并写入 MCP（Cursor / ZCode 等）。Claude 不自动注入 MCP，需自己配。
 
+### Cursor：`loopengine-ask`（C2 决策）
+
+Cursor 安装 LoopEngine 时会额外注册 MCP **`loopengine-ask`**，提供工具 **`AskUserQuestion`**（本地网页点选，兑现 C2 决策交互）。
+
+- **依赖**：`pip install mcp`（FastMCP 运行时）
+- **注册位置**：`~/.cursor/mcp.json` 的 `mcpServers.loopengine-ask`（由 `install.py` / Cursor adapter 写入）
+- **工具名**：`AskUserQuestion`（2–4 个选项，单选/多选）
+- **故障处理**：若返回 `validation_error` / `browser_error` / `timeout` / `busy`，**重试工具或上报阻塞**；**禁止**改用 markdown 列表呈现决策选项继续执行（见注入规则 `LOOPENGINE-CURSOR-ASK-NOTE`）
+
 ---
 
 ## 手动安装

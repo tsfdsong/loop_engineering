@@ -44,6 +44,36 @@ class LoopengineAskInstallIsolationTest(unittest.TestCase):
         template = json.loads((REPO / ".plugin-template.json").read_text(encoding="utf-8"))
         self.assertNotIn("loopengine-ask", template.get("mcpServers", {}))
 
+    def test_inject_agents_appends_cursor_ask_note(self):
+        agents_before = (REPO / "AGENTS.md").read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as td:
+            home = Path(td)
+            version = read_repo_version(REPO)
+            central = build_central_package(REPO, home / ".loopengine", version)
+            ctx = AdapterContext(
+                home=home,
+                repo_root=REPO,
+                central=central,
+                version=version,
+                skill_names=[],
+                mcp_bins={},
+            )
+            adapter = CursorAdapter()
+            adapter.sync_plugin(ctx)
+            adapter.inject_agents(ctx)
+
+            user_rules = home / ".cursor" / "rules" / "loopengine-interaction.mdc"
+            plugin_rules = adapter.plugin_root(ctx) / "rules" / "loopengine-interaction.mdc"
+            self.assertTrue(user_rules.is_file())
+            self.assertTrue(plugin_rules.is_file())
+            for path in (user_rules, plugin_rules):
+                text = path.read_text(encoding="utf-8")
+                self.assertIn("LOOPENGINE-CURSOR-ASK-NOTE", text)
+                self.assertIn("禁止改用 markdown", text)
+
+            agents_after = (REPO / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertEqual(agents_before, agents_after)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -16,6 +16,28 @@ from loopengine_install.adapters.helpers import (
 )
 from loopengine_install.ops import Operation
 
+CURSOR_ASK_NOTE_BEGIN = "<!-- BEGIN LOOPENGINE-CURSOR-ASK-NOTE -->"
+CURSOR_ASK_NOTE_END = "<!-- END LOOPENGINE-CURSOR-ASK-NOTE -->"
+CURSOR_ASK_NOTE = f"""{CURSOR_ASK_NOTE_BEGIN}
+## Cursor C2 兑现说明（本平台专用 · 非共享 AGENTS 正文）
+
+本平台通过 MCP `loopengine-ask` 提供工具 **AskUserQuestion**（本地网页点选）。
+决策点必须调用该工具。若工具返回 `validation_error` / `browser_error` / `timeout` / `busy`：
+**重试工具或上报阻塞**，禁止改用 markdown 列表呈现决策选项继续执行。
+{CURSOR_ASK_NOTE_END}
+"""
+
+
+def append_cursor_ask_note(path: Path) -> None:
+    """Append Cursor-only C2 note outside managed AGENTS markers (idempotent)."""
+    content = path.read_text(encoding="utf-8")
+    if CURSOR_ASK_NOTE_BEGIN in content:
+        return
+    if content and not content.endswith("\n"):
+        content += "\n"
+    content += "\n" + CURSOR_ASK_NOTE + "\n"
+    path.write_text(content, encoding="utf-8")
+
 
 class CursorAdapter(Adapter):
     name = "cursor"
@@ -176,9 +198,12 @@ class CursorAdapter(Adapter):
         ops = [op] if op else []
 
         if not ctx.dry_run and target.is_file():
+            append_cursor_ask_note(target)
             plugin_rules = self.plugin_root(ctx) / "rules" / "loopengine-interaction.mdc"
             plugin_rules.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(target, plugin_rules)
+            if plugin_rules.is_file():
+                append_cursor_ask_note(plugin_rules)
             plugin_json = self.plugin_root(ctx) / ".cursor-plugin" / "plugin.json"
             if plugin_json.is_file():
                 data = json.loads(plugin_json.read_text(encoding="utf-8"))
