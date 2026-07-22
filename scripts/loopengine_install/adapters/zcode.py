@@ -11,6 +11,12 @@ See loopengine_install.adapters.zcode (verified against zcode.cjs 2026-07-14).
 Root cause (2026-07-22): enabledPlugins=true alone still shows default-off in UI.
 zcode.cjs resolveEnabled = enabledPlugins[id] ?? defaultEnabled, and UI
 installedPlugins only lists installed_plugins.json — must register there too.
+
+Root cause (2026-07-22 #2): enabledPlugins=true on disk still lists as disabled when
+any provider.options.apiKey is "" / null. zcode.cjs Uz→QWt.parse uses
+apiKey: he.string().min(1).optional(); empty string fails the *entire* user
+config load, so enabledPlugins is silently discarded (defaultEnabled only).
+Sanitize empty apiKey keys on activate so the config stays parseable.
 """
 
 from __future__ import annotations
@@ -29,6 +35,28 @@ from loopengine_install.ops import Operation
 
 MARKETPLACE_ID = "zcode-plugins-official"
 PLUGIN_NAME = "loopengine"
+
+
+def sanitize_empty_provider_api_keys(data: dict) -> int:
+    """Drop empty/null provider options.apiKey so ZCode config parse succeeds.
+
+    Returns the number of apiKey fields removed.
+    """
+    provider = data.get("provider")
+    if not isinstance(provider, dict):
+        return 0
+    removed = 0
+    for entry in provider.values():
+        if not isinstance(entry, dict):
+            continue
+        options = entry.get("options")
+        if not isinstance(options, dict) or "apiKey" not in options:
+            continue
+        api_key = options["apiKey"]
+        if api_key is None or (isinstance(api_key, str) and api_key.strip() == ""):
+            del options["apiKey"]
+            removed += 1
+    return removed
 
 
 class ZCodeAdapter(Adapter):
@@ -165,6 +193,8 @@ class ZCodeAdapter(Adapter):
 
         def mut_enabled(data):
             data = dict(data or {})
+            # Keep config Zod-parseable; otherwise enabledPlugins never loads.
+            sanitize_empty_provider_api_keys(data)
             plugins = data.setdefault("plugins", {})
             enabled = plugins.setdefault("enabledPlugins", {})
             enabled[key] = True

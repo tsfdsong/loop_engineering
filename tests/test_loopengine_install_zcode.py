@@ -170,6 +170,90 @@ class ZCodeAdapterTest(unittest.TestCase):
                 )
             )
 
+    def test_activate_strips_empty_provider_api_keys(self):
+        """Empty provider apiKey makes ZCode Uz/QWt.parse fail the whole user
+        config, which silently drops enabledPlugins (plugin stays disabled).
+        """
+        from loopengine_install.adapters.zcode import sanitize_empty_provider_api_keys
+
+        repo = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as td:
+            home = Path(td)
+            key = "loopengine@zcode-plugins-official"
+            cfg = home / ".zcode" / "cli" / "config.json"
+            cfg.parent.mkdir(parents=True)
+            cfg.write_text(
+                json.dumps(
+                    {
+                        "provider": {
+                            "builtin:broken": {
+                                "name": "Broken",
+                                "kind": "anthropic",
+                                "options": {"apiKey": "", "baseURL": "https://x"},
+                            },
+                            "builtin:ok": {
+                                "name": "OK",
+                                "kind": "anthropic",
+                                "options": {
+                                    "apiKey": "sk-nonempty",
+                                    "baseURL": "https://y",
+                                },
+                            },
+                            "builtin:null-key": {
+                                "name": "Null",
+                                "kind": "anthropic",
+                                "options": {"apiKey": None, "baseURL": "https://z"},
+                            },
+                        },
+                        "plugins": {"enabledPlugins": {key: False}},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            plugins_root = home / ".zcode" / "cli" / "plugins"
+            plugins_root.mkdir(parents=True)
+            (plugins_root / "known_marketplaces.json").write_text(
+                '{"marketplaces":[]}\n', encoding="utf-8"
+            )
+            (plugins_root / "installed_plugins.json").write_text(
+                '{"version":1,"plugins":[]}\n', encoding="utf-8"
+            )
+
+            # Unit: sanitizer alone
+            sample = json.loads(cfg.read_text(encoding="utf-8"))
+            self.assertEqual(sanitize_empty_provider_api_keys(sample), 2)
+            self.assertNotIn(
+                "apiKey", sample["provider"]["builtin:broken"]["options"]
+            )
+            self.assertEqual(
+                sample["provider"]["builtin:ok"]["options"]["apiKey"], "sk-nonempty"
+            )
+            self.assertNotIn(
+                "apiKey", sample["provider"]["builtin:null-key"]["options"]
+            )
+
+            ctx = AdapterContext(
+                home=home,
+                repo_root=repo,
+                central=repo,
+                version="9.9.9",
+                skill_names=["go"],
+                dry_run=False,
+                mcp_bins={},
+            )
+            ZCodeAdapter().activate_registry(ctx)
+            data = json.loads(cfg.read_text(encoding="utf-8"))
+            self.assertTrue(data["plugins"]["enabledPlugins"][key])
+            self.assertNotIn(
+                "apiKey", data["provider"]["builtin:broken"]["options"]
+            )
+            self.assertEqual(
+                data["provider"]["builtin:ok"]["options"]["apiKey"], "sk-nonempty"
+            )
+            self.assertNotIn(
+                "apiKey", data["provider"]["builtin:null-key"]["options"]
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
