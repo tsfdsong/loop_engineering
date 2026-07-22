@@ -115,6 +115,42 @@ def check_cursor_plugin(home: Path, manifest: Manifest) -> list[HealthIssue]:
                         f"missing {rel} under plugins/local/loopengine",
                     )
                 )
+
+    mcp_cfg = home / ".cursor" / "mcp.json"
+    if not mcp_cfg.is_file():
+        issues.append(
+            HealthIssue(
+                "cursor-ask-mcp",
+                (
+                    "~/.cursor/mcp.json missing; loopengine-ask not registered "
+                    "— reinstall or merge MCP config"
+                ),
+            )
+        )
+    else:
+        try:
+            data = json.loads(mcp_cfg.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            issues.append(
+                HealthIssue(
+                    "cursor-ask-mcp",
+                    (
+                        f"~/.cursor/mcp.json invalid JSON ({exc}); "
+                        "loopengine-ask may be missing — reinstall or merge MCP config"
+                    ),
+                )
+            )
+        else:
+            if "loopengine-ask" not in (data.get("mcpServers") or {}):
+                issues.append(
+                    HealthIssue(
+                        "cursor-ask-mcp",
+                        (
+                            "mcpServers.loopengine-ask missing in ~/.cursor/mcp.json "
+                            "— reinstall or merge MCP config"
+                        ),
+                    )
+                )
     return issues
 
 
