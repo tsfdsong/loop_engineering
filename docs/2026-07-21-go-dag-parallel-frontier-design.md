@@ -163,4 +163,4 @@
 | **P1** | 测修多域并行 + 汇合脚本验证 |
 | **P2** | 机械门禁清单补齐（测试入口约定、与 smart_commit 衔接） |
 
-详细任务拆解：本 spec **Approved** 后由 writing-plans 或按用户指示直接 `/loop` 实施。
+详细任务拆解：本 spec **Approved** 后由 spec-driven-development 或按用户指示直接 `/loop` 实施。

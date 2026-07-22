@@ -45,9 +45,9 @@ class TestGoGoldenTraces(unittest.TestCase):
         self.assertEqual(len(dag), 5, f"review DAG must have 5 steps, got {len(dag)}: {dag}")
         self.assertIn("code-reviewer", dag)
         self.assertIn("clean-code", dag)
-        # Order: system-review → code-reviewer → clean-code → ... → writing-plans
+        # Order: system-review → code-reviewer → clean-code → ... → spec-driven-development
         self.assertEqual(dag[0], "system-review")
-        self.assertEqual(dag[-1], "writing-plans")
+        self.assertEqual(dag[-1], "spec-driven-development")
 
     # --- §15.2 web_qa: fan-out must be 4 parallel web-* skills ---
     def test_ac15_2_web_qa_four_parallel_web_skills(self):

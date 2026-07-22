@@ -64,7 +64,7 @@ design_solution:
 plan_execution:
   capability: implementation_planning
   executor_kind: direct_skill
-  skill: writing-plans
+  skill: spec-driven-development
   side_effects: none
   compatible_families: [review, research_compare, design_build, web_qa, parallel_investigation]
 

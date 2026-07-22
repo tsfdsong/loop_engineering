@@ -2,7 +2,7 @@
 
 loop --auto 供 go 编排层调用或用户明确选择时使用。全程审计闸门，不等用户确认。
 
-**禁止**：产品需求确认、writing-plans /「自动拆分」计划。  
+**禁止**：产品需求确认、spec-driven-development /「自动拆分」计划。  
 **前置**：任务包必须含可执行 `goal` + 可测验收；否则 **非 0 语义失败**，回交调用方（不在本地补做六维分析）。
 
 ## 触发条件
@@ -25,7 +25,7 @@ Step ① 任务包校验 + 上下文注入
   • 校验：可执行 goal + 可测验收是否齐全
     ├─ 缺任一（尤其被 go 调用）→ 立即失败回交调用方
     │   {"status":"failed","reason":"missing_goal_or_acceptance"}
-    │   禁止本地补做需求/六维分析；禁止 writing-plans
+    │   禁止本地补做需求/六维分析；禁止 spec-driven-development
     └─ 齐全 → 继续
   • 被 go 调用时，上下文已在 prompt 中:
     - 项目技术栈、已有模块、前置任务产物指针

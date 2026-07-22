@@ -167,4 +167,4 @@ python3 scripts/smart_commit.py -m "<message>" [--dry-run] [--push]
 3. 确认 plugin 打包含该 command；必要时更新 README/`using-loopengine` 一行说明  
 4. 本地手测 dry-run / 真实 commit  
 
-详细任务拆解待本 spec **Approved** 后由 writing-plans 产出。
+详细任务拆解待本 spec **Approved** 后由 spec-driven-development 产出。

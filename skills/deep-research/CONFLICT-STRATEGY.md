@@ -88,7 +88,7 @@ handoff:
 **理想路由**：
 1. **Skill 1**：deep-research（产出基于报告的事实分析）
 2. **Skill 2**：brainstorming（基于事实做技术选型方案）
-3. **Skill 3**（可选）：writing-plans（写实施计划）
+3. **Skill 3**（可选）：spec-driven-development（写实施计划）
 
 **手动串联方式**：
 ```
@@ -110,7 +110,7 @@ handoff:
 **理想路由**：
 1. **Skill 1**：brainstorming（先确定"做什么功能"）
 2. **Skill 2**：deep-research（基于功能调研技术栈对比）
-3. **Skill 3**：writing-plans
+3. **Skill 3**：spec-driven-development
 
 **手动串联方式**：
 ```
@@ -124,7 +124,7 @@ handoff:
 
 # Step 3
 你说：基于对比结果，写实施计划
-（AI 加载 writing-plans）
+（AI 加载 spec-driven-development）
 ```
 
 ---

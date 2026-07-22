@@ -101,7 +101,7 @@
 | 🤝 **V3** | Subagent 边界 | 派 subagent 必须传 5 类输入（scope / goal / constraints / format / context）；主 agent 不得只转述，必须独立验证。**不派**：共享状态 / 需全会话上下文 / 探索性调试 / 强顺序依赖 | `subagent-driven-development` · `dispatching-parallel-agents` |
 | 🌳 **V4** | Worktree 隔离 🆕 | 多会话并发或派 subagent 时，必须用 git worktree 隔离。**禁止**多个 agent 改同一工作目录 | `using-git-worktrees` |
 | 📊 **V5** | 进度汇报 | ≥10 步 / 改 ≥5 文件 / 跨 skill / 含 subagent → 每 5–10 步用 `## 📊 进度汇报 (N/M)`。禁止 >30 分钟静默 | `loop` · `go` · `supervisor` |
-| 🔍 **V6** | 一致性核对 | **架构级改动后**或**用户明确要求**时，走 `system-review`（至少选 1 维：需求↔实现 / 模块横向 / 端到端 / 文档↔代码） | `system-review` |
+| 🔍 **V6** | 一致性核对 | **架构级改动后**或**用户明确要求**时，走 `system-review`：**维度 4（文档↔代码，仅本次变更相关）必检**；另用 Ask 从维度 1–3 中至少再选 1 维（或全选） | `system-review` |
 | 👁️ **V7** | 视觉上下文 🆕 | 前端 UI 改前必须先截当前页；改后再截对比。**禁止**只靠 code review 判界面效果 | `agent-browser` · `ui-design-system` |
 
 > 💡 完整清单（4 维核对 / 5 类输入 / 不派发红旗 / Worktree SOP / 三层防御 / 进度 / 视觉闭环）都在对应 skill 里。
@@ -125,7 +125,7 @@
 | 🤝 Subagent（V3） | 传了 5 类输入？独立验证了返回？ |
 | 🌳 Worktree（V4） | 多会话/subagent 已隔离工作区？ |
 | 📊 进度（V5） | ≥10 步任务有分段汇报？ |
-| 🔍 一致性（V6） | 架构级改动后做了一致性核对？ |
+| 🔍 一致性（V6） | 架构级改动后做了核对？维度 4 必检 + 另选 ≥1 维？ |
 | 👁️ 视觉（V7） | UI 改动有改前+改后截图对比？ |
 
 ---

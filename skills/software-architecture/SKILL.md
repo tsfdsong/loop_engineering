@@ -292,7 +292,7 @@ Step 3: Layer 3 引入
 | 业务领域建模 | `domain-driven-design`（Layer 1 的领域层深化） |
 | 实施单体 API | `python-web-development`（Layer 1+2 的 API 落地） |
 | 业务规则验证 | `testing`（业务不变式测试） |
-| 架构决策记录 | `writing-plans` / `system-review`（ADR 模板） |
+| 架构决策记录 | `spec-driven-development` / `system-review`（ADR 模板） |
 | 重构单体 | `refactoring`（Layer 1 → Layer 2 演进） |
 
 ---

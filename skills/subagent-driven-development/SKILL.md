@@ -1,7 +1,7 @@
 ---
 name: subagent-driven-development
 description: |
-  TRIGGER: 当前 session 内执行有独立任务的实施计划（前置：必须有现成 writing-plans 计划；每任务派独立 subagent + spec/quality 两阶段审查）。无现成 plan 或临时多问题域并行 → dispatching-parallel-agents
+  TRIGGER: 当前 session 内执行有独立任务的实施计划（前置：必须有现成 spec-driven-development 计划；每任务派独立 subagent + spec/quality 两阶段审查）。无现成 plan 或临时多问题域并行 → dispatching-parallel-agents
   RULE: V3 + V4 主承载 — subagent 边界清晰 + worktree 隔离
   DETAIL: 本 SKILL.md（subagent 派发 + 两阶段审查）+ AGENTS.md §V3 §V4
 metadata:
@@ -277,7 +277,7 @@ Done!
 
 **Required workflow skills:**
 - **superpowers:using-git-worktrees** - Ensures isolated workspace (creates one or verifies existing)
-- **superpowers:writing-plans** - Creates the plan this skill executes
+- **spec-driven-development** - Creates the plan this skill executes
 - **superpowers:requesting-code-review** - Code review template for reviewer subagents
 - **superpowers:finishing-a-development-branch** - Complete development after all tasks
 

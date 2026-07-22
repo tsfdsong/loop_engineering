@@ -1,7 +1,7 @@
 ---
 name: product-manager
 description: |
-  TRIGGER: 创建 PRD / 产品规格 / 需求文档 / RICE/Kano/MoSCoW 优先级 / 用户故事 / 'PRD' / '需求' / 'RICE' / 'Kano' / '用户故事' / 'product spec'（不用于：纯头脑风暴用 brainstorming，技术实施用 writing-plans）
+  TRIGGER: 创建 PRD / 产品规格 / 需求文档 / RICE/Kano/MoSCoW 优先级 / 用户故事 / 'PRD' / '需求' / 'RICE' / 'Kano' / '用户故事' / 'product spec'（不用于：纯头脑风暴用 brainstorming，技术实施用 spec-driven-development）
   RULE: no specific rule（方法论 skill · 产品方法论）
   DETAIL: 本 SKILL.md（PRD + 优先级框架）
 risk: safe

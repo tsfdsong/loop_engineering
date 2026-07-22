@@ -69,5 +69,5 @@ After all tasks complete and verified:
 
 **Required workflow skills:**
 - **superpowers:using-git-worktrees** - Ensures isolated workspace (creates one or verifies existing)
-- **superpowers:writing-plans** - Creates the plan this skill executes
+- **spec-driven-development** - Creates the plan this skill executes
 - **superpowers:finishing-a-development-branch** - Complete development after all tasks

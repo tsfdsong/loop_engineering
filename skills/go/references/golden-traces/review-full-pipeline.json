@@ -13,7 +13,7 @@
     "code-reviewer",
     "clean-code",
     "brainstorming",
-    "writing-plans"
+    "spec-driven-development"
   ],
   "acceptance_criteria_ref": "spec §15.1"
 }

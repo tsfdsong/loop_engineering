@@ -12,7 +12,7 @@
 |----|------|----------|
 | **brainstorming** | design spec | Goal · Acceptance · Non-goals · Stop Escalation |
 | **spec-driven-development** | implementation plan | 继承 spec + Verification · Termination · Escalation Mapping |
-| **goal / loop / go** | 运行时执行 | 消费契约；不发明验收、不静默降标 |
+| **goal / loop / go** | 运行时执行 | 消费契约；不发明验收、不静默降标（见 `skills/loop/SKILL.md` · `skills/go/SKILL.md` Thin-loop 派发） |
 
 ```text
 brainstorming spec（Acceptance Contract）

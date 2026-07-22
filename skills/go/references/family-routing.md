@@ -69,7 +69,7 @@ go Step 0 只负责 **"意图 → 执行图"**，不重复：
 ### review
 
 ```text
-system-review → code-reviewer → clean-code → brainstorming → writing-plans
+system-review → code-reviewer → clean-code → brainstorming → spec-driven-development
 ```
 
 ### debug_fix

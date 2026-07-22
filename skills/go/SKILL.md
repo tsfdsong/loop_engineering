@@ -73,17 +73,19 @@ go 负责「拆任务、算前沿、分对工具」；loop 负责「把每个已
 1. **可执行目标（goal）** — 已落到可实施表述（非「要不要做 X」选型问句）
 2. **验收条件（acceptance）** — 可测、可判过/不过的清单
 
-**loop 禁止重做（由 go / brainstorming / writing-plans 承担）**：
+字段语义与上游对齐：[Loop Execution Contract](../shared/references/loop-execution-contract.md)（Goal / Acceptance；若来自 plan 则带 Verification / Termination / Escalation Mapping）。go **组装并校验**任务包，**不得**在派发时发明或静默放宽验收。
+
+**loop 禁止重做（由 go / brainstorming / spec-driven-development 承担）**：
 
 - 产品级需求确认 / brainstorming「需求分析」轮
-- writing-plans 级实施计划拆分
+- spec-driven-development 级实施计划拆分
 - 编排级复杂度 Ask / family 路由
 
 **不完整包 → 失败，禁止假装**：
 
 - 任务包缺 goal 或 acceptance → **不得**派发 loop，也不得假设 `--auto` 会「发明」验收
 - 回写失败理由（如 `missing_goal_or_acceptance`），回到 go 补齐后再派
-- go 在 Step ②/③ 产出验收；派发前自检包完备性
+- go 在 Step ②/③ 产出验收；派发前自检包完备性（对照契约字段）
 
 ---
 

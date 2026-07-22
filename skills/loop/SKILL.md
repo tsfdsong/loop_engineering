@@ -20,6 +20,17 @@ metadata:
 
 **不做**：产品级需求调研、完整实施计划拆分、与 go/brainstorming 重叠的「需求确认」轮。
 
+### 上游契约（消费，不发明）
+
+上游（brainstorming / `spec-driven-development` / go 任务包）若已写入 [Loop Execution Contract](../shared/references/loop-execution-contract.md)，loop **只消费**其中的 Goal / Acceptance（及 plan 级 Verification / Termination / Escalation）：
+
+| 规则 | 说明 |
+|------|------|
+| **消费** | 把契约字段落到本轮门禁与交付判据；缺字段时按模式补齐或失败回交（见 `mode-default` / `mode-auto`） |
+| **禁止发明验收** | 不得静默改写 Acceptance、不得擅自放宽 Termination |
+| **禁止静默降标** | 自愈不得删减功能或降低验收（见核心原则「不降级红线」） |
+| **不替代** | 本技能的 G0–G9 / F1–F5 / 自愈矩阵仍以 `references/` 为准；契约不复制门禁细节 |
+
 ## 命令格式
 
 ```
