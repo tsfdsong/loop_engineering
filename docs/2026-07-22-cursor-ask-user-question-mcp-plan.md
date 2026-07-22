@@ -3,7 +3,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 ---
-execution_path: # 用户选择后填写：subagent-driven | inline | go
+execution_path: subagent-driven
 ---
 
 **Spec:** `docs/2026-07-22-cursor-ask-user-question-mcp-design.md`  
