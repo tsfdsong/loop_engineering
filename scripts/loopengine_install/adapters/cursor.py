@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
-import sys
 from pathlib import Path
 
 from loopengine_install.adapters.base import Adapter, AdapterContext
@@ -18,25 +18,19 @@ from loopengine_install.ops import Operation
 
 CURSOR_ASK_NOTE_BEGIN = "<!-- BEGIN LOOPENGINE-CURSOR-ASK-NOTE -->"
 CURSOR_ASK_NOTE_END = "<!-- END LOOPENGINE-CURSOR-ASK-NOTE -->"
-CURSOR_ASK_NOTE = f"""{CURSOR_ASK_NOTE_BEGIN}
-## Cursor C2 兑现说明（本平台专用 · 非共享 AGENTS 正文）
-
-本平台通过 MCP `loopengine-ask` 提供工具 **AskUserQuestion**（本地网页点选）。
-决策点必须调用该工具。若工具返回 `validation_error` / `browser_error` / `timeout` / `busy`：
-**重试工具或上报阻塞**，禁止改用 markdown 列表呈现决策选项继续执行。
-{CURSOR_ASK_NOTE_END}
-"""
+_CURSOR_ASK_NOTE_RE = re.compile(
+    rf"\n*{re.escape(CURSOR_ASK_NOTE_BEGIN)}.*?{re.escape(CURSOR_ASK_NOTE_END)}\n*",
+    re.DOTALL,
+)
 
 
-def append_cursor_ask_note(path: Path) -> None:
-    """Append Cursor-only C2 note outside managed AGENTS markers (idempotent)."""
+def strip_cursor_ask_note(path: Path) -> None:
+    """Remove legacy Cursor-only ask MCP note if present (idempotent)."""
     content = path.read_text(encoding="utf-8")
-    if CURSOR_ASK_NOTE_BEGIN in content:
+    if CURSOR_ASK_NOTE_BEGIN not in content:
         return
-    if content and not content.endswith("\n"):
-        content += "\n"
-    content += "\n" + CURSOR_ASK_NOTE + "\n"
-    path.write_text(content, encoding="utf-8")
+    new = _CURSOR_ASK_NOTE_RE.sub("\n", content).rstrip() + "\n"
+    path.write_text(new, encoding="utf-8")
 
 
 class CursorAdapter(Adapter):
@@ -133,50 +127,60 @@ class CursorAdapter(Adapter):
         repo = ctx.mcp_bins.get("repomix") or ""
         hdrm = ctx.mcp_bins.get("headroom") or ""
         cfg = ctx.home / ".cursor" / "mcp.json"
-        keys = ["loopengine-ask"]
+        keys: list[str] = []
         if jcode:
             keys.append("jcodemunch")
         if repo:
             keys.append("repomix")
         if hdrm:
             keys.append("headroom")
-        central_mcp = ctx.central / "mcp"
-        ask_mcp_root = (
-            central_mcp
-            if (central_mcp / "loopengine_ask").is_dir()
-            else self.plugin_root(ctx) / "mcp"
-        )
+
+        plugin_root = self.plugin_root(ctx)
+        plugin_mcp = plugin_root / "mcp.json"
+        should_scrub = cfg.is_file() or plugin_mcp.is_file()
+
+        if not keys and not should_scrub:
+            return []
 
         if not ctx.dry_run:
-            cfg.parent.mkdir(parents=True, exist_ok=True)
-            if not cfg.exists():
-                cfg.write_text("{}\n", encoding="utf-8")
-            from _lib.json_io import atomic_write_json, read_json
+            if keys or cfg.is_file() or should_scrub:
+                cfg.parent.mkdir(parents=True, exist_ok=True)
+                if not cfg.exists():
+                    cfg.write_text("{}\n", encoding="utf-8")
+                from _lib.json_io import atomic_write_json, read_json
 
-            data = read_json(str(cfg))
-            servers = data.setdefault("mcpServers", {})
-            servers["loopengine-ask"] = {
-                "command": sys.executable,
-                "args": ["-m", "loopengine_ask"],
-                "env": {"PYTHONPATH": str(ask_mcp_root.resolve())},
-            }
-            if jcode:
-                servers["jcodemunch"] = {"command": jcode, "args": ["serve"]}
-            if repo:
-                servers["repomix"] = {"command": repo, "args": ["--mcp"]}
-            if hdrm:
-                servers["headroom"] = {"command": hdrm, "args": ["mcp", "serve"]}
-            else:
-                servers.pop("headroom", None)
-            atomic_write_json(str(cfg), data)
+                data = read_json(str(cfg))
+                servers = data.setdefault("mcpServers", {})
+                servers.pop("loopengine-ask", None)
+                if jcode:
+                    servers["jcodemunch"] = {"command": jcode, "args": ["serve"]}
+                if repo:
+                    servers["repomix"] = {"command": repo, "args": ["--mcp"]}
+                if hdrm:
+                    servers["headroom"] = {"command": hdrm, "args": ["mcp", "serve"]}
+                else:
+                    servers.pop("headroom", None)
+                atomic_write_json(str(cfg), data)
 
-            plugin_mcp = self.plugin_root(ctx) / "mcp.json"
-            if self.plugin_root(ctx).is_dir() and not self.plugin_root(ctx).is_symlink():
-                plugin_mcp.write_text(
-                    json.dumps({"mcpServers": dict(servers)}, indent=2, ensure_ascii=False)
-                    + "\n",
-                    encoding="utf-8",
-                )
+                if plugin_root.is_dir() and not plugin_root.is_symlink():
+                    if plugin_mcp.is_file() or keys:
+                        plugin_servers = dict(servers)
+                        plugin_servers.pop("loopengine-ask", None)
+                        plugin_mcp.write_text(
+                            json.dumps(
+                                {"mcpServers": plugin_servers},
+                                indent=2,
+                                ensure_ascii=False,
+                            )
+                            + "\n",
+                            encoding="utf-8",
+                        )
+                    ask_pkg = plugin_root / "mcp" / "loopengine_ask"
+                    if ask_pkg.exists():
+                        shutil.rmtree(ask_pkg)
+
+        if not keys:
+            return []
         return [
             Operation(
                 id="cursor-mcp",
@@ -198,12 +202,12 @@ class CursorAdapter(Adapter):
         ops = [op] if op else []
 
         if not ctx.dry_run and target.is_file():
-            append_cursor_ask_note(target)
+            strip_cursor_ask_note(target)
             plugin_rules = self.plugin_root(ctx) / "rules" / "loopengine-interaction.mdc"
             plugin_rules.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(target, plugin_rules)
             if plugin_rules.is_file():
-                append_cursor_ask_note(plugin_rules)
+                strip_cursor_ask_note(plugin_rules)
             plugin_json = self.plugin_root(ctx) / ".cursor-plugin" / "plugin.json"
             if plugin_json.is_file():
                 data = json.loads(plugin_json.read_text(encoding="utf-8"))
