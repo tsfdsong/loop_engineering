@@ -11,6 +11,7 @@
 # ────────────────────────────────────────────────────────────
 
 import os
+import tempfile
 import sys
 import unittest
 from unittest.mock import MagicMock, patch
@@ -181,3 +182,68 @@ class TestDimensionF(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestSkillStructureCheck(unittest.TestCase):
+    """B 维度扩展（2026-09-06 扫描器产品化）：_check_skill_structure。"""
+
+    def _make_skill(self, tmp, body: str, fm: str = "name: t\n"):
+        import os
+        d = os.path.join(tmp, "t-skill")
+        os.makedirs(d, exist_ok=True)
+        path = os.path.join(d, "SKILL.md")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(f"---\n{fm}---\n\n{body}")
+        return path
+
+    def test_dead_relative_link_is_error(self):
+        from audit_tools import _check_skill_structure
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._make_skill(tmp, "见 [缺失](references/nope.md)\n")
+            results = _check_skill_structure(path, "t-skill")
+            self.assertTrue(any(r.severity == "error" and "死链" in r.message for r in results))
+
+    def test_existing_link_not_flagged(self):
+        from audit_tools import _check_skill_structure
+        import os
+        with tempfile.TemporaryDirectory() as tmp:
+            d = os.path.join(tmp, "t-skill", "references")
+            os.makedirs(d)
+            open(os.path.join(d, "ok.md"), "w").write("x")
+            path = self._make_skill(tmp, "见 [ok](references/ok.md)\n")
+            results = _check_skill_structure(path, "t-skill")
+            self.assertFalse(any("死链" in r.message for r in results))
+
+    def test_placeholder_instructional_reference_not_flagged(self):
+        """指令性引用（引号内 / 句中名词）不算未填占位符 —— 全量扫描实测误报来源。"""
+        from audit_tools import _check_skill_structure
+        with tempfile.TemporaryDirectory() as tmp:
+            body = (
+                '1. **Placeholder scan:** Any "TBD", "TODO", incomplete sections? Fix them.\n'
+                "5. 写入项目级 TODO 或 issue 跟踪\n"
+            )
+            path = self._make_skill(tmp, body)
+            results = _check_skill_structure(path, "t-skill")
+            self.assertFalse(any("占位符" in r.message for r in results))
+
+    def test_real_placeholder_standalone_line_flagged(self):
+        from audit_tools import _check_skill_structure
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._make_skill(tmp, "## 参数\nTBD\n")
+            results = _check_skill_structure(path, "t-skill")
+            self.assertTrue(any("占位符" in r.message for r in results))
+
+    def test_over_500_lines_flagged(self):
+        from audit_tools import _check_skill_structure
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._make_skill(tmp, "x\n" * 510)
+            results = _check_skill_structure(path, "t-skill")
+            self.assertTrue(any("500" in r.message for r in results))
+
+    def test_over_1024_frontmatter_flagged(self):
+        from audit_tools import _check_skill_structure
+        with tempfile.TemporaryDirectory() as tmp:
+            fm = "description: " + "x" * 1100 + "\n"
+            path = self._make_skill(tmp, "body\n", fm=fm)
+            results = _check_skill_structure(path, "t-skill")
+            self.assertTrue(any("1024" in r.message for r in results))

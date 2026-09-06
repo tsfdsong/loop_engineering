@@ -22,6 +22,7 @@
 
 import json
 import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -166,6 +167,77 @@ def dimension_d_mcp_health(
 
 
 # ── B 维度：技能完整性（info 级 · 哨兵）──────────────────
+
+# 真实占位符判定：仅整行/整格式的占位（避免把"写入 TODO"、"never write TBD"
+# 等指令性引用误判为未填内容 —— 2026-09-06 全量扫描实测 4/4 命中均为误报）
+_PLACEHOLDER_LINE_RE = re.compile(
+    r"^(?:\|)?\s*(TBD|TODO|FIXME|待补|占位)\s*[:：]?\s*(?:\|)?\s*$"
+)
+
+
+def _check_skill_structure(skill_md: str, name: str) -> List[AuditResult]:
+    """单个技能的结构完整性检查（B 维度扩展 · 2026-09-06 扫描器产品化）。
+
+    检查：500 行硬规则（writing-skills v2.0）、frontmatter ≤1024 字符、
+    "不用于"排除项、相对链接死链、真实占位符。
+    """
+    results: List[AuditResult] = []
+    with open(skill_md, encoding="utf-8") as f:
+        text = f.read()
+    lines = text.splitlines()
+    n_lines = len(lines)
+
+    if n_lines > 500:
+        results.append(
+            AuditResult(
+                "B", "warning", "all",
+                f"{name}/SKILL.md {n_lines} 行 > 500（writing-skills v2.0 硬规则，应拆分 references/）",
+            )
+        )
+
+    m = re.match(r"^---\n(.*?)\n---\n", text, re.S)
+    if m:
+        fm_text = m.group(1)
+        if len(fm_text) > 1024:
+            results.append(
+                AuditResult(
+                    "B", "warning", "all",
+                    f"{name}/SKILL.md frontmatter {len(fm_text)} > 1024 字符（agentskills.io 规范）",
+                )
+            )
+        if "不用于" not in fm_text:
+            results.append(
+                AuditResult(
+                    "B", "info", "all",
+                    f"{name}/SKILL.md 无「不用于」排除项 → 路由精度风险（D5.0 三段式约定）",
+                )
+            )
+
+    # 死链：相对链接目标不存在（error 级：会导致加载时找不到文件）
+    skill_dir = os.path.dirname(skill_md)
+    for link in re.findall(r"\]\((?!http)([^)#]+?)(?:#[^)]*)?\)", text):
+        target = os.path.normpath(os.path.join(skill_dir, link.strip()))
+        alt = os.path.normpath(os.path.join(PROJECT_ROOT, link.strip()))
+        if not os.path.exists(target) and not os.path.exists(alt):
+            results.append(
+                AuditResult("B", "error", "all", f"{name}/SKILL.md 死链: {link}")
+            )
+
+    # 真实占位符：剥离代码块后整行匹配
+    body = re.sub(r"```.*?```", "", text, flags=re.S)
+    hits = [
+        ln.strip()
+        for ln in body.splitlines()
+        if _PLACEHOLDER_LINE_RE.match(ln.strip())
+    ]
+    if hits:
+        results.append(
+            AuditResult(
+                "B", "warning", "all",
+                f"{name}/SKILL.md 疑似未填占位符 {len(hits)} 处: {hits[:2]}",
+            )
+        )
+    return results
 
 
 def dimension_b_skill_integrity(
