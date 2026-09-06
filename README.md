@@ -1,6 +1,6 @@
 # 🚀 LoopEngine — 循环工程全家桶
 
-**一句话**：用 `/loop` 做单任务闭环，用 `/go` 做多模块编排，外加 34 个技能与 12 条红线。
+**一句话**：用 `/loop` 做单任务闭环，用 `/go` 做多模块编排，外加 34 个技能与 12 条红线（LoopEngine skill family）。
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![skills](https://img.shields.io/badge/skills-34-green)](skills/)

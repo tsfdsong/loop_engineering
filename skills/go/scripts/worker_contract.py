@@ -42,7 +42,11 @@ REQUIRED_CONSTRAINT_KEYS = frozenset({
 REQUIRED_RUNTIME_KEYS = frozenset({"profile"})
 
 VALID_TASK_TYPES = frozenset({"implement", "merge_resolve", "review"})
-VALID_PROFILES = frozenset({"cursor", "zcode"})
+# "host-tool" 是工具无关化重构（6b02116）引入的抽象 profile，用于静态资产
+# （golden packets / 文档）表示"由当前宿主工具执行"。真实调度管线经
+# detect_runtime_profile / normalize_assigned_runtime 解析为具体 profile，
+# 不会以 host-tool 落到适配器，故校验放行不影响 dispatch。
+VALID_PROFILES = frozenset({"cursor", "zcode", "host-tool"})
 VALID_STATUSES = frozenset({
     "DONE",
     "DONE_WITH_CONCERNS",

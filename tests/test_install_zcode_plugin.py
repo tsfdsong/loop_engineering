@@ -20,7 +20,10 @@ class InstallZCodePluginCliTest(unittest.TestCase):
 
         self.assertEqual(result, 0)
         self.assertIn("marketplace.json", output.getvalue())
-        self.assertIn("loopengine-local", output.getvalue())
+        # loopengine-local 独立 marketplace 方案已废弃（zcode UI 会浮现第二个
+        # 关闭态条目，见 adapters/zcode.py L292 注释）；现行设计 = 官方
+        # marketplace 注入 + SessionStart 自愈 hook（zcode-marketplace-selfheal）。
+        self.assertIn("zcode-plugins-official", output.getvalue())
 
     def test_uninstall_dry_run_includes_marketplace_removal(self):
         output = io.StringIO()

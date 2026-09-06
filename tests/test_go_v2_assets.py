@@ -10,6 +10,25 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def _with_stubs(stubs: dict, exec_module):
+    """Install stub modules for exec_module, then restore prior sys.modules state.
+
+    Stubs left in sys.modules leak into later test files (e.g. task_scheduler's
+    `import git_ops` picking up a stub without get_head → AttributeError).
+    """
+    saved = {name: sys.modules.get(name) for name in stubs}
+    for name, mod in stubs.items():
+        sys.modules[name] = mod
+    try:
+        return exec_module()
+    finally:
+        for name, prev in saved.items():
+            if prev is None:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = prev
+
+
 def load_zcode_runner_module():
     module_name = "zcode_runner_test_module"
     if module_name in sys.modules:
@@ -18,14 +37,16 @@ def load_zcode_runner_module():
     stub_git_ops = types.ModuleType("git_ops")
     stub_state_manager = types.ModuleType("state_manager")
     stub_state_manager._global_locks_guard = object()
-    sys.modules.setdefault("git_ops", stub_git_ops)
-    sys.modules.setdefault("state_manager", stub_state_manager)
 
     module_path = ROOT / "skills" / "go" / "scripts" / "zcode_runner.py"
     spec = importlib.util.spec_from_file_location(module_name, module_path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
-    spec.loader.exec_module(module)
+
+    def _exec():
+        spec.loader.exec_module(module)
+
+    _with_stubs({"git_ops": stub_git_ops, "state_manager": stub_state_manager}, _exec)
     sys.modules[module_name] = module
     return module
 
@@ -41,16 +62,23 @@ def load_orchestrator_module():
     stub_git_ops = types.ModuleType("git_ops")
     stub_zcode_runner = types.ModuleType("zcode_runner")
 
-    sys.modules.setdefault("complexity_evaluator", stub_complexity_evaluator)
-    sys.modules.setdefault("state_manager", stub_state_manager)
-    sys.modules.setdefault("git_ops", stub_git_ops)
-    sys.modules.setdefault("zcode_runner", stub_zcode_runner)
-
     module_path = ROOT / "skills" / "go" / "scripts" / "orchestrator.py"
     spec = importlib.util.spec_from_file_location(module_name, module_path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
-    spec.loader.exec_module(module)
+
+    def _exec():
+        spec.loader.exec_module(module)
+
+    _with_stubs(
+        {
+            "complexity_evaluator": stub_complexity_evaluator,
+            "state_manager": stub_state_manager,
+            "git_ops": stub_git_ops,
+            "zcode_runner": stub_zcode_runner,
+        },
+        _exec,
+    )
     sys.modules[module_name] = module
     return module
 
