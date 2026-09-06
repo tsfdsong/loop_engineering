@@ -182,11 +182,21 @@ def _empty_handoff(reason: str) -> dict[str, Any]:
 
 
 def normalize_assigned_runtime(task: dict[str, Any], default_profile: str = "zcode") -> dict[str, Any]:
-    """Map v4 assigned_tool or v5 assigned_runtime to unified runtime dict."""
+    """Map v4 assigned_tool or v5 assigned_runtime to unified runtime dict.
+
+    'host-tool' is the tool-agnostic abstract profile; it resolves to the
+    caller-provided default_profile here so it never reaches get_adapter
+    (no adapter is registered under that name).
+    """
     if task.get("assigned_runtime"):
-        return dict(task["assigned_runtime"])
+        assigned = dict(task["assigned_runtime"])
+        if assigned.get("profile") == "host-tool":
+            assigned["profile"] = default_profile
+        return assigned
 
     tool = task.get("assigned_tool", default_profile)
+    if tool == "host-tool":
+        tool = default_profile
     profile = "cursor" if tool == "cursor" else "zcode"
     return {
         "profile": profile,

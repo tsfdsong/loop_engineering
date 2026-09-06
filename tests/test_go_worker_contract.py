@@ -61,6 +61,32 @@ class TestGoWorkerContractAssets(unittest.TestCase):
             packet = wc.load_golden_packet(name)
             wc.validate_packet(packet)
 
+    def test_host_tool_profile_resolves_never_reaches_adapter(self):
+        """host-tool 通过校验但必须在 normalize 阶段解析为具体 profile。
+
+        同根缺口回归（R3.5）：validate_packet 放行 host-tool 后，若
+        normalize_assigned_runtime 原样透传，get_adapter('host-tool')
+        会 KeyError 崩溃而非优雅降级。
+        """
+        wc = _load_module("worker_contract_nt", "worker_contract.py")
+        # assigned_runtime 透传分支
+        resolved = wc.normalize_assigned_runtime(
+            {"assigned_runtime": {"profile": "host-tool", "adapter": "subagent"}},
+            default_profile="cursor",
+        )
+        self.assertEqual(resolved["profile"], "cursor")
+        # assigned_tool 兜底分支
+        resolved = wc.normalize_assigned_runtime(
+            {"assigned_tool": "host-tool"}, default_profile="zcode"
+        )
+        self.assertEqual(resolved["profile"], "zcode")
+        # 显式具体 profile 不受影响
+        resolved = wc.normalize_assigned_runtime(
+            {"assigned_runtime": {"profile": "cursor", "adapter": "subagent"}},
+            default_profile="zcode",
+        )
+        self.assertEqual(resolved["profile"], "cursor")
+
     def test_routing_rules_v5_shape(self):
         text = (ROOT / "skills" / "go" / "routing-rules.yaml").read_text(encoding="utf-8")
         self.assertIn("runtimes:", text)
