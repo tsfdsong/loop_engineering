@@ -112,6 +112,52 @@ class TestZcodeMarketplaceSelfheal(unittest.TestCase):
         self.assertEqual(mp.read_text(encoding="utf-8"), before, "must never overwrite malformed official data")
         self.assertIn("skip", result.stderr)
 
+    def _make_skill_creator(self, versions: list) -> Path:
+        """versions 为目录名列表；hook 须选取最高版本目录。"""
+        sc = self.home / ".zcode/cli/plugins/cache/zcode-plugins-official/skill-creator"
+        for v in versions:
+            d = sc / v
+            d.mkdir(parents=True, exist_ok=True)
+            (d / ".zcode-plugin").mkdir(exist_ok=True)
+            (d / ".zcode-plugin" / "plugin.json").write_text(
+                json.dumps({"name": "skill-creator", "version": v}), encoding="utf-8")
+        return sc
+
+    def test_skill_creator_missing_entry_healed_to_latest(self) -> None:
+        self._make_skill_creator(["0.1.0", "0.2.0-anthropic.85cce0381e"])
+        mp = _write_marketplace(self.home, [{"name": "github"}])
+        result = _run(self.plugin_root, self.home)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        data = json.loads(mp.read_text(encoding="utf-8"))
+        e = next(p for p in data["plugins"] if p["name"] == "skill-creator")
+        self.assertEqual(e["version"], "0.2.0-anthropic.85cce0381e")
+        self.assertIn("0.2.0", e["cachePath"])
+        self.assertIn("restored", result.stderr)
+
+    def test_skill_creator_stale_entry_updated(self) -> None:
+        self._make_skill_creator(["0.1.0", "0.2.0-anthropic.85cce0381e"])
+        mp = _write_marketplace(self.home, [{
+            "cachePath": "/old/0.1.0", "name": "skill-creator",
+            "source": "filesystem", "version": "0.1.0"}])
+        result = _run(self.plugin_root, self.home)
+        self.assertEqual(result.returncode, 0)
+        e = json.loads(mp.read_text(encoding="utf-8"))["plugins"][0]
+        self.assertEqual(e["version"], "0.2.0-anthropic.85cce0381e")
+
+    def test_all_healthy_is_silent_noop(self) -> None:
+        sc = self._make_skill_creator(["0.2.0-anthropic.85cce0381e"])
+        mp = _write_marketplace(self.home, [
+            {"cachePath": str(self.plugin_root.resolve()), "name": "loopengine",
+             "source": "filesystem", "version": VERSION},
+            {"cachePath": str(sc / "0.2.0-anthropic.85cce0381e"), "name": "skill-creator",
+             "source": "filesystem", "version": "0.2.0-anthropic.85cce0381e"},
+        ])
+        before = mp.read_text(encoding="utf-8")
+        result = _run(self.plugin_root, self.home)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(mp.read_text(encoding="utf-8"), before)
+        self.assertEqual(result.stderr, "")
+
     def test_missing_seed_skips(self) -> None:
         _write_marketplace(self.home, [])
         shutil.rmtree(self.plugin_root)
