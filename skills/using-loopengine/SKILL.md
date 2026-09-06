@@ -23,6 +23,7 @@ brainstorming     未定型：探索 / 选型 / 设计
 | Skill | 做什么 | 不做什么 | 典型说法 |
 |-------|--------|----------|----------|
 | **brainstorming** | 探索、选型、设计草稿 | 编码、门禁、多模块编排 | 「要不要做 X」「A vs B」 |
+| **grilling** | 对已有方案 / spec 穷尽式审讯（frontier 决策树） | 从零生成设计（→ brainstorming） | 「拷问 / 压力测试这个方案」 |
 | **spec-driven-development** | 写实施计划 + 验收/终止契约 | 运行时 DAG / worktree | 「写实施计划」 |
 | **go** | family 路由、拆任务、并行、汇合 | 替代单任务薄执行 | `/go 做整站/多模块` |
 | **loop** | 目标+验收齐全 → 编码闭环 | 需求分析、长确认流 | `/loop 实现 X，验收…` |
@@ -33,6 +34,7 @@ brainstorming     未定型：探索 / 选型 / 设计
 补充：
 - **product-manager** — PRD / 优先级（不做执行环）
 - **executing-plans** — 按已有书面计划逐步执行
+- **domain-modeling** — 术语执法 / CONTEXT.md 词汇表 / ADR（常与 grilling 组合）
 
 **go** 管运行时编排；**spec-driven-development** 管书面计划 —— 互不替代。
 
@@ -59,13 +61,13 @@ brainstorming     未定型：探索 / 选型 / 设计
 | 分类 | 例子 |
 |------|------|
 | 闭环 | `loop` · `go` · `supervisor` |
-| 规划 | `brainstorming` · `spec-driven-development` · `product-manager` |
+| 规划 | `brainstorming` · `grilling` · `domain-modeling` · `spec-driven-development` · `product-manager` |
 | 质量 | `clean-code` · `code-reviewer` · `refactoring` |
 | 审查 | `system-review` · `evidence-first` |
 | 测试 | `testing` · `systematic-debugging` · `web-quality` |
 | 工程 | `using-git-worktrees` · `verification-officer` · `subagent-driven-development` |
 
-完整列表：`skills/`（32 个）。
+完整列表：`skills/`（34 个）。
 
 ## 安装
 

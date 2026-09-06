@@ -30,7 +30,7 @@ You MUST create a task for each of these items and complete them in order:
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
 6. **Write design doc** — save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit（**含 Loop Execution Contract · spec 级字段**，见下文）
-7. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope, **acceptance 可判定性** (see below)
+7. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope, **acceptance 可判定性** (see below)；**若满足下文「对抗审讯触发条件」任一条，先触发 grilling 审讯、修订写回后再进第 8 步**
 8. **User reviews written spec** — ask user to review the spec file before proceeding
 9. **Transition to implementation** — invoke **spec-driven-development** skill（writing-plans 继任）to create implementation plan
 
@@ -151,6 +151,16 @@ After writing the spec document, look at it with fresh eyes:
 5. **Acceptance contract:** Every acceptance item observable and pass/fail? Non-goals present? Stop Escalation lists real blockers? No gate-matrix copy-paste?
 
 Fix any issues inline. No need to re-review — just fix and move on.
+
+**对抗审讯（条件触发 · grilling）：**
+
+触发条件（满足**任一**即必须触发 grilling 审讯，不得跳过）：
+
+1. spec 引入 **≥ 3 个**项目/领域中尚无明确定义的新领域术语
+2. spec 涉及**跨模块或多方接口契约**（触及 ≥ 2 个模块边界，或新增/修改对外 API）
+3. 预估实现工作量 **> 1 天**，或含不可逆决策（数据模型变更 / 外部契约 / 删除性操作）
+
+三条全不满足 → 跳过本步，直接进入 User Review Gate。触发时调用 **grilling** 技能对 spec 做穷尽式审讯（frontier 决策树 + AskUserQuestion 轮次；术语沉淀并行走 domain-modeling），修订写回本文件后再进入 User Review Gate。
 
 **User Review Gate:**
 After the spec review loop passes, ask the user to review the written spec before proceeding:

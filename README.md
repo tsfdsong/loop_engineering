@@ -1,9 +1,9 @@
 # 🚀 LoopEngine — 循环工程全家桶
 
-**一句话**：用 `/loop` 做单任务闭环，用 `/go` 做多模块编排，外加 32 个技能与 12 条红线。
+**一句话**：用 `/loop` 做单任务闭环，用 `/go` 做多模块编排，外加 34 个技能与 12 条红线。
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![skills](https://img.shields.io/badge/skills-32-green)](skills/)
+[![skills](https://img.shields.io/badge/skills-34-green)](skills/)
 [![redlines](https://img.shields.io/badge/redlines-12-red)](AGENTS.md)
 
 ---
@@ -105,7 +105,7 @@ jcodemunch-mcp index_folder .
 | 分类 | 例子 |
 |------|------|
 | 闭环 | `loop` · `go` · `supervisor` · `using-loopengine` |
-| 规划 | `brainstorming` · `spec-driven-development` · `product-manager` |
+| 规划 | `brainstorming` · `grilling` · `domain-modeling` · `spec-driven-development` · `product-manager` |
 | 质量 | `clean-code` · `code-reviewer` · `refactoring` |
 | 审查 | `system-review` · `evidence-first` · `software-architecture` |
 | 测试 | `testing` · `systematic-debugging` · `web-quality` |
@@ -121,7 +121,7 @@ jcodemunch-mcp index_folder .
 |------|------|
 | `install.py` | 唯一安装入口 |
 | `skills/` | 技能定义 |
-| `commands/` | `/loop` · `/go` · `/audit` · `/git-commit` |
+| `commands/` | `/loop` · `/go` · `/audit` · `/git-commit` · `/grilling` |
 | `hooks/` | 会话启动注入 |
 | `docs/INSTALL.md` | 安装详规 |
 | `AGENTS.md` | AI 红线（单点真源） |
