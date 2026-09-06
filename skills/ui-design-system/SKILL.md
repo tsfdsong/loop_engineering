@@ -1,7 +1,7 @@
 ---
 name: ui-design-system
 description: |
-  TRIGGER: 前端 UI 改动 / 重构组件 / 设计交互 / "前端反复纠正" / 创建 design token / 组件库 / 视觉规范
+  TRIGGER: 前端 UI 改动 / 重构组件 / 设计交互 / "前端反复纠正" / 创建 design token / 组件库 / 视觉规范（不用于：改后质量测试用 web-quality，非前端改动不适用）
   RULE: V7 视觉上下文 — UI 改动前必须截图当前页面 + 改后对比验证
   DETAIL: 本 SKILL.md + references/{design-tokens,component-spec-template}.md + 与 agent-browser 配合
 ---

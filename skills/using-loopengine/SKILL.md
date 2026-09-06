@@ -1,7 +1,7 @@
 ---
 name: using-loopengine
 description: |
-  TRIGGER: 用户初次接触 LoopEngine / 需要 loop/go 生态指引 / 多 skill 编排系统导览
+  TRIGGER: 用户初次接触 LoopEngine / 需要 loop/go 生态指引 / 多 skill 编排系统导览（不用于：具体任务执行（本技能仅生态导览，不承载任何执行环节））
   RULE: no specific rule（方法论 skill · 入门导览）
   DETAIL: 本 SKILL.md（核心 skill + 编排系统导览）
 ---

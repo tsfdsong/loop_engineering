@@ -1,7 +1,7 @@
 ---
 name: subagent-driven-development
 description: |
-  TRIGGER: 当前 session 内执行有独立任务的实施计划（前置：必须有现成 spec-driven-development 计划；每任务派独立 subagent + spec/quality 两阶段审查）。无现成 plan 或临时多问题域并行 → dispatching-parallel-agents
+  TRIGGER: 当前 session 内执行有独立任务的实施计划（前置：必须有现成 spec-driven-development 计划；每任务派独立 subagent + spec/quality 两阶段审查）。无现成 plan 或临时多问题域并行 → dispatching-parallel-agents（不用于：写计划用 spec-driven-development，单文件小修直接做不派 subagent）
   RULE: V3 + V4 主承载 — subagent 边界清晰 + worktree 隔离
   DETAIL: 本 SKILL.md（subagent 派发 + 两阶段审查）+ AGENTS.md §V3 §V4
 metadata:

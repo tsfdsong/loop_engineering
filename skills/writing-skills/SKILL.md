@@ -1,7 +1,7 @@
 ---
 name: writing-skills
 description: |
-  TRIGGER: 创建新 skill / 编辑现有 skill / 部署前验证 skill 可用性
+  TRIGGER: 创建新 skill / 编辑现有 skill / 部署前验证 skill 可用性（不用于：用技能执行开发任务（本技能仅用于编写和维护技能本身））
   RULE: no specific rule（方法论 skill · skill 编写方法论）
   DETAIL: 本 SKILL.md（skill 结构 + 元数据 + 验证流程）+ references/skill-spec.md（详细规范）
 ---

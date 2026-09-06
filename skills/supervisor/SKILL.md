@@ -1,7 +1,7 @@
 ---
 name: supervisor
 description: |
-  TRIGGER: go 派发多子任务后 / L2/L3 复杂任务并发 / 子任务卡住或降级 / "监控子任务" / "看门狗"
+  TRIGGER: go 派发多子任务后 / L2/L3 复杂任务并发 / 子任务卡住或降级 / "监控子任务" / "看门狗"（不用于：单任务执行用 loop，任务拆分与派发用 go（本技能只盯不派））
   RULE: 持续监控子任务状态（任务级 polling + 异常双轨）+ R1-R4 干预链（重启→降级→重切→上报）
   DETAIL: 本 SKILL.md + 状态文件 .supervisor-state.json 通信 + references/
 ---

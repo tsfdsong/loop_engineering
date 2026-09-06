@@ -1,7 +1,7 @@
 ---
 name: executing-plans
 description: |
-  TRIGGER: 有书面实施计划需要在独立 session 执行（含审查检查点）
+  TRIGGER: 有书面实施计划需要在独立 session 执行（含审查检查点）（不用于：session 内 subagent 执行用 subagent-driven-development，写计划用 spec-driven-development）
   RULE: no specific rule（方法论 skill · 计划执行方法论）
   DETAIL: 本 SKILL.md（计划执行 + 审查检查点）
 ---

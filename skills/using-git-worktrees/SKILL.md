@@ -1,7 +1,7 @@
 ---
 name: using-git-worktrees
 description: |
-  TRIGGER: 开始需与当前工作区隔离的功能开发 / 执行实施计划前 / 确保 isolated workspace 存在（原生工具优先，git worktree 兜底）
+  TRIGGER: 开始需与当前工作区隔离的功能开发 / 执行实施计划前 / 确保 isolated workspace 存在（原生工具优先，git worktree 兜底）（不用于：单会话小改动无需隔离的场景）
   RULE: V4 主承载 — subagent / 多任务开发必须 worktree 隔离
   DETAIL: 本 SKILL.md（worktree 建立流程）+ AGENTS.md §V4
 ---

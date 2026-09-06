@@ -1,7 +1,7 @@
 ---
 name: spec-driven-development
 description: |
-  TRIGGER: 有批准的设计需要拆任务 / 写实施计划 / "spec → plan → task" / 实施计划 / 任务清单
+  TRIGGER: 有批准的设计需要拆任务 / 写实施计划 / "spec → plan → task" / 实施计划 / 任务清单（不用于：从零探索设计用 brainstorming，单 PR 代码审查用 code-reviewer）
   RULE: V6 一致性 — 架构级改动后必查需求↔实现一致性
   DETAIL: 本 SKILL.md（OpenSpec 三段式）+ AGENTS.md §V6
 ---

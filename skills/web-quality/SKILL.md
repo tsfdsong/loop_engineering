@@ -1,7 +1,7 @@
 ---
 name: web-quality
 description: |
-  TRIGGER: web 质量测试 / E2E 回归 / 视觉 diff / a11y 审计 / 性能预算 / Lighthouse / Web Vitals / WCAG / "无障碍"
+  TRIGGER: web 质量测试 / E2E 回归 / 视觉 diff / a11y 审计 / 性能预算 / Lighthouse / Web Vitals / WCAG / "无障碍"（不用于：UI 设计与组件规范用 ui-design-system，纯后端 API 无页面可测的场景）
   RULE: V7 辅承载 — 前端改动后按需跑 4 子能力之一（a11y/perf/regression/visual-diff）
   DETAIL: 本 SKILL.md 路由 + references/{a11y,perf,regression-e2e,visual-diff}.md
 metadata:
