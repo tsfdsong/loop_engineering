@@ -7,24 +7,7 @@ description: |
 metadata:
   version: "2.1"
   type: skill
-  sources:
-    - ciembor/agent-rules-books (2 books)
-    - self (1 code-quality-principles)
-    - ciembor/agent-rules-books (pragmatic-programmer)
-  books:
-    - Clean Code by Robert C. Martin
-    - Code Complete by Steve McConnell
-    - The Pragmatic Programmer by Hunt & Thomas
-  merged_from:
-    - clean-code
-    - code-complete
-    - code-quality-principles
-    - pragmatic-programmer
-  merge_date_v2: "2026-06-29"
-  merge_date_v2_1: "2026-06-30"  # v6.4 强化风格融合 + 内联 pragmatic-programmer
-  merge_reason: |
-    v6.2 合并 → 4 源并排但风格不一致；v6.4 明确 4 源在 4 个不同维度（原则/要点/规范/决策），
-    让用户按需选风格而非混用。
+  sources: ciembor/agent-rules-books + self（Martin / McConnell / self 规范 / Pragmatic 四源）
   style_dimensions:
     - principles (Martin · 为什么)
     - checklist (McConnell · 是什么)

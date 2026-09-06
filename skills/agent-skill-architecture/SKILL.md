@@ -51,6 +51,6 @@ metadata:
 
 ---
 
-完整规范: [agent-skill-architecture-principles.md](../../../../tsfdsong/python-project/yimi-ai-hub/docs/superpowers/specs/agent-skill-architecture-principles.md)
+完整规范: 本技能自含（设计原则已并入上文各节）+ 审查清单见 `references/checklist.md`
 
 审查清单: `references/checklist.md`
