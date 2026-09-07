@@ -251,4 +251,53 @@ Get-Content : 无法将参数绑定到参数"Path"，因为该参数是空值。
 
 <!-- BEGIN LOOPENGINE-MANAGED EVIDENCE-RULES -->
 （待补：2026-06-29 v5.4 兼容性胡乱分析事故记录，详见 AGENTS.md §2）
-<!-- END LOOPENGINE-MANAGED EVIDENCE-RULES -->
+<!-- END LOOPENGINE-MANAGED EVIDENCE-RULES -->## 📚 L#006 · 2026-09-07 · skill-creator 描述优化 · 评测基线全零伪影（`claude -p` 认证失败被计为"不触发"）
+
+### 现象
+对 grilling 技能跑 skill-creator 描述优化的触发评测，20 条查询 × 3 次全部返回"不触发"：10 条正样本 recall=0%（0/30），一度得出"**grilling 严重欠触发，TRIGGER 三段式格式可能全仓失效**"的重大结论，险些据此改动 34 个技能的 description 格式。
+
+### 根因（3 层叠加）
+1. **`claude -p` 认证失败的行为伪装**：OAuth 过期时进程 `exit=1` 但错误文本（`Failed to authenticate: OAuth session expired...`）走 **stdout**——评测器把它当"模型的回答"去解析触发标记。
+2. **评测器的默认值语义**：`run_eval.py` 解析不到触发标记时默认返回 `triggered=False`——依赖故障被静默转译为"模型选择了不触发"，产生**系统性偏差**（60/60 调用全失败 = 60/60 "不触发"，正负样本恰好"符合"一半预期，更具迷惑性）。
+3. **诊断复现的管道陷阱**：主代理首次复现用 `claude -p ... 2>&1 | head -5; echo $?`——zsh 中 `$?` 取的是 **head 的退出码（0）**，得出"exit=0 静默失败"的错误判断，把诊断引向"评测器吞错"的错误方向。
+
+**确证方式**：干净复现 `env -u CLAUDECODE claude -p "Reply ok"` → 错误文本 + `exit=1`，退出码与错误通道还原真相。
+
+### 修复（3 处）
+- **结论撤回**：recall=0% 判定为认证伪影，"TRIGGER 格式失效"假说降级为未验证假设，禁止据此改格式
+- **评测资产保全**：4 技能 × 20 条评测集归档 `~/.loopengine/eval-archive/desc-opt/`（/tmp 易失），认证恢复后重测
+- **定时续跑**：限额重置后自动重跑（CronCreate），重测前先冒烟验证认证
+
+### 教训（4 条）
+1. **外部 CLI 评测前先冒烟**：跑任何依赖外部模型 CLI 的评测循环前，先手工调 1 次并**检查输出是模型语言而非错误文本**——区分"模型说 NO"与"根本没问成"。
+2. **全零结果是环境故障信号**：真实模型行为总有方差，30 次调用 0 触发（连"拷问""审讯"这种显式词都不触发）应先怀疑评测链路故障，再怀疑被测对象。
+3. **管道后取退出码用 `pipestatus`**（zsh）/`${PIPESTATUS[0]}`（bash），或干脆不用管道——`echo $?` 取的是管道**最后一个命令**的退出码。
+4. **审视评测器的默认值语义**：`default=False` 在依赖故障时会变成系统性偏差源；评测器应在输出异常时区分"模型回答"与"调用失败"。
+
+---
+
+## 📚 L#007 · 2026-09-06~07 · ZCode 官方 registry 周期性冲掉本地插件注册（marketplace 条目 4 次丢失 + 已删目录被重建）
+
+### 现象
+- `install.py install` 成功写入 loopengine 的 marketplace 条目后，**39 秒内**被冲掉（时间戳实证），验证期间累计复发 4 次
+- skill-creator（Anthropic 官方版）升级到 `0.2.0-anthropic.85cce0381e` 并删除 `0.1.0` 目录后：**旧目录被应用重建**，registry 条目被冲回 `0.1.0`
+- 审计 `audit_tools.py` 的 G 维度随之间歇性报红（`marketplace.json 缺 loopengine 条目`），一度被误判为安装器 bug
+
+### 根因（2 层）
+1. **ZCode CLI 周期性从官方远端同步 registry**：重写 `~/.zcode/cli/plugins/marketplaces/zcode-plugins-official/marketplace.json`，只保留远端 manifest 存在的 8 个官方插件——loopengine（本地注入）与 skill-creator（已从远端下架）的条目必然被抹，重装频率无关。
+2. **应用缓存同步会重建已删除的旧版本目录**：删除 `skill-creator/0.1.0` 后被再次创建——"删除旧版"不是终态操作。
+
+### 修复（1 处 · 结构性）
+`hooks/zcode-marketplace-selfheal.sh`（SessionStart hook）：
+- 守护 loopengine（seed 文件）+ skill-creator（扫描缓存目录取最高版本）双条目
+- 幂等：健康时静默 no-op（不重写文件）；被冲时从本地缓存事实重建
+- 安全边界：不动官方远端条目、官方文件损坏时保护性跳过、任何失败不阻塞会话启动
+- 9 个 pytest 场景（heal/no-op/过期更新/损坏保护/seed 缺失/双插件/最高版本选择）
+- 接线 `hooks/hooks.json` SessionStart（与 verify-state-init 并列）
+
+**备选方案否决记录**：独立 `loopengine-local` marketplace 方案曾实施后废弃——zcode UI 会浮现第二个关闭态的 `loopengine@loopengine-local` 条目（`adapters/zcode.py` L292 注释存档）。
+
+### 教训（3 条）
+1. **注入外部应用管辖的注册表 = 假设会被覆盖**：任何写入非本项目管辖文件（应用的 registry/缓存/配置）的操作，都要回答"应用刷新后怎么办"——一次性写入不是终态。
+2. **自愈优于锁文件**：无法真正锁住应用管辖的文件（chflag/权限会破坏应用自身功能）；会话启动幂等重注入（自愈）与"每次用时校验"（审计）双管齐下更稳。
+3. **间歇性报红先查时间戳**：`marketplace.json` 的 mtime 与安装完成时间的差值（39 秒）是判定"谁改了文件"的关键证据——先取时间线再怀疑自己的安装器。
