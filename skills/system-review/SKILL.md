@@ -5,7 +5,7 @@ description: |
   RULE: V6 主承载 — 系统级交付前必查需求↔实现↔架构一致性
   DETAIL: 本 SKILL.md（横向一致性 + 纵向架构深度 + 持续改进）+ AGENTS.md §V6 + references/ousterhout-philosophy.md（Step 2 理论背靠，按需加载）
 metadata:
-  version: "1.4"
+  version: "1.4.1"
   type: methodology
   mode: system-level-review
   review_level: system
@@ -71,9 +71,12 @@ Step 3: 持续改进审查 ── 哪些可增强/精简/优化（含 §4 必检
 1. 列出系统核心组件（API 层、领域层、基础设施层、外部服务）
 2. 对每个**跨组件边界**，过一遍上表检查项
 3. 记录每个矛盾点：**预期 vs 实际** + 影响范围
+3.5 **边界值探测**：对本次 diff 新引入的配置入口 / 参数 / 路径 / 分支，逐一推演边界输入（空值、纯文件名、极端值、未定义输入）——盲评测证：这是最常漏检的崩溃源（如 `os.makedirs("")`）
 4. 按影响排序：阻塞型（运行时会崩）> 隐藏型（边缘场景）> 优雅降级型
 
 **输出标签**：`[CRITICAL]` / `[HIDDEN]` / `[MINOR]`
+
+**定级前自检**：① 该发现运行时是否直接崩溃 / 产生错误行为？否 → 降 HIDDEN；② 是否与已有 CRITICAL 同根因？是 → 并档不重复计。每个发现附 `文件:行号`，行号引用后回读原文核对一次。
 
 ## Step 2: 纵向架构深度审查
 
