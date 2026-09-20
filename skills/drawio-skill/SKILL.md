@@ -13,47 +13,47 @@ platforms: [macos, linux, windows]
 
 # Draw.io Diagrams
 
-## Overview
+## Overview（概述）
 
-Generate `.drawio` XML files and export to PNG/SVG/PDF/JPG locally using the native draw.io desktop app CLI.
+用原生 draw.io 桌面版 CLI 生成 `.drawio` XML 文件并在本地导出 PNG/SVG/PDF/JPG。
 
-**Supported formats:** PNG, SVG, PDF, JPG — no browser automation needed.
+**支持格式：** PNG、SVG、PDF、JPG —— 无需浏览器自动化。
 
-PNG, SVG, and PDF exports support `--embed-diagram` (`-e`) — the exported file contains the full diagram XML, so opening it in draw.io recovers the editable diagram. Use double extensions (`name.drawio.png`) to signal embedded XML.
+PNG、SVG、PDF 导出支持 `--embed-diagram`（`-e`）—— 导出文件内嵌完整图表 XML，在 draw.io 中打开即可恢复可编辑图表。用双扩展名（`name.drawio.png`）标示内嵌 XML。
 
-## When to use / when NOT to use
+## 何时用 / 何时不用
 
-**Use this skill for:** polished, precise diagrams (architecture, network, strict UML, ERD), anything needing solid opaque fills, 10,000+ stock/branded shapes, swimlanes, or custom geometry, exported as editable PNG/SVG/PDF.
+**用本技能：** 精致、精确的图表（架构、网络、严格 UML、ERD）、需要实心不透明填充的、需要 10000+ 内置/品牌形状、泳道或自定义几何的、要导出为可编辑 PNG/SVG/PDF 的场景。
 
-**Do NOT use it — route elsewhere — for:**
-- A casual hand-drawn / whiteboard look → **excalidraw** or **tldraw**.
-- Diagrams-as-code that live in git / render in Markdown → **mermaid** (general) or **plantuml** (UML).
-- Freeform infinite-canvas sketching or freehand strokes → **tldraw**.
+**不用 —— 走别的路：**
+- 随手的手绘/白板风格 → **excalidraw** 或 **tldraw**
+- 图即代码（进 git / Markdown 渲染）→ **mermaid**（通用）或 **plantuml**（UML）
+- 自由无限画布或手绘笔触 → **tldraw**
 
-## Bundled resources
+## 内置资源
 
-When the workflow references one of these, read it on demand — none of them need to be in context up front.
+工作流引用到以下资源时按需读取——都不需要预先放进上下文。
 
-| File | Read it when |
+| 文件 | 何时读 |
 |---|---|
-| `references/diagram-types.md` | The user names a specific diagram type (ERD, UML class, sequence, architecture, ML/DL, flowchart) |
-| `references/shapes.md` + `scripts/shapesearch.py` | The diagram needs a **specific shape** — a cloud icon (AWS/Azure/GCP), Cisco/Kubernetes/network symbol, UML/BPMN/ER/electrical/P&ID element — or any time you'd otherwise guess a `style=` string. `shapesearch.py "<keywords>"` returns the exact official style for 10k+ shapes |
-| `scripts/aiicons.py` | The diagram involves an **AI/LLM brand** (OpenAI, Claude, Gemini, Mistral, Llama, HuggingFace, Ollama, LangChain, …) — `aiicons.py "<brand>"` returns a draw.io `image` style for the brand logo (lobe-icons via CDN; `--embed` to inline). draw.io has no built-in AI logos. See `references/shapes.md` → "AI / LLM brand logos" |
-| `references/style-presets.md` | The user asks to learn / save / list / set-default / delete a style preset, or you've resolved an active preset and need the application rules |
-| `references/style-extraction.md` | You're inside the Learn flow and need the extraction procedure (called from `style-presets.md`) |
-| `references/troubleshooting.md` | An export fails, vision rejects a PNG, or a rendering looks wrong |
-| `scripts/repair_png.py` | After every `-e` PNG export — fixes draw.io's truncated IEND chunk (issue #8) |
-| `scripts/encode_drawio_url.py` | The CLI is unavailable and you need a browser-fallback diagrams.net URL (`--edit` for an editable editor URL) |
-| `references/autolayout.md` | The diagram is large or layout-heavy (dependency/call graph, code structure, >~15 nodes) and you want Graphviz to place nodes + route edges instead of hand-placing coordinates |
-| `scripts/pyimports.py` · `jsimports.py` · `goimports.py` · `rustimports.py` | The user wants to visualize a **Python, JS/TS, Go, or Rust project** structure — extracts the import graph (transitive-reduced, optional `--group` containers, nested by sub-package) for autolayout |
-| `scripts/pyclasses.py` | The user wants a **Python class hierarchy / class diagram** — extracts classes + inheritance edges (boxed by module with `--group`) for autolayout |
-| `scripts/validate.py` | You generated a `.drawio` (especially via autolayout or for a large hand-placed diagram) and want a fast deterministic structural lint (dangling edges, dup/reserved ids, broken parents, overlaps) before the vision self-check |
+| `references/diagram-types.md` | 用户点名具体图表类型（ERD、UML 类、时序、架构、ML/DL、流程图） |
+| `references/shapes.md` + `scripts/shapesearch.py` | 图表需要**特定形状**——云图标（AWS/Azure/GCP）、Cisco/Kubernetes/网络符号、UML/BPMN/ER/电气/P&ID 元件——或任何你本来要瞎猜 `style=` 字符串的时候。`shapesearch.py "<keywords>"` 返回 10k+ 形状的精确官方 style |
+| `scripts/aiicons.py` | 图表涉及 **AI/LLM 品牌**（OpenAI、Claude、Gemini、Mistral、Llama、HuggingFace、Ollama、LangChain 等）—— `aiicons.py "<brand>"` 返回该品牌 logo 的 draw.io `image` style（lobe-icons 经 CDN；`--embed` 内联）。draw.io 没有内置 AI logo。见 `references/shapes.md` → "AI / LLM brand logos" |
+| `references/style-presets.md` | 用户要求学习/保存/列出/设默认/删除样式预设，或你已解析出激活的预设、需要应用规则 |
+| `references/style-extraction.md` | 你在 Learn 流程内且需要提取步骤（由 style-presets.md 调用） |
+| `references/troubleshooting.md` | 导出失败、vision 拒绝 PNG、渲染不对 |
+| `scripts/repair_png.py` | 每次 `-e` PNG 导出后 —— 修复 draw.io 截断的 IEND chunk（issue #8） |
+| `scripts/encode_drawio_url.py` | CLI 不可用、需要浏览器兜底 diagrams.net URL（`--edit` 得可编辑编辑器 URL） |
+| `references/autolayout.md` | 图表大或布局重（依赖/调用图、代码结构、>~15 节点）、想让 Graphviz 摆节点+布线而不是手摆坐标 |
+| `scripts/pyimports.py` · `jsimports.py` · `goimports.py` · `rustimports.py` | 用户想可视化 **Python、JS/TS、Go 或 Rust 项目**结构 —— 提取 import 图（传递归约、可选 `--group` 容器、按子包嵌套）供 autolayout |
+| `scripts/pyclasses.py` | 用户想要 **Python 类继承/类图** —— 提取类 + 继承边（`--group` 按模块装箱）供 autolayout |
+| `scripts/validate.py` | 你生成了 `.drawio`（尤其经 autolayout或大图手摆）并在 vision 自检前想跑一次快速确定性结构 lint（悬空边、重复/保留 id、坏 parent、重叠） |
 
-## Prerequisites
+## 前置条件
 
-The draw.io desktop app must be installed and the CLI accessible:
+必须安装 draw.io 桌面版且 CLI 可用：
 
-**macOS sandbox / sandbox isolation note (e.g., codex.app):** In some sandboxed macOS environments, invoking the draw.io desktop CLI (even `drawio --version`) can crash the draw.io process or produce no output. If that happens, treat the CLI as **unavailable in this sandbox isolation** — do not keep retrying inside the sandbox. Prefer a **non-sandboxed host environment** (outside sandbox isolation) for any CLI export work, or use the browser fallback / XML-only outputs.
+**macOS sandbox / 沙箱隔离注意（如 codex.app）：** 某些沙箱化 macOS 环境中，调用 draw.io 桌面 CLI（哪怕 `drawio --version`）可能让 draw.io 进程崩溃或无输出。若发生，把 CLI 视为**在此沙箱隔离中不可用**——不要在沙箱内反复重试。CLI 导出工作优先用**非沙箱宿主环境**（沙箱隔离外），或用浏览器兜底 / 纯 XML 输出。
 
 ```bash
 # macOS (Homebrew — recommended; CLI binary is `drawio`, not `draw.io`)
@@ -70,114 +70,114 @@ drawio --version
 drawio --version
 ```
 
-Install draw.io desktop if missing:
-- macOS: `brew install --cask drawio` or download from https://github.com/jgraph/drawio-desktop/releases
-- Windows: download installer from https://github.com/jgraph/drawio-desktop/releases
-- Linux: download `.deb`/`.rpm` from https://github.com/jgraph/drawio-desktop/releases — **do not use snap** (AppArmor sandbox denies secrets/keyring on servers, causes crash)
+缺失时安装 draw.io 桌面版：
+- macOS：`brew install --cask drawio` 或从 https://github.com/jgraph/drawio-desktop/releases 下载
+- Windows：从 https://github.com/jgraph/drawio-desktop/releases 下载安装包
+- Linux：从 https://github.com/jgraph/drawio-desktop/releases 下载 `.deb`/`.rpm` —— **不要用 snap**（AppArmor 沙箱在服务器上拒绝 secrets/keyring，导致崩溃）
 
-## Workflow
+## 工作流
 
-Before starting the workflow, assess whether the user's request is specific enough. If key details are missing, ask 1-3 focused questions:
-- **Diagram type** — which preset? (ERD, UML, Sequence, Architecture, ML/DL, Flowchart, or general)
-- **Output format** — PNG (default), SVG, PDF, or JPG?
-- **Output location** — default is the user's working dir; honor any explicit path the user gives (e.g. "put it in `./artifacts/`"). Don't ask if they didn't mention one.
-- **Scope/fidelity** — how many components? Any specific technologies or labels?
+开工前评估用户请求是否足够具体。缺关键细节时问 1-3 个聚焦问题：
+- **图表类型** —— 哪个预设？（ERD、UML、时序、架构、ML/DL、流程图，或通用）
+- **输出格式** —— PNG（默认）、SVG、PDF 还是 JPG？
+- **输出位置** —— 默认用户工作目录；用户给了显式路径就遵循（如"放 `./artifacts/`"）。没提就不问。
+- **范围/精度** —— 多少组件？有特定技术或标签吗？
 
-Skip clarification if the request already specifies these details or is clearly simple (e.g., "draw a flowchart of X").
+请求已含这些细节或明显简单（如"画个 X 的流程图"）时跳过澄清。
 
-**Step 0 — Resolve active preset.** Determine which (if any) user-defined style preset applies to this generation.
+**Step 0 —— 解析激活的预设。** 判断是否有用户自定义样式预设适用于本次生成。
 
-- Scan the user's message for a phrase that clearly names a style preset: "use my `<name>` style", "with my `<name>` style", "in `<name>` mode", "in the style of `<name>`". A bare `with <name>` does **not** count — "draw a diagram with redis" names a component, not a style. If a clear match is found → active preset = `<name>`.
-- Else, check `~/.drawio-skill/styles/` for any file with `"default": true`. If found → active preset = that one.
-- Else → no preset active; fall through to the built-in color/shape/edge conventions for the rest of the workflow.
+- 扫描用户消息中明确点名样式预设的短语："use my `<name>` style"、"with my `<name>` style"、"in `<name>` mode"、"in the style of `<name>`"。光秃秃的 `with <name>` **不算**——"draw a diagram with redis" 点名的是组件不是样式。清晰命中 → 激活预设 = `<name>`。
+- 否则，查 `~/.drawio-skill/styles/` 中是否有 `"default": true` 的文件。有 → 激活该预设。
+- 否则 → 无激活预设；工作流其余部分落入内置颜色/形状/边约定。
 
-Load the preset JSON from `~/.drawio-skill/styles/<name>.json`, falling back to `<this-skill-dir>/styles/built-in/<name>.json`. If the named preset exists in neither location, tell the user the name is unknown, list the available presets (user dir + built-in), and stop — do **not** silently fall back to defaults.
+从 `~/.drawio-skill/styles/<name>.json` 加载预设 JSON，兜底 `<this-skill-dir>/styles/built-in/<name>.json`。两处都不存在时，告知用户该名字未知、列出可用预设（用户目录 + 内置），然后停下——**不要**静默回落到默认。
 
-When a preset loads successfully, mention it in the first line of the reply: *"Using preset `<name>` (confidence: `<level>`)."* See the **Applying a preset** subsection below for how the preset changes color/shape/edge/font decisions.
+预设加载成功时，在回复第一行提及：*"Using preset `<name>` (confidence: `<level>`)."* 预设如何改变颜色/形状/边/字体决策，见下方 **Applying a preset** 小节。
 
-1. **Check deps** — **resolve which name the binary has on this system** and use that name verbatim in every subsequent command in this workflow. Try in order: (a) `drawio --version` (the canonical name for Homebrew cask, jgraph `.deb`/`.rpm`, Arch AUR), (b) `draw.io --version` (older builds, some custom symlinks, some distro packages), (c) macOS `.app` direct: `/Applications/draw.io.app/Contents/MacOS/draw.io --version`, (d) Windows: `"C:\Program Files\draw.io\draw.io.exe" --version`. The first one that prints a version is your binary; remember the exact path/name and substitute it for `drawio` in every export command below. **Do not copy the example commands verbatim if your binary is named differently** — the examples use `drawio` only because it's the most common. On macOS-Homebrew, `drawio` is just a thin wrapper script that execs `/Applications/draw.io.app/Contents/MacOS/draw.io` — they run the same engine, so candidate (c) is only needed when the `drawio` wrapper is absent (e.g. the app was installed by drag-and-drop without the cask).
-2. **Plan** — identify shapes, relationships, layout (LR or TB), group by tier/layer
-3. **Generate** — write `.drawio` XML file to disk. Hand-place coordinates for small/styled diagrams. **For large or layout-heavy diagrams (dependency/call graphs, code structure, >~15 nodes), don't hand-place** — describe the graph as JSON and run `python3 <this-skill-dir>/scripts/autolayout.py graph.json -o <name>.drawio` to compute node positions + orthogonal edge routing via Graphviz (see `references/autolayout.md`). For a **Python / JS-TS / Go / Rust project**, the matching importer (`scripts/pyimports.py`, `jsimports.py`, `goimports.py`, or `rustimports.py`) extracts the import graph (transitive-reduced; add `--group` to box modules by sub-package, nested for deep trees) ready for autolayout; for a **Python class hierarchy**, `scripts/pyclasses.py` extracts classes + inheritance instead. After generating any `.drawio`, run `python3 <this-skill-dir>/scripts/validate.py <name>.drawio` for a fast structural lint (dangling edges, dup ids, overlaps) before exporting. Default output dir is the user's working dir; if the user specified an output path or directory (e.g. `./artifacts/`, `docs/images/`), use that instead — `mkdir -p` the target dir first. Apply the same dir choice to PNG/SVG/PDF exports in steps 4 and 7.
-4. **Export draft** — run CLI to produce a preview PNG. **Do NOT pass `-e`** at this step — the embedded `zTXt mxGraphModel` chunk it adds causes vision APIs (Claude included) to return 400 "Could not process image" in step 5. **Cap the preview width with `--width 2000` (not `-s 2`)** — Claude's vision API rejects images larger than 2576×2576px with "Unable to resize image — dimensions exceed the 2576x2576px limit", and `-s 2` on a medium-or-larger diagram easily overshoots that ceiling. Save the clean preview as `<name>.png` (single extension). Embedding and full-resolution scale are for the final export only (step 7).
-5. **Self-check** — use the agent's built-in vision capability to read the exported PNG, catch obvious issues, auto-fix before showing user (requires a vision-enabled model such as Claude Sonnet/Opus). If reading the PNG returns a 400 / "Could not process image" error, you almost certainly exported with `-e` by mistake — re-export without `-e` and retry once. If it still fails, skip self-check and continue to step 6.
-6. **Review loop** — show image to user, collect feedback, apply targeted XML edits, re-export, repeat until approved
-7. **Final export** — re-export the approved version to all requested formats. Use `-e` here (PNG/SVG/PDF) so the deliverable stays editable in draw.io; save as `<name>.drawio.png` to signal embedded XML. **For PNG with `-e`, run `python3 <this-skill-dir>/scripts/repair_png.py <name>.drawio.png` immediately after** — draw.io's CLI truncates the IEND chunk in `-e` PNG output (8 bytes missing), producing a corrupt file that vision APIs and strict PNG decoders reject (issue #8). Report file paths.
+1. **检查依赖** —— **解析二进制在本系统的名字**，并在本工作流后续每条命令中逐字使用。按序尝试：(a) `drawio --version`（Homebrew cask、jgraph `.deb`/`.rpm`、Arch AUR 的规范名），(b) `draw.io --version`（旧构建、某些自制 symlink、某些发行版包），(c) macOS `.app` 直调：`/Applications/draw.io.app/Contents/MacOS/draw.io --version`，(d) Windows：`"C:\Program Files\draw.io\draw.io.exe" --version`。第一个能打印版本号的就是你的二进制；记住确切路径/名字并在下方每条导出命令中替换 `drawio`。**你的二进制名字不同就不要逐字抄示例命令**——示例用 `drawio` 只因它最常见。macOS-Homebrew 上 `drawio` 只是个 exec `/Applications/draw.io.app/Contents/MacOS/draw.io` 的薄包装脚本——同一引擎，候选 (c) 只在 `drawio` 包装缺失时需要（如拖拽安装而非 cask）。
+2. **规划** —— 定形状、关系、布局（LR 或 TB），按层/档分组
+3. **生成** —— 把 `.drawio` XML 写入磁盘。小图/样式图手摆坐标。**大图或布局重的图（依赖/调用图、代码结构、>~15 节点）不要手摆**——把图描述为 JSON，跑 `python3 <this-skill-dir>/scripts/autolayout.py graph.json -o <name>.drawio`，让 Graphviz 计算节点位置 + 正交布线（见 `references/autolayout.md`）。**Python / JS-TS / Go / Rust 项目**用对应 importer（`scripts/pyimports.py`、`jsimports.py`、`goimports.py`、`rustimports.py`）提取 import 图（传递归约；加 `--group` 按子包装箱，深树嵌套）供 autolayout；**Python 类继承**用 `scripts/pyclasses.py` 提取类 + 继承边。生成任何 `.drawio` 后，跑 `python3 <this-skill-dir>/scripts/validate.py <name>.drawio` 做快速结构 lint（悬空边、重复 id、重叠）再导出。默认输出目录是用户工作目录；用户指定了输出路径/目录（如 `./artifacts/`、`docs/images/`）就用它——先 `mkdir -p`。步骤 4 和 7 的 PNG/SVG/PDF 导出沿用同一目录选择。
+4. **导出草稿** —— 跑 CLI 出预览 PNG。**此步不要传 `-e`**——它附加的内嵌 `zTXt mxGraphModel` chunk 会让 vision API（含 Claude）在步骤 5 返回 400 "Could not process image"。**用 `--width 2000`（不是 `-s 2`）限制预览宽度**——Claude 的 vision API 拒绝大于 2576×2576px 的图（"Unable to resize image — dimensions exceed the 2576x2576px limit"），中大型图上 `-s 2` 很容易超限。干净预览存为 `<name>.png`（单扩展名）。内嵌与全分辨率缩放只属于最终导出（步骤 7）。
+5. **自检** —— 用 agent 内建 vision 能力读导出的 PNG，抓明显问题、给用户看之前自动修（需 vision 模型如 Claude Sonnet/Opus）。读 PNG 返回 400 / "Could not process image" 时，几乎肯定误传了 `-e`——去掉 `-e` 重导再试一次。仍失败则跳过自检进步骤 6。
+6. **评审循环** —— 给用户看图、收反馈、做针对性 XML 编辑、重导出、循环到批准
+7. **最终导出** —— 把批准版重导出到全部请求格式。此处用 `-e`（PNG/SVG/PDF）让交付物在 draw.io 中保持可编辑；存为 `<name>.drawio.png` 标示内嵌 XML。**`-e` PNG 后立即跑 `python3 <this-skill-dir>/scripts/repair_png.py <name>.drawio.png`**——draw.io CLI 在 `-e` PNG 输出中截断 IEND chunk（缺 8 字节），产出 vision API 和严格 PNG 解码器都拒绝的坏文件（issue #8）。报告文件路径。
 
-**If `drawio --version` crashes or prints nothing (common in restricted macOS sandbox isolation like codex.app):**
-- Do not keep retrying CLI invocations inside the sandbox.
-- Skip steps 4, 5, 6, and 7 (CLI export + PNG-based review) and use **Browser fallback** (`scripts/encode_drawio_url.py`) or deliver the `.drawio` XML only.
-- If the user needs PNG/SVG/PDF outputs, ask them to run the export commands in a **non-sandboxed host environment** (outside sandbox isolation) and share the resulting files.
+**若 `drawio --version` 崩溃或无输出（codex.app 等受限 macOS 沙箱隔离中常见）：**
+- 不要在沙箱内继续重试 CLI 调用。
+- 跳过步骤 4、5、6、7（CLI 导出 + 基于 PNG 的评审），改用**浏览器兜底**（`scripts/encode_drawio_url.py`）或只交付 `.drawio` XML。
+- 用户需要 PNG/SVG/PDF 时，请其在**非沙箱宿主环境**（沙箱隔离外）跑导出命令并回传文件。
 
-Escalation rule:
-- If the binary exists on PATH (or known app path exists) but execution fails with abnormal exit, empty output, Electron startup failure, display/session error, or likely sandbox restriction, prefer one escalated retry before falling back.
-- If the binary is missing entirely, do not escalate just to search more aggressively; go to install guidance or fallback.
+升级规则：
+- 二进制在 PATH（或已知 app 路径存在）但执行异常退出、空输出、Electron 启动失败、显示/会话错误、疑似沙箱限制——优先做一次升级重试再兜底。
+- 二进制完全缺失——不要仅为更激进地搜索而升级；直接走安装指引或兜底。
 
-### Step 5: Self-Check
+### Step 5: 自检
 
-After exporting the draft PNG, use the agent's vision capability (e.g., Claude's image input) to read the image and check for these issues before showing the user. If the agent does not support vision, skip self-check and show the PNG directly.
+导出草稿 PNG 后，用 agent 的 vision 能力（如 Claude 图像输入）读图并在给用户看之前检查这些问题。agent 不支持 vision 就跳过自检、直接展示 PNG。
 
-**Important:** the draft PNG read here must have been exported **without** `-e`. Draw.io's `-e` flag emits a PNG with a truncated IEND chunk (8 bytes of type+CRC missing) that the Anthropic vision API rejects with 400 "Could not process image" (issue #8). The simplest fix for the preview step is to skip `-e` entirely; the final export in step 7 keeps `-e` and runs the repair snippet. If you see the 400 error here, re-export without `-e` and retry once; if it still fails (any other reason), skip self-check and proceed to step 6.
+**重要：** 此处读的草稿 PNG 必须是**不带** `-e` 导出的。draw.io 的 `-e` 产出 IEND chunk 截断的 PNG（缺 8 字节 type+CRC），Anthropic vision API 以 400 "Could not process image" 拒绝（issue #8）。预览步骤最简单的修法是完全跳过 `-e`；步骤 7 的最终导出保留 `-e` 并跑修复脚本。此处见 400 就去掉 `-e` 重导再试一次；仍失败（其他原因）则跳过自检进步骤 6。
 
-| Check | What to look for | Auto-fix action |
+| 检查项 | 找什么 | 自动修动作 |
 |-------|-----------------|-----------------|
-| Overlapping shapes | Two or more shapes stacked on top of each other | Shift shapes apart by ≥200px |
-| Clipped labels | Text cut off at shape boundaries | Increase shape width/height to fit label |
-| Missing connections | Arrows that don't visually connect to shapes | Verify `source`/`target` ids match existing cells |
-| Off-canvas shapes | Shapes at negative coordinates or far from the main group | Move to positive coordinates near the cluster |
-| Edge-shape overlap | An edge/arrow visually crosses through an unrelated shape | Add waypoints (`<Array as="points">`) to route around the shape, or increase spacing between shapes |
-| Stacked edges | Multiple edges overlap each other on the same path | Distribute entry/exit points across the shape perimeter (use different exitX/entryX values) |
+| 形状重叠 | 两个以上形状叠在一起 | 把形状挪开 ≥200px |
+| 标签被裁 | 文字在形状边界处被切 | 增大形状宽/高容纳标签 |
+| 连接缺失 | 箭头视觉上没连到形状 | 验证 `source`/`target` id 匹配既有 cell |
+| 画出画布 | 形状在负坐标或远离主体 | 移到簇附近的正坐标 |
+| 边穿形状 | 一条边视觉上穿过无关形状 | 加 waypoint（`<Array as="points">`)绕行，或加大形状间距 |
+| 边叠边 | 多条边在同一路径上重叠 | 在形状周边分散出入点（用不同 exitX/entryX） |
 
-- Max **2 self-check rounds** — if issues remain after 2 fixes, show the user anyway
-- Re-export after each fix and re-read the new PNG
+- 最多 **2 轮自检**——2 轮修复后仍有问题就直接给用户看
+- 每次修复后重导出并重读新 PNG
 
-### Step 6: Review Loop
+### Step 6: 评审循环
 
-After self-check, show the exported image and ask the user for feedback.
+自检后，展示导出的图并向用户征求反馈。
 
-**Targeted edit rules** — for each type of feedback, apply the minimal XML change:
+**针对性编辑规则** —— 每类反馈做最小 XML 改动：
 
-| User request | XML edit action |
+| 用户要求 | XML 编辑动作 |
 |-------------|----------------|
-| Change color of X | Find `mxCell` by `value` matching X, update `fillColor`/`strokeColor` in `style` |
-| Add a new node | Append a new `mxCell` vertex with next available `id`, position near related nodes |
-| Remove a node | Delete the `mxCell` vertex and any edges with matching `source`/`target` |
-| Move shape X | Update `x`/`y` in the `mxGeometry` of the matching `mxCell` |
-| Resize shape X | Update `width`/`height` in the `mxGeometry` of the matching `mxCell` |
-| Add arrow from A to B | Append a new `mxCell` edge with `source`/`target` matching A and B ids |
-| Change label text | Update the `value` attribute of the matching `mxCell` |
-| Change layout direction | **Full regeneration** — rebuild XML with new orientation |
+| 改 X 的颜色 | 按 `value` 匹配 X 找到 `mxCell`，更新 `style` 中的 `fillColor`/`strokeColor` |
+| 加节点 | 追加新 `mxCell` vertex，用下一个可用 `id`，摆在相关节点旁 |
+| 删节点 | 删除该 `mxCell` vertex 及所有 `source`/`target` 匹配的边 |
+| 移动形状 X | 更新匹配 `mxCell` 的 `mxGeometry` 中 `x`/`y` |
+| 调整大小 | 更新匹配 `mxCell` 的 `mxGeometry` 中 `width`/`height` |
+| 加 A→B 箭头 | 追加新 `mxCell` edge，`source`/`target` 匹配 A、B 的 id |
+| 改标签文字 | 更新匹配 `mxCell` 的 `value` 属性 |
+| 改布局方向 | **整体重新生成** —— 按新方向重建 XML |
 
-**Rules:**
-- For single-element changes: edit existing XML in place — preserves layout tuning from prior iterations
-- For layout-wide changes (e.g., swap LR↔TB, "start over"): regenerate full XML
-- Overwrite the same `{name}.png` (no `-e`) each iteration — do not create `v1`, `v2`, `v3` files. `-e` is reserved for the final export in step 7.
-- After applying edits, re-export and show the updated image
-- Loop continues until user says approved / done / LGTM
-- **Safety valve:** after 5 iteration rounds, suggest the user open the `.drawio` file in draw.io desktop for fine-grained adjustments
+**规则：**
+- 单元素改动：就地编辑既有 XML——保留先前迭代调好的布局
+- 布局级改动（如 LR↔TB 互换、"推倒重来"）：整体重生成 XML
+- 每轮覆盖同一个 `{name}.png`（不带 `-e`）——不要造 `v1`、`v2`、`v3`。`-e` 只属于步骤 7 的最终导出
+- 应用编辑后重导出并展示新图
+- 循环直到用户说批准 / 完成 / LGTM
+- **安全阀：** 5 轮迭代后，建议用户在 draw.io 桌面版中打开 `.drawio` 做细调
 
-### Step 7: Final Export
+### Step 7: 最终导出
 
-Once the user approves:
-- Export to all requested formats (PNG, SVG, PDF, JPG) — default to PNG if not specified
-- Report file paths for both the `.drawio` source file and exported image(s)
-- **Auto-launch:** offer to open the `.drawio` file in draw.io desktop for fine-tuning — `open diagram.drawio` (macOS), `xdg-open` (Linux), `start` (Windows)
-- Confirm files are saved and ready to use
+用户批准后：
+- 导出到全部请求格式（PNG、SVG、PDF、JPG）——未指定则默认 PNG
+- 报告 `.drawio` 源文件与导出图的路径
+- **自动打开：** 主动提出在 draw.io 桌面版打开 `.drawio` 细调 —— `open diagram.drawio`（macOS）、`xdg-open`（Linux）、`start`（Windows）
+- 确认文件已保存可用
 
-## Style Presets
+## Style Presets（样式预设）
 
-A **style preset** is a named JSON file capturing a user's visual preferences (palette, shapes, font, edges). When active, it fully replaces the built-in color/shape conventions in this skill.
+**样式预设**是捕获用户视觉偏好（调色板、形状、字体、边）的命名 JSON 文件。激活时完全取代本技能的内置颜色/形状约定。
 
-**Lookup order** when SKILL.md's Step 0 resolves a preset name:
-1. `~/.drawio-skill/styles/<name>.json` — user presets (survive `git pull`)
-2. `<this-skill-dir>/styles/built-in/<name>.json` — shipped built-ins (`default`, `corporate`, `handdrawn`)
+**查找顺序**（SKILL.md Step 0 解析出预设名后）：
+1. `~/.drawio-skill/styles/<name>.json` —— 用户预设（`git pull` 后仍在）
+2. `<this-skill-dir>/styles/built-in/<name>.json` —— 内置（`default`、`corporate`、`handdrawn`）
 
-Always lowercase the user-provided name before any file operation — the schema enforces lowercase.
+任何文件操作前先把用户提供的名字转小写——schema 强制小写。
 
-**For everything else — Learn flow (extracting a preset from a file), management ops (list/default/delete/rename), application rules (color lookup, shape keywords, edges, fonts, extras, interaction with diagram-type presets), and validation — read `references/style-presets.md`.** It's only needed when the user invokes those flows or when an active preset must be applied to the current generation.
+**其余内容——Learn 流程（从文件提取预设）、管理操作（list/default/delete/rename）、应用规则（颜色查找、形状关键词、边、字体、附加项、与图表类型预设的交互）、校验——读 `references/style-presets.md`。** 仅当用户调用那些流程或需要把激活预设应用到本次生成时才需要。
 
-## Draw.io XML Structure
+## Draw.io XML 结构
 
-### File skeleton
+### 文件骨架
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -194,30 +194,30 @@ Always lowercase the user-provided name before any file operation — the schema
 </mxfile>
 ```
 
-**Rules:**
-- `id="0"` and `id="1"` are required root cells — never omit them
-- User shapes start at `id="2"` and increment sequentially
-- All shapes have `parent="1"` (unless inside a container — then use container's id)
-- All text uses `html=1` in style for proper rendering
-- **Never use `--` inside XML comments** — it's illegal per XML spec and causes parse errors
-- Escape special characters in attribute values: `&amp;`, `&lt;`, `&gt;`, `&quot;`
-- **Multi-line text in labels:** use `&#xa;` for line breaks inside `value` attributes (not literal `\n`). Example: `value="Line 1&#xa;Line 2"`
+**规则：**
+- `id="0"` 与 `id="1"` 是必需的根 cell——绝不省略
+- 用户形状从 `id="2"` 起顺序递增
+- 所有形状 `parent="1"`（容器内则用容器 id）
+- 所有文字在 style 中用 `html=1` 保证正确渲染
+- **绝不在 XML 注释里用 `--`**——XML 规范非法，导致解析错误
+- 属性值转义特殊字符：`&amp;`、`&lt;`、`&gt;`、`&quot;`
+- **标签多行文字：** `value` 属性内用 `&#xa;` 换行（不是字面 `\n`）。示例：`value="Line 1&#xa;Line 2"`
 
-### Shape types (vertex)
+### 形状类型（vertex）
 
-| Style keyword | Use for |
+| Style 关键字 | 用途 |
 |--------------|---------|
-| `rounded=0` | plain rectangle (default) |
-| `rounded=1` | rounded rectangle — services, modules |
-| `ellipse;` | circles/ovals — start/end, databases |
-| `rhombus;` | diamond — decision points |
-| `shape=mxgraph.aws4.resourceIcon;` | AWS icons |
-| `shape=cylinder3;` | cylinder — databases |
-| `swimlane;` | group/container with title bar |
+| `rounded=0` | 直角矩形（默认） |
+| `rounded=1` | 圆角矩形——服务、模块 |
+| `ellipse;` | 圆/椭圆——起止、数据库 |
+| `rhombus;` | 菱形——判断 |
+| `shape=mxgraph.aws4.resourceIcon;` | AWS 图标 |
+| `shape=cylinder3;` | 圆柱——数据库 |
+| `swimlane;` | 带标题栏的分组/容器 |
 
-For **vendor/branded icons** (AWS/Azure/GCP/Cisco/Kubernetes) and any non-trivial shape, don't guess the `shape=mxgraph.*` name — a wrong name renders as a blank box. Run `python3 <this-skill-dir>/scripts/shapesearch.py "<keywords>"` to get the exact official style + size, or see `references/shapes.md` for the hand-writable cheatsheet. For **AI/LLM brand logos** (OpenAI, Claude, Gemini, …), which draw.io has none of, use `python3 <this-skill-dir>/scripts/aiicons.py "<brand>"`.
+**厂商/品牌图标**（AWS/Azure/GCP/Cisco/Kubernetes）及任何非平凡形状，不要瞎猜 `shape=mxgraph.*` 名字——错名渲染成空白框。跑 `python3 <this-skill-dir>/scripts/shapesearch.py "<keywords>"` 拿精确官方 style + 尺寸，或看 `references/shapes.md` 的手写速查表。**AI/LLM 品牌 logo**（OpenAI、Claude、Gemini 等，draw.io 一个都没有）用 `python3 <this-skill-dir>/scripts/aiicons.py "<brand>"`。
 
-### Required properties
+### 必需属性
 
 ```xml
 <!-- Rectangle / rounded box -->
@@ -236,19 +236,19 @@ For **vendor/branded icons** (AWS/Azure/GCP/Cisco/Kubernetes) and any non-trivia
 </mxCell>
 ```
 
-### Containers and groups
+### 容器与分组
 
-For architecture diagrams with nested elements, use draw.io's parent-child containment — do **not** just place shapes on top of larger shapes.
+有嵌套元素的架构图，用 draw.io 的 parent-child 包含——**不要**只是把形状摆在大形状上面。
 
-| Type | Style | When to use |
+| 类型 | Style | 何时用 |
 |------|-------|-------------|
-| **Group** (invisible) | `group;pointerEvents=0;` | No visual border needed, container has no connections |
-| **Swimlane** (titled) | `swimlane;startSize=30;` | Container needs a visible title bar, or container itself has connections |
-| **Custom container** | Add `container=1;pointerEvents=0;` to any shape | Any shape acting as a container without its own connections |
+| **Group**（不可见） | `group;pointerEvents=0;` | 无需可视边框、容器自身无连接 |
+| **Swimlane**（带标题） | `swimlane;startSize=30;` | 容器需要可见标题栏、或容器自身有连接 |
+| **自定义容器** | 任意 shape 加 `container=1;pointerEvents=0;` | 任何充当容器但自身无连接的形状 |
 
-**Key rules:**
-- Add `pointerEvents=0;` to container styles that should not capture connections between children
-- Children set `parent="containerId"` and use coordinates **relative to the container**
+**关键规则：**
+- 不应截获子元素间连接的容器 style 加 `pointerEvents=0;`
+- 子元素设 `parent="containerId"`，坐标**相对容器**
 
 ```xml
 <!-- Swimlane container -->
@@ -264,9 +264,9 @@ For architecture diagrams with nested elements, use draw.io's parent-child conta
 </mxCell>
 ```
 
-### Connector (edge)
+### 连接器（edge）
 
-**CRITICAL:** Every edge `mxCell` must contain a `<mxGeometry relative="1" as="geometry" />` child element. Self-closing edge cells (`<mxCell ... edge="1" ... />`) are **invalid** and will not render. Always use the expanded form.
+**关键：** 每个 edge `mxCell` 必须含 `<mxGeometry relative="1" as="geometry" />` 子元素。自闭合的 edge cell（`<mxCell ... edge="1" ... />`）**无效**、不渲染。永远用展开形式。
 
 ```xml
 <!-- Directed arrow — always include rounded, orthogonalLoop, jettySize for clean routing -->
@@ -289,83 +289,83 @@ For architecture diagrams with nested elements, use draw.io's parent-child conta
 </mxCell>
 ```
 
-**Edge style rules:**
-- **Animated connectors:** add `flowAnimation=1;` to any edge style to show a moving dot animation along the arrow. Works in SVG export and draw.io desktop — ideal for data-flow and pipeline diagrams. Example: `style="edgeStyle=orthogonalEdgeStyle;flowAnimation=1;rounded=1;..."`
-- **Always** include `rounded=1;orthogonalLoop=1;jettySize=auto` — these enable smart routing that avoids overlaps
-- Pin `exitX/exitY/entryX/entryY` on every edge when a node has 2+ connections — distributes lines across the shape perimeter
-- Add `<Array as="points">` waypoints when an edge must detour around an intermediate shape
-- **Leave room for arrowheads:** the final straight segment between the last bend and the target shape must be ≥20px long. If too short, the arrowhead overlaps the bend and looks broken. Fix by increasing node spacing or adding explicit waypoints
+**边样式规则：**
+- **动画连线：** 任意边 style 加 `flowAnimation=1;` 显示沿箭头移动的光点动画。SVG 导出与 draw.io 桌面均有效——数据流/管线图理想之选。示例：`style="edgeStyle=orthogonalEdgeStyle;flowAnimation=1;rounded=1;..."`
+- **永远**包含 `rounded=1;orthogonalLoop=1;jettySize=auto`——启用避重叠的智能布线
+- 一个节点有 2+ 连接时，每条边都钉 `exitX/exitY/entryX/entryY`——把线分散到形状周边
+- 边必须绕过中间形状时加 `<Array as="points">` waypoint
+- **给箭头留空间：** 最后一个拐弯与目标形状之间的末段直线必须 ≥20px。太短则箭头叠在拐弯上、看起来坏了。加大节点间距或加显式 waypoint 修复
 
-### Distributing connections on a shape
+### 在形状上分散连接
 
-When multiple edges connect to the same shape, assign different entry/exit points to prevent stacking:
+多条边连同一形状时，分配不同出入点防叠：
 
-| Position | exitX/entryX | exitY/entryY | Use when |
+| 位置 | exitX/entryX | exitY/entryY | 何时用 |
 |----------|-------------|-------------|----------|
-| Top center | 0.5 | 0 | connecting to node above |
-| Top-left | 0.25 | 0 | 2nd connection from top |
-| Top-right | 0.75 | 0 | 3rd connection from top |
-| Right center | 1 | 0.5 | connecting to node on right |
-| Bottom center | 0.5 | 1 | connecting to node below |
-| Left center | 0 | 0.5 | connecting to node on left |
+| 顶中 | 0.5 | 0 | 连上方节点 |
+| 左上 | 0.25 | 0 | 自上第 2 连接 |
+| 右上 | 0.75 | 0 | 自上第 3 连接 |
+| 右中 | 1 | 0.5 | 连右侧节点 |
+| 底中 | 0.5 | 1 | 连下方节点 |
+| 左中 | 0 | 0.5 | 连左侧节点 |
 
-**Rule:** if a shape has N connections on one side, space them evenly (e.g., 3 connections on bottom → exitX = 0.25, 0.5, 0.75)
+**规则：** 一侧有 N 个连接就均分（如底部 3 连接 → exitX = 0.25、0.5、0.75）
 
-### Color palette (fillColor / strokeColor)
+### 调色板（fillColor / strokeColor）
 
-*Used only when no preset is active (see "Applying a preset" above).*
+*仅在无激活预设时使用（见上方 "Applying a preset"）。*
 
-| Color name | fillColor | strokeColor | Use for |
+| 颜色 | fillColor | strokeColor | 用途 |
 |-----------|-----------|-------------|---------|
-| Blue | `#dae8fc` | `#6c8ebf` | services, clients |
-| Green | `#d5e8d4` | `#82b366` | success, databases |
-| Yellow | `#fff2cc` | `#d6b656` | queues, decisions |
-| Orange | `#ffe6cc` | `#d79b00` | gateways, APIs |
-| Red/Pink | `#f8cecc` | `#b85450` | errors, alerts |
-| Grey | `#f5f5f5` | `#666666` | external/neutral |
-| Purple | `#e1d5e7` | `#9673a6` | security, auth |
+| 蓝 | `#dae8fc` | `#6c8ebf` | 服务、客户端 |
+| 绿 | `#d5e8d4` | `#82b366` | 成功、数据库 |
+| 黄 | `#fff2cc` | `#d6b656` | 队列、判断 |
+| 橙 | `#ffe6cc` | `#d79b00` | 网关、API |
+| 红/粉 | `#f8cecc` | `#b85450` | 错误、告警 |
+| 灰 | `#f5f5f5` | `#666666` | 外部/中性 |
+| 紫 | `#e1d5e7` | `#9673a6` | 安全、认证 |
 
-### Layout tips
+### 布局技巧
 
-**Spacing — scale with complexity:**
+**间距——随复杂度伸缩：**
 
-| Diagram complexity | Nodes | Horizontal gap | Vertical gap |
+| 图表复杂度 | 节点 | 水平间距 | 垂直间距 |
 |-------------------|-------|----------------|--------------|
-| Simple | ≤5 | 200px | 150px |
-| Medium | 6–10 | 280px | 200px |
-| Complex | >10 | 350px | 250px |
+| 简单 | ≤5 | 200px | 150px |
+| 中等 | 6–10 | 280px | 200px |
+| 复杂 | >10 | 350px | 250px |
 
-**Routing corridors:** between shape rows/columns, leave an extra ~80px empty corridor where edges can route without crossing shapes. Never place a shape in a gap that edges need to traverse.
+**布线走廊：** 形状行/列之间留约 80px 空走廊供边穿行不穿形状。绝不把形状放在边需要穿过的空档里。
 
-**Grid alignment:** snap all `x`, `y`, `width`, `height` values to **multiples of 10** — this ensures shapes align cleanly on draw.io's default grid and makes manual editing easier.
+**网格对齐：** 所有 `x`、`y`、`width`、`height` 取 **10 的倍数**——保证在 draw.io 默认网格上干净对齐、便于手改。
 
-**General rules:**
-- Plan a grid before assigning x/y coordinates — sketch node positions on paper/mentally first
-- Group related nodes in the same horizontal or vertical band
-- Use `swimlane` cells for logical grouping with visible borders
-- Place heavily-connected "hub" nodes centrally so edges radiate outward instead of crossing
-- To force straight vertical connections, pin entry/exit points explicitly on edges:
+**通用规则：**
+- 分配 x/y 前先规划网格——先在纸上/脑中勾出节点位置
+- 相关节点放同一水平或垂直带
+- 逻辑分组用带可见边框的 `swimlane`
+- 连接多的"枢纽"节点放中心，让边向外辐射而非交叉
+- 强制垂直直线连接时，在边上显式钉出入点：
   `exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0`
-- Always center-align a child node under its parent (same center x) to avoid diagonal routing
-- **Event bus pattern**: place Kafka/bus nodes in the **center of the service row**, not below — services on either side can reach it with short horizontal arrows (`exitX=1` left side, `exitX=0` right side), eliminating all line crossings
-- Horizontal connections (`exitX=1` or `exitX=0`) never cross vertical nodes in the same row; use them for peer-to-peer and publish connections
+- 子节点永远与父节点中心对齐（同 center x）避免斜线
+- **事件总线模式：** Kafka/总线节点放在**服务行的中心**而非下方——两侧服务用短水平箭头即可达（左侧 `exitX=1`、右侧 `exitX=0`），消灭所有交叉线
+- 水平连接（`exitX=1` 或 `exitX=0`）永不穿过同行竖直节点；用于对等连接与发布连接
 
-**Avoiding edge-shape overlap:**
-- Before finalizing coordinates, trace each edge path mentally — if it must cross an unrelated shape, either move the shape or add waypoints
-- For tree/hierarchical layouts: assign nodes to layers (rows), connect only between adjacent layers to minimize crossings
-- For star/hub layouts: place the hub center, satellites around it — edges stay short and radial
-- When an edge must span multiple rows/columns, route it along the outer corridor, not through the middle of the diagram
+**避免边穿形状：**
+- 定坐标前脑中走一遍每条边——必穿无关形状时，移形状或加 waypoint
+- 树/层级布局：节点分层（行），只在相邻层之间连接，减少交叉
+- 星型/枢纽布局：枢纽居中、卫星环绕——边短且呈辐射状
+- 边必须跨多行/列时，沿外围走廊走，不穿图中间
 
-## Export
+## 导出
 
-### Commands
+### 命令
 
-There are **two** export modes:
+有**两种**导出模式：
 
-- **Preview / self-check** (step 4 of the workflow) — no `-e`. Output `diagram.png`. Required for vision self-check; using `-e` here triggers a 400 "Could not process image" error from the vision API (issue #8).
-- **Final / deliverable** (step 7) — pass `-e`. Output `diagram.drawio.png`. The embedded XML keeps the file editable in draw.io.
+- **预览/自检**（工作流步骤 4）——不带 `-e`。输出 `diagram.png`。vision 自检必需；此处用 `-e` 会触发 vision API 400 "Could not process image"（issue #8）。
+- **最终/交付**（步骤 7）——传 `-e`。输出 `diagram.drawio.png`。内嵌 XML 保持文件在 draw.io 中可编辑。
 
-> All commands below write `drawio` as a placeholder for the binary you resolved in Step 1. If your binary is on PATH as `draw.io` (with dot — some older or distro-packaged installs), substitute `draw.io` throughout. If only the macOS `.app` or Windows `.exe` is available, use the full path variant shown a few lines down.
+> 下方命令中 `drawio` 是你在 Step 1 解析出的二进制名的占位符。你的二进制在 PATH 上叫 `draw.io`（带点——旧版或发行版打包）就全程替换之。只有 macOS `.app` 或 Windows `.exe` 可用时，用下方完整路径变体。
 
 ```bash
 # Preview PNG (use this in step 4, before self-check) — NO -e, width-capped to stay under vision's 2576px ceiling
@@ -397,56 +397,56 @@ drawio -x -f pdf -e -o diagram.pdf input.drawio
 mkdir -p ./artifacts && drawio -x -f png -e -s 2 -o ./artifacts/diagram.drawio.png input.drawio
 ```
 
-### Post-export PNG repair (required after `-e` PNG export)
+### 导出后 PNG 修复（`-e` PNG 导出后必需）
 
-draw.io CLI truncates the IEND chunk when emitting `-e` PNGs — the file ends with the 4-byte IEND length field but the `IEND` type + CRC (8 bytes) are missing. Result: vision APIs return 400 "Could not process image" and strict PNG decoders error out. SVG/PDF are unaffected.
+draw.io CLI 在产出 `-e` PNG 时截断 IEND chunk——文件以 4 字节 IEND 长度字段结尾，但 `IEND` 类型 + CRC（8 字节）缺失。后果：vision API 返回 400 "Could not process image"、严格 PNG 解码器报错。SVG/PDF 不受影响。
 
-Run this immediately after every `-e` PNG export:
+每次 `-e` PNG 导出后立即跑：
 
 ```bash
 python3 <this-skill-dir>/scripts/repair_png.py diagram.drawio.png
 ```
 
-The script's `endswith(IEND)` guard makes it a no-op once draw.io fixes the bug upstream — safe to run unconditionally.
+脚本的 `endswith(IEND)` 守卫使其在 draw.io 上游修好后自动变 no-op——无条件运行也安全。
 
-**Key flags:**
-- `-x` — export mode (required)
-- `-f` — format: `png`, `svg`, `pdf`, `jpg`
-- `-e` — embed diagram XML in output (PNG, SVG, PDF) — exported file remains editable in draw.io. **Skip for the preview PNG used in step 5 self-check** — `-e` PNGs have a truncated IEND chunk that vision APIs reject (issue #8). For final PNG export, keep `-e` and run `scripts/repair_png.py` (see Post-export PNG repair). SVG/PDF unaffected.
-- `-s` — scale: `1`, `2`, `3` (2 recommended for final PNG; do NOT use for the step-4 preview — see `--width`)
-- `--width <px>` — target width in pixels (no short form; `-w` does **not** exist and silently breaks the input-file parser). Use `--width 2000` for the step-4 preview to keep the PNG under Claude's 2576×2576 vision ceiling. There's also a `--height <px>` flag for tall-narrow diagrams. Don't combine `--width` with `-s`.
-- `-o` — output file path; accepts any directory (e.g. `./artifacts/diagram.drawio.png`) — `mkdir -p` the target dir first. Use `.drawio.png` double extension when embedding.
-- `-b` — border width around diagram (default: 0, recommend 10)
-- `-t` — transparent background (PNG only)
-- `--page-index 0` — export specific page (default: all)
+**关键 flag：**
+- `-x` —— 导出模式（必需）
+- `-f` —— 格式：`png`、`svg`、`pdf`、`jpg`
+- `-e` —— 输出内嵌图表 XML（PNG、SVG、PDF）——导出文件在 draw.io 中保持可编辑。**步骤 5 自检的预览 PNG 跳过**——`-e` PNG 的 IEND 截断会被 vision API 拒绝（issue #8）。最终 PNG 保留 `-e` 并跑 `scripts/repair_png.py`（见导出后修复）。SVG/PDF 不受影响
+- `-s` —— 缩放：`1`、`2`、`3`（最终 PNG 推荐 2；步骤 4 预览**不要用**——见 `--width`）
+- `--width <px>` —— 目标宽度像素（无短形式；`-w` **不存在**且会静默弄坏输入文件解析器）。步骤 4 预览用 `--width 2000` 保证 PNG 不超 Claude vision 的 2576×2576 上限。另有 `--height <px>` 供细高图用。不要与 `-s` 合用
+- `-o` —— 输出文件路径；接受任意目录（如 `./artifacts/diagram.drawio.png`）——先 `mkdir -p`。内嵌时用 `.drawio.png` 双扩展名
+- `-b` —— 图外边距（默认 0，推荐 10）
+- `-t` —— 透明背景（仅 PNG）
+- `--page-index 0` —— 导出指定页（默认全部）
 
-### Browser fallback (no CLI needed)
+### 浏览器兜底（无需 CLI）
 
-When the draw.io desktop CLI is unavailable, generate a client-side URL:
+draw.io 桌面 CLI 不可用时，生成客户端 URL：
 
 ```bash
 python3 <this-skill-dir>/scripts/encode_drawio_url.py input.drawio          # read-only viewer
 python3 <this-skill-dir>/scripts/encode_drawio_url.py --edit input.drawio    # opens in the editor
 ```
 
-Default prints a `https://viewer.diagrams.net/...#R…` viewer URL; `--edit` prints a `https://app.diagrams.net/...#create=…` URL that opens straight into the editable editor. Either way the diagram XML is `encodeURIComponent`-encoded, deflate-compressed, and base64'd into the URL fragment — the fragment (after `#`) is never sent to the server, so nothing is uploaded. The `encodeURIComponent` step is mandatory: without it, any diagram containing a literal `%` or non-ASCII (e.g. CJK) label makes the browser throw "URI malformed" and the diagram never opens.
+默认打印 `https://viewer.diagrams.net/...#R…` 查看器 URL；`--edit` 打印直接进入可编辑编辑器的 `https://app.diagrams.net/...#create=…` URL。两种方式下图表 XML 都经 `encodeURIComponent` 编码、deflate 压缩、base64 进 URL fragment——fragment（`#` 之后）永不发给服务器，零上传。`encodeURIComponent` 步骤是强制的：没有它，任何含字面 `%` 或非 ASCII（如 CJK）标签的图会让浏览器抛 "URI malformed"、图永远打不开。
 
-Open the URL with `open "$URL"` (macOS) / `xdg-open "$URL"` (Linux). On **WSL2 / Windows**, `cmd.exe` drops the `#fragment` — write a `.url` shortcut file and open that instead (see `references/troubleshooting.md` → "WSL2 / Windows specifics").
+用 `open "$URL"`（macOS）/ `xdg-open "$URL"`（Linux）打开 URL。**WSL2 / Windows** 上 `cmd.exe` 会丢 `#fragment`——改写一个 `.url` 快捷方式文件再打开（见 `references/troubleshooting.md` → "WSL2 / Windows specifics"）。
 
-### Fallback chain
+### 兜底链
 
-When tools are unavailable, degrade gracefully:
+工具不可用时优雅降级：
 
-| Scenario | Behavior |
+| 场景 | 行为 |
 |----------|----------|
-| draw.io CLI missing, Python available | Use browser fallback (diagrams.net URL) |
-| draw.io CLI missing, Python missing | Generate `.drawio` XML only; instruct user to open in draw.io desktop or diagrams.net manually |
-| draw.io CLI crashes / no output in macOS sandbox isolation | Treat CLI as unavailable in-sandbox; use browser fallback / XML-only; ask user to run CLI exports in a non-sandboxed host environment |
-| Vision unavailable for self-check | Skip self-check (step 5); proceed directly to showing user the exported PNG |
-| Export fails (Chromium/display issues) | On Linux, retry with `xvfb-run -a`; if still failing, deliver `.drawio` XML and suggest manual export |
-| Export fails on Linux server (headless) | Try in order: (1) `xvfb-run -a`, (2) append `--no-sandbox` at the very end if root, (3) add `--disable-gpu`, (4) `export HOME=/tmp`, (5) install apt deps (`libgtk-3-0 libnotify4 libnss3 libgbm1 libasound2t64` etc.), (6) fall back to [tomkludy/drawio-renderer](https://hub.docker.com/r/tomkludy/drawio-renderer) Docker (REST API for headless export) |
+| draw.io CLI 缺失、Python 可用 | 用浏览器兜底（diagrams.net URL） |
+| draw.io CLI 缺失、Python 缺失 | 只生成 `.drawio` XML；指引用户在 draw.io 桌面版或 diagrams.net 手动打开 |
+| draw.io CLI 在 macOS 沙箱隔离中崩溃/无输出 | 视 CLI 为沙箱内不可用；用浏览器兜底 / 纯 XML；请用户在非沙箱宿主环境跑 CLI 导出 |
+| vision 不可用做自检 | 跳过自检（步骤 5）；直接给用户看导出的 PNG |
+| 导出失败（Chromium/显示问题） | Linux 上用 `xvfb-run -a` 重试；仍失败则交付 `.drawio` XML 并建议手动导出 |
+| Linux 服务器（headless）导出失败 | 按序尝试：(1) `xvfb-run -a`，(2) root 时在**末尾**追加 `--no-sandbox`，(3) 加 `--disable-gpu`，(4) `export HOME=/tmp`，(5) 装 apt 依赖（`libgtk-3-0 libnotify4 libnss3 libgbm1 libasound2t64` 等），(6) 兜底 [tomkludy/drawio-renderer](https://hub.docker.com/r/tomkludy/drawio-renderer) Docker（headless 导出 REST API） |
 
-### Checking if drawio is in PATH
+### 检查 drawio 是否在 PATH
 
 ```bash
 # Prefer the Homebrew / Linux-package binary name (no dot)
@@ -466,23 +466,23 @@ else
 fi
 ```
 
-On **WSL2 / native Windows**, opening exported files and browser-fallback URLs needs path conversion + a `.url`-file workaround (`cmd.exe` drops URL `#fragment`s) — see the "WSL2 / Windows specifics" section in `references/troubleshooting.md`.
+**WSL2 / 原生 Windows** 上打开导出文件与浏览器兜底 URL 需要路径转换 + `.url` 文件 workaround（`cmd.exe` 丢 URL `#fragment`）——见 `references/troubleshooting.md` 的 "WSL2 / Windows specifics" 节。
 
 ## Common Mistakes
 
-When something looks wrong (export fails, vision rejects a PNG, layout broken, edges misroute), see `references/troubleshooting.md` for a row-by-row mistake → fix table.
+出问题时（导出失败、vision 拒绝 PNG、布局坏、边乱走），看 `references/troubleshooting.md` 的逐行"错误 → 修复"表。
 
-## Diagram Type Presets
+## 图表类型预设
 
-When the user requests a specific diagram type, read `references/diagram-types.md` for the matching preset (shapes, edges, layout direction). Pick by user phrasing:
+用户请求特定图表类型时，读 `references/diagram-types.md` 取对应预设（形状、边、布局方向）。按用户措辞选择：
 
-| User says | Section in `references/diagram-types.md` |
+| 用户说 | `references/diagram-types.md` 中的节 |
 |---|---|
-| "ER diagram", "schema diagram", "data model" | ERD |
-| "UML class diagram", "class diagram" | UML Class |
-| "sequence diagram", "interaction diagram", "lifeline" | Sequence |
-| "architecture", "system diagram", "service diagram" | Architecture |
-| "neural network", "model architecture", "ML diagram", "deep learning" | ML / Deep Learning Model |
-| "flowchart", "decision tree", "process flow" | Flowchart |
+| "ER diagram"、"schema diagram"、"data model" | ERD |
+| "UML class diagram"、"class diagram" | UML Class |
+| "sequence diagram"、"interaction diagram"、"lifeline" | Sequence |
+| "architecture"、"system diagram"、"service diagram" | Architecture |
+| "neural network"、"model architecture"、"ML diagram"、"deep learning" | ML / Deep Learning Model |
+| "flowchart"、"decision tree"、"process flow" | Flowchart |
 
-The diagram-type preset sets **structural** style keywords. If a user style preset is also active (see `## Style Presets`), keep the structural keywords and layer color/font/edge/extras on top — read `references/style-presets.md` → "Interaction with diagram-type presets" for the merge rules.
+图表类型预设设定**结构性** style 关键字。若用户样式预设也激活（见 `## Style Presets`），保留结构关键字、把颜色/字体/边/附加项叠上去——合并规则见 `references/style-presets.md` → "Interaction with diagram-type presets"。
