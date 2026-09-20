@@ -1,27 +1,27 @@
-# E2E Testing Patterns Implementation Playbook
+# E2E 测试模式实施手册
 
-This file contains detailed patterns, checklists, and code samples referenced by the skill.
+本文件承载技能引用的详细模式、清单与代码样例。
 
-## Core Concepts
+## 核心概念
 
-### 1. E2E Testing Fundamentals
+### 1. E2E 测试基础
 
-**What to Test with E2E:**
-- Critical user journeys (login, checkout, signup)
-- Complex interactions (drag-and-drop, multi-step forms)
-- Cross-browser compatibility
-- Real API integration
-- Authentication flows
+**E2E 该测什么：**
+- 关键用户旅程（登录、结账、注册）
+- 复杂交互（拖放、多步表单）
+- 跨浏览器兼容
+- 真实 API 集成
+- 认证流程
 
-**What NOT to Test with E2E:**
-- Unit-level logic (use unit tests)
-- API contracts (use integration tests)
-- Edge cases (too slow)
-- Internal implementation details
+**E2E 不该测什么：**
+- 单元级逻辑（用单元测试）
+- API 契约（用集成测试）
+- 边界情况（太慢）
+- 内部实现细节
 
-### 2. Test Philosophy
+### 2. 测试哲学
 
-**The Testing Pyramid:**
+**测试金字塔：**
 ```
         /\
        /E2E\         ← Few, focused on critical paths
@@ -31,17 +31,18 @@ This file contains detailed patterns, checklists, and code samples referenced by
    /Unit Tests\      ← Many, fast, isolated
   /────────────\
 ```
+（E2E 少而聚焦关键路径；集成多测组件交互；单元多而快、隔离。）
 
-**Best Practices:**
-- Test user behavior, not implementation
-- Keep tests independent
-- Make tests deterministic
-- Optimize for speed
-- Use data-testid, not CSS selectors
+**最佳实践：**
+- 测用户行为，不测实现
+- 测试保持独立
+- 测试保持确定性
+- 为速度优化
+- 用 data-testid，不用 CSS 选择器
 
-## Playwright Patterns
+## Playwright 模式
 
-### Setup and Configuration
+### 安装与配置
 
 ```typescript
 // playwright.config.ts
@@ -76,7 +77,7 @@ export default defineConfig({
 });
 ```
 
-### Pattern 1: Page Object Model
+### Pattern 1: Page Object Model（页对象模型）
 
 ```typescript
 // pages/LoginPage.ts
@@ -136,7 +137,7 @@ test('failed login shows error', async ({ page }) => {
 });
 ```
 
-### Pattern 2: Fixtures for Test Data
+### Pattern 2: 测试数据 Fixtures
 
 ```typescript
 // fixtures/test-data.ts
@@ -193,7 +194,7 @@ test('user can update profile', async ({ page, testUser }) => {
 });
 ```
 
-### Pattern 3: Waiting Strategies
+### Pattern 3: 等待策略
 
 ```typescript
 // ❌ Bad: Fixed timeouts
@@ -226,7 +227,7 @@ await Promise.all([
 ]);
 ```
 
-### Pattern 4: Network Mocking and Interception
+### Pattern 4: 网络 Mock 与拦截
 
 ```typescript
 // Mock API responses
@@ -276,9 +277,9 @@ test('payment flow with mocked Stripe', async ({ page }) => {
 });
 ```
 
-## Cypress Patterns
+## Cypress 模式
 
-### Setup and Configuration
+### 安装与配置
 
 ```typescript
 // cypress.config.ts
@@ -300,7 +301,7 @@ export default defineConfig({
 });
 ```
 
-### Pattern 1: Custom Commands
+### Pattern 1: 自定义命令
 
 ```typescript
 // cypress/support/commands.ts
@@ -370,9 +371,9 @@ cy.intercept('GET', '/api/data', (req) => {
 });
 ```
 
-## Advanced Patterns
+## 高级模式
 
-### Pattern 1: Visual Regression Testing
+### Pattern 1: 视觉回归测试
 
 ```typescript
 // With Playwright
@@ -404,7 +405,7 @@ test('button in all states', async ({ page }) => {
 });
 ```
 
-### Pattern 2: Parallel Testing with Sharding
+### Pattern 2: 分片并行测试
 
 ```typescript
 // playwright.config.ts
@@ -430,7 +431,7 @@ export default defineConfig({
 // npx playwright test --shard=2/4
 ```
 
-### Pattern 3: Accessibility Testing
+### Pattern 3: 无障碍测试
 
 ```typescript
 // Install: npm install @axe-core/playwright
@@ -458,16 +459,16 @@ test('form is accessible', async ({ page }) => {
 });
 ```
 
-## Best Practices
+## 最佳实践
 
-1. **Use Data Attributes**: `data-testid` or `data-cy` for stable selectors
-2. **Avoid Brittle Selectors**: Don't rely on CSS classes or DOM structure
-3. **Test User Behavior**: Click, type, see - not implementation details
-4. **Keep Tests Independent**: Each test should run in isolation
-5. **Clean Up Test Data**: Create and destroy test data in each test
-6. **Use Page Objects**: Encapsulate page logic
-7. **Meaningful Assertions**: Check actual user-visible behavior
-8. **Optimize for Speed**: Mock when possible, parallel execution
+1. **用数据属性**：`data-testid` 或 `data-cy` 做稳定选择器
+2. **避免脆选择器**：不依赖 CSS 类或 DOM 结构
+3. **测用户行为**：点击、输入、看见——不是实现细节
+4. **测试保持独立**：每个测试隔离运行
+5. **清理测试数据**：每个测试内创建并销毁
+6. **用 Page Object**：封装页面逻辑
+7. **有意义的断言**：检查用户真实可见的行为
+8. **为速度优化**：能 mock 就 mock、并行执行
 
 ```typescript
 // ❌ Bad selectors
@@ -480,17 +481,17 @@ cy.getByLabel('Email address').type('user@example.com');
 cy.get('[data-testid="email-input"]').type('user@example.com');
 ```
 
-## Common Pitfalls
+## 常见坑
 
-- **Flaky Tests**: Use proper waits, not fixed timeouts
-- **Slow Tests**: Mock external APIs, use parallel execution
-- **Over-Testing**: Don't test every edge case with E2E
-- **Coupled Tests**: Tests should not depend on each other
-- **Poor Selectors**: Avoid CSS classes and nth-child
-- **No Cleanup**: Clean up test data after each test
-- **Testing Implementation**: Test user behavior, not internals
+- **flaky 测试**：用恰当的等待，不用固定超时
+- **测试慢**：mock 外部 API、并行执行
+- **过度测试**：不要每个边界都用 E2E 测
+- **测试耦合**：测试之间不应相互依赖
+- **烂选择器**：避免 CSS 类与 nth-child
+- **不清理**：每个测试后清理测试数据
+- **测实现**：测用户行为，不测内部
 
-## Debugging Failing Tests
+## 调试失败测试
 
 ```typescript
 // Playwright debugging
@@ -521,11 +522,11 @@ test('checkout flow', async ({ page }) => {
 await page.pause();  // Pauses execution, opens inspector
 ```
 
-## Resources
+## 资源
 
-- **references/playwright-best-practices.md**: Playwright-specific patterns
-- **references/cypress-best-practices.md**: Cypress-specific patterns
-- **references/flaky-test-debugging.md**: Debugging unreliable tests
-- **assets/e2e-testing-checklist.md**: What to test with E2E
-- **assets/selector-strategies.md**: Finding reliable selectors
-- **scripts/test-analyzer.ts**: Analyze test flakiness and duration
+- **references/playwright-best-practices.md**：Playwright 专用模式
+- **references/cypress-best-practices.md**：Cypress 专用模式
+- **references/flaky-test-debugging.md**：调试不可靠测试
+- **assets/e2e-testing-checklist.md**：E2E 该测什么
+- **assets/selector-strategies.md**：找可靠选择器
+- **scripts/test-analyzer.ts**：分析测试 flakiness 与时长
