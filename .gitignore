@@ -35,3 +35,6 @@ err.txt
 
 # 本地 spike / 实验产物（不入库）
 .spike-zcode-goal/
+
+# SDD 产物目录(单计划隔离,终审后删除 · 2026-09-20 C10)
+.loopengine/
