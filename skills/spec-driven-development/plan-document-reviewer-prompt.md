@@ -1,39 +1,39 @@
-# Plan Document Reviewer Prompt Template
+# Plan Document Reviewer Prompt 模板
 
-Use this template when dispatching a plan document reviewer subagent.
+派遣 plan 文档 reviewer subagent 时使用此模板。
 
-**Purpose:** Verify the plan is complete, matches the spec, and has proper task decomposition.
+**用途：** 验证计划完整、与 spec 匹配、任务拆解得当。
 
-**Dispatch after:** The complete plan is written.
+**派遣时机：** 完整计划写完之后。
 
 ```
 Task tool (general-purpose):
   description: "Review plan document"
   prompt: |
-    You are a plan document reviewer. Verify this plan is complete and ready for implementation.
+    你是 plan 文档 reviewer。验证这份计划完整且可进入实施。
 
-    **Plan to review:** [PLAN_FILE_PATH]
-    **Spec for reference:** [SPEC_FILE_PATH]
+    **待审 plan：** [PLAN_FILE_PATH]
+    **参考 spec：** [SPEC_FILE_PATH]
 
-    ## What to Check
+    ## 检查什么
 
-    | Category | What to Look For |
+    | 类别 | 找什么 |
     |----------|------------------|
-    | Completeness | TODOs, placeholders, incomplete tasks, missing steps |
-    | Spec Alignment | Plan covers spec requirements, no major scope creep |
-    | Task Decomposition | Tasks have clear boundaries, steps are actionable |
-    | Buildability | Could an engineer follow this plan without getting stuck? |
+    | 完整性 | TODO、占位符、不完整任务、缺步骤 |
+    | Spec 对齐 | 计划覆盖 spec 需求、无重大范围蔓延 |
+    | 任务拆解 | 任务边界清晰、步骤可执行 |
+    | 可构建性 | 工程师能照着做而不卡住吗？ |
 
-    ## Calibration
+    ## 校准
 
-    **Only flag issues that would cause real problems during implementation.**
-    An implementer building the wrong thing or getting stuck is an issue.
-    Minor wording, stylistic preferences, and "nice to have" suggestions are not.
+    **只标记会在实施中造成真问题的 issue。**
+    implementer 做出错的东西或卡住 = issue。
+    措辞小事、风格偏好、"锦上添花"建议不是。
 
-    Approve unless there are serious gaps — missing requirements from the spec,
-    contradictory steps, placeholder content, or tasks so vague they can't be acted on.
+    除非存在严重缺口——漏了 spec 需求、步骤矛盾、占位符内容、任务含糊到无法
+    执行——否则批准。
 
-    ## Output Format
+    ## 输出格式
 
     ## Plan Review
 
@@ -46,4 +46,4 @@ Task tool (general-purpose):
     - [suggestions for improvement]
 ```
 
-**Reviewer returns:** Status, Issues (if any), Recommendations
+**Reviewer 回报：** Status、Issues（如有）、Recommendations

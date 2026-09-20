@@ -1,16 +1,16 @@
-# CONTEXT.md Format
+# CONTEXT.md 格式
 
-## Structure
+## 结构
 
 ```md
 # {Context Name}
 
-{One or two sentence description of what this context is and why it exists.}
+{一两句话描述这个上下文是什么、为什么存在。}
 
 ## Language
 
 **Order**:
-{A one or two sentence description of the term}
+{一两句话描述该术语}
 _Avoid_: Purchase, transaction
 
 **Invoice**:
@@ -22,18 +22,18 @@ A person or organization that places orders.
 _Avoid_: Client, buyer, account
 ```
 
-## Rules
+## 规则
 
-- **Be opinionated.** When multiple words exist for the same concept, pick the best one and list the others under `_Avoid_`.
-- **Keep definitions tight.** One or two sentences max. Define what it IS, not what it does.
-- **Only include terms specific to this project's context.** General programming concepts (timeouts, error types, utility patterns) don't belong even if the project uses them extensively. Before adding a term, ask: is this a concept unique to this context, or a general programming concept? Only the former belongs.
-- **Group terms under subheadings** when natural clusters emerge. If all terms belong to a single cohesive area, a flat list is fine.
+- **要有主见。** 同一概念存在多个词时，选最好的那个，其余列入 `_Avoid_`。
+- **定义要紧凑。** 最多一两句。定义它**是**什么，不是它做什么。
+- **只收本上下文特有的术语。** 通用编程概念（超时、错误类型、工具模式）不算，哪怕项目大量使用。加词前自问：这是本上下文独有的概念，还是通用编程概念？只有前者该进。
+- **自然聚类出现时按子标题分组。** 若所有词属单一内聚领域，平铺即可。
 
-## Single vs multi-context repos
+## 单上下文 vs 多上下文仓库
 
-**Single context (most repos):** One `CONTEXT.md` at the repo root.
+**单上下文（多数仓库）：** repo 根放一个 `CONTEXT.md`。
 
-**Multiple contexts:** A `CONTEXT-MAP.md` at the repo root lists the contexts, where they live, and how they relate to each other:
+**多上下文：** repo 根放 `CONTEXT-MAP.md`，列出各上下文、位置、相互关系：
 
 ```md
 # Context Map
@@ -51,10 +51,10 @@ _Avoid_: Client, buyer, account
 - **Ordering ↔ Billing**: Shared types for `CustomerId` and `Money`
 ```
 
-The skill infers which structure applies:
+技能自动推断适用哪种结构：
 
-- If `CONTEXT-MAP.md` exists, read it to find contexts
-- If only a root `CONTEXT.md` exists, single context
-- If neither exists, create a root `CONTEXT.md` lazily when the first term is resolved
+- 存在 `CONTEXT-MAP.md` → 读它找各上下文
+- 只有根 `CONTEXT.md` → 单上下文
+- 都不存在 → 首个术语被解析时惰性创建根 `CONTEXT.md`
 
-When multiple contexts exist, infer which one the current topic relates to. If unclear, ask.
+多上下文存在时，推断当前话题关联哪个。不清楚就问。
