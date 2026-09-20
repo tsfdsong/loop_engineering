@@ -1,7 +1,7 @@
 ---
 name: brainstorming
 description: |
-  TRIGGER: 创建功能 / 构建组件 / 添加能力 / 修改行为 / 用户想设计新东西但不确定要什么（不用于：纯研究用 deep-research，调试用 systematic-debugging，代码审查用 code-reviewer，对已有 spec 的对抗审讯用 grilling）
+  TRIGGER: 创建功能 / 构建组件 / 添加能力 / 修改行为 / 用户想设计新东西但不确定要什么（不用于：纯研究用 deep-research，调试用 systematic-debugging，代码审查用 code-reviewer，对已有 spec 的对抗审讯用 grilling，术语/词汇表/ADR 维护用 domain-modeling）
   RULE: no specific rule（方法论 skill · 创意发散方法论）
   DETAIL: 本 SKILL.md（头脑风暴方法论）
 ---
