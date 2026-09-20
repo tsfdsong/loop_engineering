@@ -1,8 +1,8 @@
-# Indexing Principles
+# Indexing Principles（索引原则）
 
-> When and how to create indexes effectively.
+> 何时建索引、怎么建有效。
 
-## When to Create Indexes
+## 何时建索引
 
 ```
 Index these:
@@ -18,17 +18,19 @@ Don't over-index:
 ├── Columns rarely queried
 ```
 
-## Index Type Selection
+（该索引：WHERE 列 / JOIN 列 / ORDER BY 列 / 外键列 / 唯一约束。别过度索引：写密集表（拖慢插入）/ 低基数列 / 极少查询的列。）
 
-| Type | Use For |
+## 索引类型选择
+
+| 类型 | 用途 |
 |------|---------|
-| **B-tree** | General purpose, equality & range |
-| **Hash** | Equality only, faster |
-| **GIN** | JSONB, arrays, full-text |
-| **GiST** | Geometric, range types |
-| **HNSW/IVFFlat** | Vector similarity (pgvector) |
+| **B-tree** | 通用，等值与范围 |
+| **Hash** | 仅等值，更快 |
+| **GIN** | JSONB、数组、全文 |
+| **GiST** | 几何、范围类型 |
+| **HNSW/IVFFlat** | 向量相似度（pgvector） |
 
-## Composite Index Principles
+## 复合索引原则
 
 ```
 Order matters for composite indexes:
@@ -37,3 +39,5 @@ Order matters for composite indexes:
 ├── Most selective first
 └── Match query pattern
 ```
+
+（顺序很重要：等值列在前、范围列在后、高选择性优先、匹配查询模式。）

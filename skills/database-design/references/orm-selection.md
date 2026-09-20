@@ -1,8 +1,8 @@
 # ORM Selection (2025)
 
-> Choose ORM based on deployment and DX needs.
+> 基于部署与 DX 需求选 ORM。
 
-## Decision Tree
+## 决策树
 
 ```
 What's the context?
@@ -20,11 +20,13 @@ What's the context?
     └── SQLAlchemy 2.0 (async support)
 ```
 
-## Comparison
+（边缘部署/包体积敏感→Drizzle（最小、类 SQL）；最佳 DX/schema 优先→Prisma（migration、studio）；最大控制→原生 SQL + query builder；Python 生态→SQLAlchemy 2.0（async 支持）。）
 
-| ORM | Best For | Trade-offs |
+## 对比
+
+| ORM | 最适合 | 代价 |
 |-----|----------|------------|
-| **Drizzle** | Edge, TypeScript | Newer, less examples |
-| **Prisma** | DX, schema management | Heavier, not edge-ready |
-| **Kysely** | Type-safe SQL builder | Manual migrations |
-| **Raw SQL** | Complex queries, control | Manual type safety |
+| **Drizzle** | 边缘、TypeScript | 较新、示例少 |
+| **Prisma** | DX、schema 管理 | 更重、不适边缘 |
+| **Kysely** | 类型安全 SQL 构建器 | 手动 migration |
+| **Raw SQL** | 复杂查询、控制 | 手动类型安全 |

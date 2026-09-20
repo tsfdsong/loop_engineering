@@ -1,8 +1,8 @@
-# Query Optimization
+# Query Optimization（查询优化）
 
-> N+1 problem, EXPLAIN ANALYZE, optimization priorities.
+> N+1 问题、EXPLAIN ANALYZE、优化优先级。
 
-## N+1 Problem
+## N+1 问题
 
 ```
 What is N+1?
@@ -17,7 +17,9 @@ Solutions:
 └── Subquery → Fetch related in one query
 ```
 
-## Query Analysis Mindset
+（N+1 = 1 条查父记录 + N 条查关联记录，非常慢。解法：JOIN 单查询全量 / ORM 预加载 / DataLoader 批量缓存（GraphQL）/ 子查询一次取关联。）
+
+## 查询分析心智
 
 ```
 Before optimizing:
@@ -27,10 +29,12 @@ Before optimizing:
 └── Identify missing indexes
 ```
 
-## Optimization Priorities
+（优化前：EXPLAIN ANALYZE / 找 Seq Scan（全表扫）/ 对比实际与预估行数 / 识别缺失索引。）
 
-1. **Add missing indexes** (most common issue)
-2. **Select only needed columns** (not SELECT *)
-3. **Use proper JOINs** (avoid subqueries when possible)
-4. **Limit early** (pagination at database level)
-5. **Cache** (when appropriate)
+## 优化优先级
+
+1. **补缺失索引**（最常见问题）
+2. **只选需要的列**（不要 SELECT *）
+3. **用恰当的 JOIN**（尽量避免子查询）
+4. **尽早 limit**（数据库层分页）
+5. **缓存**（适当时）

@@ -1,8 +1,8 @@
-# Schema Design Principles
+# Schema Design Principles（schema 设计原则）
 
-> Normalization, primary keys, timestamps, relationships.
+> 范式化、主键、时间戳、关系。
 
-## Normalization Decision
+## 范式化决策
 
 ```
 When to normalize (separate tables):
@@ -18,16 +18,18 @@ When to denormalize (embed/duplicate):
 └── Simpler queries needed
 ```
 
-## Primary Key Selection
+（范式化（拆表）：数据跨行重复 / 更新需多处改 / 关系清晰 / 查询模式受益。反范式化（嵌入/冗余）：读性能关键 / 数据极少变 / 总是一起取 / 需要更简单的查询。）
 
-| Type | Use When |
+## 主键选择
+
+| 类型 | 何时用 |
 |------|----------|
-| **UUID** | Distributed systems, security |
-| **ULID** | UUID + sortable by time |
-| **Auto-increment** | Simple apps, single database |
-| **Natural key** | Rarely (business meaning) |
+| **UUID** | 分布式系统、安全 |
+| **ULID** | UUID + 按时间可排序 |
+| **Auto-increment** | 简单应用、单数据库 |
+| **自然键** | 极少（带业务含义） |
 
-## Timestamp Strategy
+## 时间戳策略
 
 ```
 For every table:
@@ -38,15 +40,17 @@ For every table:
 Use TIMESTAMPTZ (with timezone) not TIMESTAMP
 ```
 
-## Relationship Types
+（每张表：created_at 创建时间 / updated_at 最后修改 / deleted_at 软删（如需）。用 TIMESTAMPTZ（带时区）不用 TIMESTAMP。）
 
-| Type | When | Implementation |
+## 关系类型
+
+| 类型 | 何时 | 实现 |
 |------|------|----------------|
-| **One-to-One** | Extension data | Separate table with FK |
-| **One-to-Many** | Parent-children | FK on child table |
-| **Many-to-Many** | Both sides have many | Junction table |
+| **一对一** | 扩展数据 | 独立表 + FK |
+| **一对多** | 父子 | 子表放 FK |
+| **多对多** | 双方都有多 | 联结表 |
 
-## Foreign Key ON DELETE
+## 外键 ON DELETE
 
 ```
 ├── CASCADE → Delete children with parent
@@ -54,3 +58,5 @@ Use TIMESTAMPTZ (with timezone) not TIMESTAMP
 ├── RESTRICT → Prevent delete if children exist
 └── SET DEFAULT → Children get default value
 ```
+
+（CASCADE 级联删子；SET NULL 子成孤儿；RESTRICT 有子禁删；SET DEFAULT 子取默认值。）
