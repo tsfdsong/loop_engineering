@@ -463,6 +463,43 @@ description: use when implementing any feature or bugfix, before writing impleme
 
 ---
 
+## Slimming Discipline（瘦身纪律 · 2026-09-20 引入）
+
+> 源自 superpowers v6.2.0 全库压缩运动的实证教训。
+
+**铁律：反 rationalization 内容是行为载荷，不是赘肉。**
+
+实证数据（superpowers v6.2.0 A/B 对照）：
+- 直接删除 TDD skill 的 "Why Order Matters" 论证段 → test-first 行为 8/10 → 5/10（退化 37.5%）
+- 同等内容以"借口表行内反驳"形式保留 → 行为不退化
+- 结论：同样字数，放的位置决定是否起作用 — 合理化发生的瞬间，agent 命中的是表格行，不是远处的章节
+
+**瘦身操作规则：**
+1. 删任何"反驳借口/合理化"内容前，必须评估行为退化风险（该内容是否在压力场景中被命中过？）
+2. 评估不了 = 不删，或改写为借口表行内形式再删原段落
+3. 压缩运动纪律：每一刀都微测（抽样 2-3 次压力场景），行为退化 = 重做或恢复，**不 ship 退化版本**
+4. recap / social proof / benefits-selling 类说服性内容可以删（无行为载荷）；反 rationalization 内容不可当同类删
+
+## Match the Form to the Failure + Micro-Test Wording（2026-09-20 引入）
+
+> 源自 superpowers v6.0.0 writing-skills 方法论。
+
+**形式匹配失败模式**：指导的形态由它要防的失败模式决定 ——
+
+| 失败模式 | 正确形式 | 错误形式 |
+|---|---|---|
+| 明知故犯（走捷径诱惑） | 扁平禁令 + No exceptions 清单 | 长篇解释 why |
+| 不知道怎样算合规 | worked example（good/bad 对照） | 抽象原则 |
+| 压力下合理化（"这次不一样"） | 借口表行内反驳 + Red Flags 自检 | 独立章节远置 |
+| 检索失败（找不到） | CSO description 触发器 + keyword | 正文详述 |
+
+**Micro-Test Wording（措辞微测）**：
+- 场景：改了措辞 / 移动了内容位置，想确认行为不退化
+- 协议：抽样跑 2-3 次压力场景（有指导）vs 无指导对照组；行为达标 = 合入；退化 = 重写措辞再测
+- 与本仓库盲对比方法（匿名化 + 交叉分配 + rubric 评分）同族；微测是轻量版，重大改动仍用完整盲对比
+
+---
+
 ## RED-GREEN-REFACTOR for Skills
 
 遵循 TDD 循环：

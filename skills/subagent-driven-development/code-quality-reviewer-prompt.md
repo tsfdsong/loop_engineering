@@ -1,10 +1,10 @@
-# Code Quality Reviewer Prompt Template
+# Code Quality Reviewer Prompt 模板
 
-Use this template when dispatching a code quality reviewer subagent.
+派遣 code quality reviewer subagent 时使用此模板。
 
-**Purpose:** Verify implementation is well-built (clean, tested, maintainable)
+**用途：** 验证实现质量（干净、有测试、可维护）
 
-**Only dispatch after spec compliance review passes.**
+**仅在 spec 合规评审通过后派遣。**
 
 ```
 Task tool (general-purpose):
@@ -16,10 +16,11 @@ Task tool (general-purpose):
   HEAD_SHA: [current commit]
 ```
 
-**In addition to standard code quality concerns, the reviewer should check:**
-- Does each file have one clear responsibility with a well-defined interface?
-- Are units decomposed so they can be understood and tested independently?
-- Is the implementation following the file structure from the plan?
-- Did this implementation create new files that are already large, or significantly grow existing files? (Don't flag pre-existing file sizes — focus on what this change contributed.)
+**除标准代码质量关注点外，reviewer 还应检查：**
+- 每个文件是否职责单一、接口清晰？
+- 单元是否拆分到可独立理解与测试？
+- 实现是否遵循计划中的文件结构？
+- 本次实现是否新建了已属大文件的新文件、或显著增大了既有文件？（不追责既有文件大小——只看本次改动贡献了什么。）
+- reviewer 不得派遣自己的 subagent —— 直接审 diff（递归派遣曾产生重复评审）。
 
-**Code reviewer returns:** Strengths, Issues (Critical/Important/Minor), Assessment
+**Code reviewer 回报：** Strengths（优点）、Issues（Critical/Important/Minor 三层）、Assessment（结论）

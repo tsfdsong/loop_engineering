@@ -3,7 +3,7 @@ name: subagent-driven-development
 description: |
   TRIGGER: 当前 session 内执行有独立任务的实施计划（前置：必须有现成 spec-driven-development 计划；每任务派独立 subagent + spec/quality 两阶段审查）。无现成 plan 或临时多问题域并行 → dispatching-parallel-agents（不用于：写计划用 spec-driven-development，单文件小修直接做不派 subagent）
   RULE: V3 + V4 主承载 — subagent 边界清晰 + worktree 隔离
-  DETAIL: 本 SKILL.md（subagent 派发 + 两阶段审查）+ AGENTS.md §V3 §V4
+  DETAIL: 本 SKILL.md（subagent 派遣 + 两阶段审查）+ AGENTS.md §V3 §V4
 metadata:
   version: "1.0"  # v6.1 增强：新增 bridgeable 能力
   type: skill
@@ -12,17 +12,17 @@ metadata:
   bridge_env: "LOOPENGINE_BRIDGES=alpha 启用桥接"
 ---
 
-# Subagent-Driven Development
+# Subagent-Driven Development（subagent 驱动开发）
 
-Execute plan by dispatching fresh subagent per task, with two-stage review after each: spec compliance review first, then code quality review.
+按计划逐任务派遣全新 subagent 执行，每任务后两阶段评审：先 spec compliance（规格合规）评审，再 code quality（代码质量）评审。
 
-**Why subagents:** You delegate tasks to specialized agents with isolated context. By precisely crafting their instructions and context, you ensure they stay focused and succeed at their task. They should never inherit your session's context or history — you construct exactly what they need. This also preserves your own context for coordination work.
+**为什么用 subagent：** 你把任务委派给上下文隔离的专职 agent。通过精确构造它们的指令与上下文，确保它们聚焦并完成任务。它们绝不继承你的会话上下文或历史——你构造的正是它们所需的。这同时也为你自己的上下文留出协调工作的空间。
 
-**Core principle:** Fresh subagent per task + two-stage review (spec then quality) = high quality, fast iteration
+**核心原则：** 每任务全新 subagent + 两阶段评审（先 spec 后 quality）= 高质量、快迭代
 
-**Continuous execution:** Do not pause to check in with your human partner between tasks. Execute all tasks from the plan without stopping. The only reasons to stop are: BLOCKED status you cannot resolve, ambiguity that genuinely prevents progress, or all tasks complete. "Should I continue?" prompts and progress summaries waste their time — they asked you to execute the plan, so execute it.
+**连续执行：** 任务之间不要停下来向 human partner 打卡。不间断执行计划中全部任务。仅以下情况停下：无法解决的 BLOCKED、真正阻碍推进的歧义、或全部任务完成。"要继续吗？"类提问和进度小结浪费他们的时间——他们让你执行计划，那就执行。
 
-## When to Use
+## 何时使用
 
 ```dot
 digraph when_to_use {
@@ -42,13 +42,13 @@ digraph when_to_use {
 }
 ```
 
-**vs. Executing Plans (parallel session):**
-- Same session (no context switch)
-- Fresh subagent per task (no context pollution)
-- Two-stage review after each task: spec compliance first, then code quality
-- Faster iteration (no human-in-loop between tasks)
+**vs. Executing Plans（并行会话执行）：**
+- 同一会话（无上下文切换）
+- 每任务全新 subagent（无上下文污染）
+- 每任务后两阶段评审：先 spec 合规，后代码质量
+- 迭代更快（任务间无人工介入）
 
-## The Process
+## 流程
 
 ```dot
 digraph process {
@@ -95,197 +95,198 @@ digraph process {
 }
 ```
 
-## Model Selection
+## Model Selection（模型选择）
 
-Use the least powerful model that can handle each role to conserve cost and increase speed.
+用能胜任各角色的最弱模型，省成本提速度。
 
-**Mechanical implementation tasks** (isolated functions, clear specs, 1-2 files): use a fast, cheap model. Most implementation tasks are mechanical when the plan is well-specified.
+**机械实现任务**（隔离函数、清晰规格、1-2 文件）：用快而廉的模型。计划写得当时，大多数实现任务都是机械的。
 
-**Integration and judgment tasks** (multi-file coordination, pattern matching, debugging): use a standard model.
+**集成与判断任务**（多文件协调、模式匹配、调试）：用标准模型。
 
-**Architecture, design, and review tasks**: use the most capable available model.
+**架构、设计与评审任务**：用最强可用模型。
 
-**Task complexity signals:**
-- Touches 1-2 files with a complete spec → cheap model
-- Touches multiple files with integration concerns → standard model
-- Requires design judgment or broad codebase understanding → most capable model
+**任务复杂度信号：**
+- 动 1-2 文件且规格完整 → 廉价模型
+- 动多文件且有集成顾虑 → 标准模型
+- 需要设计判断或广域代码库理解 → 最强模型
 
-## Handling Implementer Status
+## 处理 implementer 状态
 
-Implementer subagents report one of four statuses. Handle each appropriately:
+implementer subagent 回报四种状态之一，分别处理：
 
-**DONE:** Proceed to spec compliance review.
+**DONE：** 进入 spec 合规评审。
 
-**DONE_WITH_CONCERNS:** The implementer completed the work but flagged doubts. Read the concerns before proceeding. If the concerns are about correctness or scope, address them before review. If they're observations (e.g., "this file is getting large"), note them and proceed to review.
+**DONE_WITH_CONCERNS：** implementer 完成了工作但标注了疑虑。先读疑虑再继续。若关乎正确性或范围，先处理再评审。若只是观察（如"这个文件在变大"），记下并进入评审。
 
-**NEEDS_CONTEXT:** The implementer needs information that wasn't provided. Provide the missing context and re-dispatch.
+**NEEDS_CONTEXT：** implementer 缺少未提供的信息。补上缺失上下文后重新派遣。
 
-**BLOCKED:** The implementer cannot complete the task. Assess the blocker:
-1. If it's a context problem, provide more context and re-dispatch with the same model
-2. If the task requires more reasoning, re-dispatch with a more capable model
-3. If the task is too large, break it into smaller pieces
-4. If the plan itself is wrong, escalate to the human
+**BLOCKED：** implementer 无法完成任务。评估阻塞点：
+1. 上下文问题 → 提供更多上下文，同模型重派
+2. 任务需要更强推理 → 换更强模型重派
+3. 任务太大 → 拆小
+4. 计划本身有错 → 上报人类
 
-**Never** ignore an escalation or force the same model to retry without changes. If the implementer said it's stuck, something needs to change.
+**绝不**无视升级请求或让同一模型无变化地重试。implementer 说卡住了，就一定有东西要变。
 
-## Prompt Templates
+## Prompt 模板
 
-- `./implementer-prompt.md` - Dispatch implementer subagent
-- `./spec-reviewer-prompt.md` - Dispatch spec compliance reviewer subagent
-- `./code-quality-reviewer-prompt.md` - Dispatch code quality reviewer subagent
+- `./implementer-prompt.md` —— 派遣 implementer subagent
+- `./spec-reviewer-prompt.md` —— 派遣 spec 合规 reviewer subagent
+- `./code-quality-reviewer-prompt.md` —— 派遣 code quality reviewer subagent
 
-## Example Workflow
+## 示例工作流
 
 ```
-You: I'm using Subagent-Driven Development to execute this plan.
+你：我正在使用 Subagent-Driven Development 执行此计划。
 
-[Read plan file once: docs/superpowers/plans/feature-plan.md]
-[Extract all 5 tasks with full text and context]
-[Create TodoWrite with all tasks]
+[读计划文件一次：docs/superpowers/plans/feature-plan.md]
+[提取全部 5 个任务的全文与上下文]
+[创建含全部任务的 TodoWrite]
 
-Task 1: Hook installation script
+Task 1: Hook 安装脚本
 
-[Get Task 1 text and context (already extracted)]
-[Dispatch implementation subagent with full task text + context]
+[取 Task 1 全文与上下文（已提取）]
+[派遣 implementer subagent，附任务全文 + 上下文]
 
-Implementer: "Before I begin - should the hook be installed at user or system level?"
+implementer："开始前——hook 装在用户级还是系统级？"
 
-You: "User level (~/.config/superpowers/hooks/)"
+你："用户级（~/.config/superpowers/hooks/）"
 
-Implementer: "Got it. Implementing now..."
-[Later] Implementer:
-  - Implemented install-hook command
-  - Added tests, 5/5 passing
-  - Self-review: Found I missed --force flag, added it
-  - Committed
+implementer："明白，开始实现…"
+[稍后] implementer：
+  - 实现了 install-hook 命令
+  - 加了测试，5/5 通过
+  - 自审：发现漏了 --force flag，已补
+  - 已 commit
 
-[Dispatch spec compliance reviewer]
-Spec reviewer: ✅ Spec compliant - all requirements met, nothing extra
+[派遣 spec 合规 reviewer]
+spec reviewer：✅ 规格合规——所有要求满足，无多余
 
-[Get git SHAs, dispatch code quality reviewer]
-Code reviewer: Strengths: Good test coverage, clean. Issues: None. Approved.
+[取 git SHA，派遣 code quality reviewer]
+quality reviewer：优点：测试覆盖好、干净。问题：无。批准。
 
-[Mark Task 1 complete]
+[标记 Task 1 完成]
 
-Task 2: Recovery modes
+Task 2: 恢复模式
 
-[Get Task 2 text and context (already extracted)]
-[Dispatch implementation subagent with full task text + context]
+[取 Task 2 全文与上下文（已提取）]
+[派遣 implementer subagent，附任务全文 + 上下文]
 
-Implementer: [No questions, proceeds]
-Implementer:
-  - Added verify/repair modes
-  - 8/8 tests passing
-  - Self-review: All good
-  - Committed
+implementer：[无提问，直接开工]
+implementer：
+  - 加了 verify/repair 模式
+  - 8/8 测试通过
+  - 自审：无问题
+  - 已 commit
 
-[Dispatch spec compliance reviewer]
-Spec reviewer: ❌ Issues:
-  - Missing: Progress reporting (spec says "report every 100 items")
-  - Extra: Added --json flag (not requested)
+[派遣 spec 合规 reviewer]
+spec reviewer：❌ 问题：
+  - 缺失：进度汇报（spec 要求"每 100 项汇报一次"）
+  - 多余：加了 --json flag（未要求）
 
-[Implementer fixes issues]
-Implementer: Removed --json flag, added progress reporting
+[implementer 修复问题]
+implementer：移除 --json flag，补上进度汇报
 
-[Spec reviewer reviews again]
-Spec reviewer: ✅ Spec compliant now
+[spec reviewer 复审]
+spec reviewer：✅ 现在规格合规
 
-[Dispatch code quality reviewer]
-Code reviewer: Strengths: Solid. Issues (Important): Magic number (100)
+[派遣 code quality reviewer]
+quality reviewer：优点：扎实。问题（Important）：魔法数字（100）
 
-[Implementer fixes]
-Implementer: Extracted PROGRESS_INTERVAL constant
+[implementer 修复]
+implementer：抽出 PROGRESS_INTERVAL 常量
 
-[Code reviewer reviews again]
-Code reviewer: ✅ Approved
+[quality reviewer 复审]
+quality reviewer：✅ 批准
 
-[Mark Task 2 complete]
+[标记 Task 2 完成]
 
-...
+…
 
-[After all tasks]
-[Dispatch final code-reviewer]
-Final reviewer: All requirements met, ready to merge
+[全部任务后]
+[派遣最终 code-reviewer]
+最终 reviewer：所有要求满足，可合并
 
-Done!
+完成！
 ```
 
-## Advantages
+## 优势
 
-**vs. Manual execution:**
-- Subagents follow TDD naturally
-- Fresh context per task (no confusion)
-- Parallel-safe (subagents don't interfere)
-- Subagent can ask questions (before AND during work)
+**vs. 手动执行：**
+- subagent 天然遵循 TDD
+- 每任务全新上下文（无混淆）
+- 并行安全（subagent 互不干扰）
+- subagent 可提问（开工前与工作中都可）
 
-**vs. Executing Plans:**
-- Same session (no handoff)
-- Continuous progress (no waiting)
-- Review checkpoints automatic
+**vs. Executing Plans：**
+- 同一会话（无交接）
+- 连续推进（无等待）
+- 评审检查点自动化
 
-**Efficiency gains:**
-- No file reading overhead (controller provides full text)
-- Controller curates exactly what context is needed
-- Subagent gets complete information upfront
-- Questions surfaced before work begins (not after)
+**效率收益：**
+- 无读文件开销（controller 提供全文）
+- controller 精确筛选所需上下文
+- subagent 一次性拿到完整信息
+- 问题在开工前暴露（而非事后）
 
-**Quality gates:**
-- Self-review catches issues before handoff
-- Two-stage review: spec compliance, then code quality
-- Review loops ensure fixes actually work
-- Spec compliance prevents over/under-building
-- Code quality ensures implementation is well-built
+**质量闸门：**
+- 自审在交接前拦截问题
+- 两阶段评审：spec 合规 + 代码质量
+- 评审循环确保修复真正生效
+- spec 合规防过度/不足实现
+- code quality 确保实现质量
 
-**Cost:**
-- More subagent invocations (implementer + 2 reviewers per task)
-- Controller does more prep work (extracting all tasks upfront)
-- Review loops add iterations
-- But catches issues early (cheaper than debugging later)
+**成本：**
+- 更多 subagent 调用（每任务 implementer + 2 reviewer）
+- controller 准备工作更多（前置提取全部任务）
+- 评审循环增加迭代
+- 但问题拦得早（比事后调试便宜）
 
 ## Red Flags
 
-**Never:**
-- Start implementation on main/master branch without explicit user consent
-- Skip reviews (spec compliance OR code quality)
-- Proceed with unfixed issues
-- Dispatch multiple implementation subagents in parallel (conflicts)
-- Make subagent read plan file (provide full text instead)
-- Skip scene-setting context (subagent needs to understand where task fits)
-- Ignore subagent questions (answer before letting them proceed)
-- Accept "close enough" on spec compliance (spec reviewer found issues = not done)
-- Skip review loops (reviewer found issues = implementer fixes = review again)
-- Let implementer self-review replace actual review (both are needed)
-- **Start code quality review before spec compliance is ✅** (wrong order)
-- Move to next task while either review has open issues
+**Never：**
+- 未经用户明确同意就在 main/master 分支上开工
+- 跳过评审（spec 合规 OR 代码质量）
+- 带未修复问题继续
+- 并行派遣多个 implementer subagent（冲突）
+- 从 subagent 内再派遣 subagent（递归派遣）——implementer/reviewer 必须自己做自己的活；嵌套派遣曾产生重复评审与失控成本（2026-09-20 引入，源自 superpowers v6.3.0）
+- 让 subagent 自己读计划文件（直接提供全文）
+- 跳过场景铺垫上下文（subagent 需理解任务所处位置）
+- 无视 subagent 提问（先答再放行）
+- spec 合规上接受"差不多"（spec reviewer 发现问题 = 没完成）
+- 跳过评审循环（reviewer 发现问题 = implementer 修复 = 再评审）
+- 让 implementer 自审替代正式评审（两者都需要）
+- **spec 合规未 ✅ 就开始 code quality 评审**（顺序错误）
+- 任一评审还有未决问题时进入下一任务
 
-**If subagent asks questions:**
-- Answer clearly and completely
-- Provide additional context if needed
-- Don't rush them into implementation
+**subagent 提问时：**
+- 清晰完整地回答
+- 需要时补上下文
+- 不催促其开工
 
-**If reviewer finds issues:**
-- Implementer (same subagent) fixes them
-- Reviewer reviews again
-- Repeat until approved
-- Don't skip the re-review
+**reviewer 发现问题时：**
+- implementer（同一 subagent）修复
+- reviewer 再评审
+- 循环直到批准
+- 不跳过复审
 
-**If subagent fails task:**
-- Dispatch fix subagent with specific instructions
-- Don't try to fix manually (context pollution)
+**subagent 任务失败时：**
+- 派遣修复 subagent 并附具体指令
+- 不亲手修（上下文污染）
 
-## Integration
+## Integration（衔接）
 
-**Required workflow skills:**
-- **superpowers:using-git-worktrees** - Ensures isolated workspace (creates one or verifies existing)
-- **spec-driven-development** - Creates the plan this skill executes
-- **superpowers:requesting-code-review** - Code review template for reviewer subagents
-- **superpowers:finishing-a-development-branch** - Complete development after all tasks
+**必需工作流技能：**
+- **superpowers:using-git-worktrees** —— 确保隔离工作区（创建或验证）
+- **spec-driven-development** —— 产出本技能执行的计划
+- **superpowers:requesting-code-review** —— reviewer subagent 的代码评审模板
+- **superpowers:finishing-a-development-branch** —— 全部任务后收尾
 
-**Subagents should use:**
-- **superpowers:test-driven-development** - Subagents follow TDD for each task
+**subagent 应使用：**
+- **superpowers:test-driven-development** —— subagent 每任务遵循 TDD
 
-**Alternative workflow:**
-- **superpowers:executing-plans** - Use for parallel session instead of same-session execution
+**替代工作流：**
+- **superpowers:executing-plans** —— 并行会话执行时改用它
 
 ---
 
@@ -348,36 +349,36 @@ LOOPENGINE_BRIDGES=alpha /loop --reviewer=subagent-dd 实现分页功能
 ## §N. V3 Subagent 边界详规（吸收原 AGENTS.md §7.5 / §7.7 · v2.0 迁移）
 
 > **来源**：原 AGENTS.md §7 Subagent 边界红线（v1.0.6+ · 909 行结构）。
-> v2.0 AGENTS.md 精简为 V3 一句话铁律（"派 subagent 必须传 5 类输入；主 agent 不得仅转述，必须独立验证"），"4 不派发硬条件"和"已知边界表"作为补充规则迁入本节，与本 SKILL.md 既有的 "Red Flags Never 清单"（L245-260）互补——前者管"是否派"，后者管"派了之后怎么用"。
+> v2.0 AGENTS.md 精简为 V3 一句话铁律（"派 subagent 必须传 5 类输入；主 agent 不得仅转述，必须独立验证"），"4 不派发硬条件"和"已知边界表"作为补充规则迁入本节，与本 SKILL.md 既有的 "Red Flags Never 清单"（上文）互补——前者管"是否派"，后者管"派了之后怎么用"。
 > 归档溯源：`docs/legacy/red-lines-history.md` §5.7。
 
 ### N.1 4 不派发硬条件（原 §7.5）
 
-满足以下任一条件时**不得派发 subagent**（即使本 SKILL.md "The Process" 流程已就绪，也必须留在主 agent 单步执行）：
+满足以下任一条件时**不得派发 subagent**（即使本 SKILL.md "流程"已就绪，也必须留在主 agent 单步执行）：
 
 | # | 不派发条件 | 原因 | 替代做法 |
 |---|-----------|------|---------|
 | 1 | **问题之间共享状态**（需协调而非并行） | subagent 上下文隔离 → 状态不同步 → 互相覆盖 | 主 agent 串行处理，状态保留在同一上下文 |
-| 2 | **需全 session 上下文** | subagent **never inherit session context**（本 SKILL.md L19 原则）→ 缺失历史 → 误判 | 主 agent 自己做，或先抽取足够上下文再派（成本可能高于自做） |
+| 2 | **需全 session 上下文** | subagent **never inherit session context**（本 SKILL.md 上文原则）→ 缺失历史 → 误判 | 主 agent 自己做，或先抽取足够上下文再派（成本可能高于自做） |
 | 3 | **探索性调试**（结果不确定） | 结果不确定 → 单步更可控；subagent 走偏后主 agent 难以纠偏 | 主 agent 单步 systematic-debugging |
 | 4 | **顺序依赖**（前一步输出决定后一步输入） | 前步未出后步无法启动 → 并行无意义 → 派了也是串行 | 主 agent 直接串行，避免 handoff 开销 |
 
 **违规判定**：违反 4 不派发条件强行并行 = 🔴 红线违规（与"派发时不传 5 类输入"、"subagent 返回未经独立验证即宣称完成"同级）。
 
-**与 Red Flags Never 清单（L245-260）的边界**：
-- Red Flags 管**派发之后**的流程违规（跳过 review / 并行 implementer / 让 subagent 读 plan 文件 / 忽略 subagent 提问 等）
+**与 Red Flags Never 清单的边界**：
+- Red Flags 管**派发之后**的流程违规（跳过 review / 并行 implementer / 让 subagent 读 plan 文件 / 忽视 subagent 提问 等）
 - 本节管**派发之前**的决策违规（不该派却派了）
 - 两者叠加覆盖 subagent 生命周期的全部违规模式
 
-### N.2 已知边界（v1.0.2 暂未实现 · 原 §7.7）
+### N.2 已知边界（原 §7.7 · 第 3 项已实施）
 
-下列 4 项能力在原 AGENTS.md §7.7 已标注为"已知缺失"，v2.0 迁移时保留登记，作为本 SKILL.md 的"已知技术债"——不影响当前派发流程，但使用者应知道这些保护尚未到位：
+下列 4 项能力在原 AGENTS.md §7.7 已标注为"已知缺失"，v2.0 迁移时保留登记，作为本 SKILL.md 的"已知技术债"——不影响当前派发流程，但使用者应知道这些保护尚未到位（其中第 3 项已于 2026-09-20 实施，借鉴 superpowers v6.3.0）：
 
 | # | 缺失能力 | 影响 | 计划 |
 |---|---------|------|------|
 | 1 | **工具白名单**（subagent 工具权限收敛） | subagent 理论上可调用主 agent 全部工具，无强制权限隔离 | 后续 v6.x 桥接层完成（`bridges/contract.py` 已提供 opt-in 入口） |
 | 2 | **token 预算**（限制 subagent 读大文件全量） | subagent 可能 Read 全量大文件 → 上下文爆炸 → quality 下降 | 待立项；当前靠 implementer-prompt.md 的 "context snippets" 约束 |
-| 3 | **递归派发禁令**（subagent 再派 subagent） | 理论上 subagent 可再调 Agent 工具 → 递归失控 | 待立项；当前靠 prompt 显式禁止 |
+| 3 | ~~**递归派发禁令**（subagent 再派 subagent）~~ **✅ 已实施（2026-09-20）** | 曾存在递归失控风险 | 已落地：SKILL.md Red Flags + implementer/reviewer prompt 模板显式禁令（原登记"当前靠 prompt 显式禁止"与实际不符，当时 prompt 中并无禁令，本次补齐） |
 | 4 | **commit 签名审计**（subagent ID 嵌入 commit） | subagent 提交的 commit 无法追溯是哪个派发轮次 | 待立项；当前靠 TodoWrite + handoff JSON 记录 |
 
 > **使用建议**：已知边界 1/2 是"可能影响 quality"的软限制，使用本 skill 时**应**在 implementer-prompt.md 中显式声明"仅使用以下工具"和"单文件 ≤ N 行"；3/4 是"审计追溯"类限制，对生产代码 quality 无直接影响，但 PR review 时需人工补追溯信息。

@@ -387,9 +387,13 @@ WORKTREE_PATH=$(git rev-parse --show-toplevel)
   ```bash
   MAIN_ROOT=$(git -C "$(git rev-parse --git-common-dir)/.." rev-parse --show-toplevel)
   cd "$MAIN_ROOT"
+  # Pre-removal guard: surface untracked/uncommitted files (borrowed from superpowers v6.3.0)
+  git -C "$WORKTREE_PATH" status --porcelain
   git worktree remove "$WORKTREE_PATH"
   git worktree prune  # Self-healing: clean up any stale registrations
   ```
+
+  **未跟踪文件防护**：若 `status --porcelain` 输出非空（存在未跟踪/未提交文件），**禁止继续移除**——停下来逐个点名文件，用 AskUserQuestion 让用户决定：先转移/提交文件再重跑清理，或明确确认丢弃。**Never** 在 `worktree remove` 报错后顺手加 `--force`——`--force` 会静默销毁未跟踪文件，这正是本防护要拦的路径。
 
 - **其他情况**：宿主环境（harness）拥有此工作区。**不要移除**。若平台提供 workspace-exit 工具，用它；否则保持原状。
 
@@ -411,6 +415,7 @@ WORKTREE_PATH=$(git rev-parse --show-toplevel)
 - **在 worktree 内部运行 `git worktree remove`** → 静默失败。Fix：`cd` 到主 repo 根再移除。
 - **清理 harness 拥有的 worktree** → 幻影状态。Fix：只清 `.worktrees/` / `worktrees/` / `~/.config/superpowers/worktrees/`。
 - **Option 4 不确认** → 误删工作。Fix：要求键入 "discard" 确认。
+- **`worktree remove` 失败后加 `--force`** → 静默销毁未跟踪文件。Fix：先跑 `status --porcelain` 列出未跟踪文件，非空则停下问用户（2026-09-20 引入，源自 superpowers v6.3.0）。
 
 ### Red Flags（收尾）
 
@@ -422,6 +427,7 @@ WORKTREE_PATH=$(git rev-parse --show-toplevel)
 - 不确认 merge 成功就移除 worktree
 - 清理不是你创建的 worktree（来源检查）
 - 在 worktree 内部运行 `git worktree remove`
+- 未跟踪文件非空时 `--force` 移除（先点名文件问用户）
 
 **Always:**
 - 给选项前验证测试

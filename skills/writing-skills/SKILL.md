@@ -202,6 +202,16 @@ Edit skill without testing? Same violation.
 
 > 完整 good/bad 对比、Red Flags 模板、CSO 违规症状示例 → **见 `references/skill-spec.md` § Bulletproofing Skills Against Rationalization**。
 
+## 瘦身纪律与措辞微测 — 要点（2026-09-20 引入 · 源自 superpowers v6.0/v6.2）
+
+**瘦身红线：反 rationalization 内容不是赘肉。** superpowers v6.2.0 A/B 实测：删掉 TDD "Why Order Matters" 论证段 → test-first 行为 8/10 退化到 5/10；以"借口表行内反驳"形式保留则不退化。渐进式披露瘦身时**禁止**把反借口内容当冗余删除 — 它们在 agent 合理化的瞬间被命中，是行为保持的载荷。
+
+**形式匹配失败模式 + 措辞微测：**
+- 指导形式按失败模式选：扁平禁令（防明知故犯）/ worked example（防不知何为合规）/ 借口表行内反驳（防压力下合理化）
+- 措辞改动后微测：抽样 2-3 次压力场景 vs 无指导对照组，行为无退化才合入；重大改动用完整盲对比
+
+> 完整纪律、实证数据、形式选择表 → **见 `references/skill-spec.md` § Slimming Discipline / § Match the Form to the Failure**。
+
 ## RED-GREEN-REFACTOR for Skills
 
 Follow the TDD cycle:
