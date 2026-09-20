@@ -1,7 +1,7 @@
 ---
 name: grilling
 description: |
-  TRIGGER: 对已存在的方案 / 计划 / 设计 / spec 做穷尽式压力测试（触发词：grill / 拷问 / 审讯 / 压力测试 / 挑战这个方案 / 逐条追问）（不用于：从零生成新设计用 brainstorming，PRD/用户故事等文档工件用 product-manager，通用文档写作用 writing-skills）
+  TRIGGER: 对已存在的方案 / 计划 / 设计 / spec 做穷尽式压力测试（触发词：grill / 拷问 / 审讯 / 压力测试 / 挑战这个方案 / 逐条追问）（不用于：从零生成新设计用 brainstorming，术语/词汇表/ADR 维护用 domain-modeling，PRD/用户故事等文档工件用 product-manager，通用文档写作用 writing-skills）
   RULE: no specific rule（方法论 skill · 需求对抗审讯方法论）
   DETAIL: 本 SKILL.md（frontier 决策树审讯协议）
 ---

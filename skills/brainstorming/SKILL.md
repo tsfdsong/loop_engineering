@@ -1,7 +1,7 @@
 ---
 name: brainstorming
 description: |
-  TRIGGER: 创建功能 / 构建组件 / 添加能力 / 修改行为 / 用户想设计新东西但不确定要什么（不用于：纯研究用 deep-research，调试用 systematic-debugging，代码审查用 code-reviewer）
+  TRIGGER: 创建功能 / 构建组件 / 添加能力 / 修改行为 / 用户想设计新东西但不确定要什么（不用于：纯研究用 deep-research，调试用 systematic-debugging，代码审查用 code-reviewer，对已有 spec 的对抗审讯用 grilling）
   RULE: no specific rule（方法论 skill · 创意发散方法论）
   DETAIL: 本 SKILL.md（头脑风暴方法论）
 ---
@@ -31,6 +31,8 @@ description: |
 | **Architectural**（架构级） | 跨模块 / 不可逆 / 多方契约 / >1 天 | 全套：设计文档 + spec 四节 + 反选项清单（R1.1）+ grilling 触发评估 | 分节呈现、逐节批准 + User Review Gate |
 
 **分级判定错误的自愈**：spike 过程发现超出 4h 或牵出跨模块契约 → 停下，升到 bounded/architectural 重走对应仪式。宁可升级不可硬闯。
+
+**与审讯门的绑定（2026-09-20 边界审查补）**：凡产出 spec 四节的级别（bounded / architectural），**均须过下方清单第 7 步**（spec 自审 + grilling 触发评估）——分级省的是文档，不是质量闸门；仅 spike（无 spec、无审讯对象）免。
 
 ## 清单
 
