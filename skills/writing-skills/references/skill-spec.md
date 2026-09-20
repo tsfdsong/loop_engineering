@@ -393,9 +393,9 @@ NO SKILL WITHOUT A FAILING TEST FIRST
 
 **心理学注记：** 理解说服技巧为什么奏效，有助于系统化应用。研究基础（Cialdini, 2021; Meincke et al., 2025）见 persuasion-principles.md，涵盖权威、承诺、稀缺、社会认同、归属感原则。
 
-### Close Every Loophole Explicitly
+### Close Every Loophole Explicitly（显式封堵每个漏洞）
 
-不只陈述规则 — 显式禁止具体规避：
+不只陈述规则 —— 显式禁止具体规避：
 
 <Bad>
 ```markdown
@@ -405,7 +405,7 @@ Write code before test? Delete it.
 
 <Good>
 ```markdown
-Write code before test? Delete it. Start over.
+先写代码后写测试？删掉，重来。
 
 **No exceptions:**
 - Don't keep it as "reference"
@@ -415,7 +415,7 @@ Write code before test? Delete it. Start over.
 ```
 </Good>
 
-### Address "Spirit vs Letter" Arguments
+### Address "Spirit vs Letter" Arguments（切断"精神 vs 字面"争论）
 
 早期加基础原则：
 
@@ -425,7 +425,7 @@ Write code before test? Delete it. Start over.
 
 这切掉整类"我在守精神"的合理化。
 
-### Build Rationalization Table
+### Build Rationalization Table（建合理化表）
 
 从基线测试捕获合理化借口（见 Testing 段）。agent 找的每个借口都进表：
 
@@ -437,7 +437,7 @@ Write code before test? Delete it. Start over.
 | "Tests after achieve same goals" | Tests-after = "what does this do?" Tests-first = "what should this do?" |
 ```
 
-### Create Red Flags List
+### Create Red Flags List（建 Red Flags 列表）
 
 让 agent 在合理化时容易自检：
 
@@ -453,7 +453,7 @@ Write code before test? Delete it. Start over.
 **All of these mean: Delete code. Start over with TDD.**
 ```
 
-### Update CSO for Violation Symptoms
+### Update CSO for Violation Symptoms（CSO 加违规症状）
 
 在 description 里加：你即将违规时的症状：
 
@@ -500,11 +500,11 @@ description: use when implementing any feature or bugfix, before writing impleme
 
 ---
 
-## RED-GREEN-REFACTOR for Skills
+## RED-GREEN-REFACTOR for Skills（技能的红绿重构循环）
 
 遵循 TDD 循环：
 
-### RED: Write Failing Test（Baseline）
+### RED: 写失败测试（Baseline）
 
 无 skill 跑压力场景。记录确切行为：
 - 他们做了什么选择？
@@ -513,13 +513,13 @@ description: use when implementing any feature or bugfix, before writing impleme
 
 这就是"看测试失败" — 写 skill 前必须先看 agent 自然会做什么。
 
-### GREEN: Write Minimal Skill
+### GREEN: 写最小技能
 
 写针对那些具体合理化的 skill。不加针对假设情况的内容。
 
 同一场景**有** skill 再跑。agent 现在应守规则。
 
-### REFACTOR: Close Loopholes
+### REFACTOR: 堵漏洞
 
 agent 找到新合理化？加显式反制。重测直到无懈可击。
 
@@ -531,24 +531,24 @@ agent 找到新合理化？加显式反制。重测直到无懈可击。
 
 ---
 
-## Anti-Patterns
+## Anti-Patterns（反模式）
 
-### ❌ Narrative Example
+### ❌ Narrative Example（叙事示例）
 "In session 2025-10-03, we found empty projectDir caused..."
 **Why bad:** 太具体，不可复用
 
-### ❌ Multi-Language Dilution
+### ❌ Multi-Language Dilution（多语言稀释）
 example-js.js, example-py.py, example-go.go
 **Why bad:** 质量平庸，维护负担重
 
-### ❌ Code in Flowcharts
+### ❌ Code in Flowcharts（代码进流程图）
 ```dot
 step1 [label="import fs"];
 step2 [label="read file"];
 ```
 **Why bad:** 不能复制粘贴，难读
 
-### ❌ Generic Labels
+### ❌ Generic Labels（无语义标签）
 helper1, helper2, step3, pattern4
 **Why bad:** 标签应有语义
 
