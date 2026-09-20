@@ -8,20 +8,20 @@ description: |
 
 # Database Design
 
-> **Learn to THINK, not copy SQL patterns.**
+> **学的是思考，不是抄 SQL 模式。**
 
-## 🎯 Selective Reading Rule
+## 🎯 选择性阅读规则
 
-**Read ONLY files relevant to the request!** Check the content map, find what you need.
+**只读与请求相关的文件！** 查内容地图，找到需要的再读。
 
-| File | Description | When to Read |
-|------|-------------|--------------|
-| `references/database-selection.md` | PostgreSQL vs Neon vs Turso vs SQLite | Choosing database |
-| `references/orm-selection.md` | Drizzle vs Prisma vs Kysely | Choosing ORM |
-| `references/schema-design.md` | Normalization, PKs, relationships | Designing schema |
-| `references/indexing.md` | Index types, composite indexes | Performance tuning |
-| `references/optimization.md` | N+1, EXPLAIN ANALYZE | Query optimization |
-| `references/migrations.md` | Safe migrations, serverless DBs | Schema changes |
+| 文件 | 内容 | 何时读 |
+|------|------|--------|
+| `references/database-selection.md` | PostgreSQL vs Neon vs Turso vs SQLite | 选数据库 |
+| `references/orm-selection.md` | Drizzle vs Prisma vs Kysely | 选 ORM |
+| `references/schema-design.md` | Normalization、PK、关系 | 设计 schema |
+| `references/indexing.md` | 索引类型、复合索引 | 性能调优 |
+| `references/optimization.md` | N+1、EXPLAIN ANALYZE | 查询优化 |
+| `references/migrations.md` | 安全迁移、serverless DB | schema 变更 |
 
 ## 决策示例
 
@@ -39,38 +39,36 @@ description: |
 
 ---
 
-## ⚠️ Core Principle
+## ⚠️ 核心原则
 
-- ASK user for database preferences when unclear
-- Choose database/ORM based on CONTEXT
-- Don't default to PostgreSQL for everything
-
----
-
-## Decision Checklist
-
-Before designing schema:
-
-- [ ] Asked user about database preference?
-- [ ] Chosen database for THIS context?
-- [ ] Considered deployment environment?
-- [ ] Planned index strategy?
-- [ ] Defined relationship types?
+- 数据库偏好不明时**问用户**
+- 基于上下文选数据库/ORM
+- 不要什么都默认 PostgreSQL
 
 ---
 
-## Anti-Patterns
+## 决策清单
 
-❌ Default to PostgreSQL for simple apps (SQLite may suffice)
-❌ Skip indexing
-❌ Use SELECT * in production
-❌ Store JSON when structured data is better
-❌ Ignore N+1 queries
+设计 schema 之前：
 
-## When to Use
-This skill is applicable to execute the workflow or actions described in the overview.
+- [ ] 问过用户数据库偏好吗？
+- [ ] 为**此**上下文选定数据库了吗？
+- [ ] 考虑过部署环境吗？
+- [ ] 规划过索引策略吗？
+- [ ] 定义过关系类型吗？
 
-## Limitations
-- Use this skill only when the task clearly matches the scope described above.
-- Do not treat the output as a substitute for environment-specific validation, testing, or expert review.
-- Stop and ask for clarification if required inputs, permissions, safety boundaries, or success criteria are missing.
+---
+
+## 反模式
+
+❌ 简单应用默认上 PostgreSQL（SQLite 可能就够）
+❌ 跳过索引
+❌ 生产环境用 SELECT *
+❌ 结构化数据更适合时却存 JSON
+❌ 无视 N+1 查询
+
+## 何时使用
+本技能适用于执行上述范围的工作流或操作。
+
+## 边界
+- 仅当任务明确匹配上述范围时使用本技能。

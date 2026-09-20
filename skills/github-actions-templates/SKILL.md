@@ -8,23 +8,21 @@ description: |
 
 # GitHub Actions Templates
 
-Production-ready GitHub Actions workflow patterns for testing, building, and deploying applications.
+## 用途
 
-## Purpose
+为测试、构建、部署应用创建高效、安全的 GitHub Actions workflow，覆盖多种技术栈。
 
-Create efficient, secure GitHub Actions workflows for continuous integration and deployment across various tech stacks.
+## 何时使用
 
-## Use this skill when
+- 自动化测试与部署
+- 构建 Docker 镜像并推送 registry
+- 部署到 Kubernetes 集群
+- 跑安全扫描
+- 为多环境实现 matrix 构建
 
-- Automate testing and deployment
-- Build Docker images and push to registries
-- Deploy to Kubernetes clusters
-- Run security scans
-- Implement matrix builds for multiple environments
+## 常用 Workflow 模式
 
-## Common Workflow Patterns
-
-### Pattern 1: Test Workflow
+### Pattern 1: 测试 Workflow
 
 ```yaml
 name: Test
@@ -67,9 +65,9 @@ jobs:
         files: ./coverage/lcov.info
 ```
 
-**Reference:** See `assets/test-workflow.yml`
+**参考：** 见 `assets/test-workflow.yml`
 
-### Pattern 2: Build and Push Docker Image
+### Pattern 2: 构建并推送 Docker 镜像
 
 ```yaml
 name: Build and Push
@@ -77,7 +75,7 @@ name: Build and Push
 on:
   push:
     branches: [ main ]
-    tags: [ 'v*' ]
+  tags: [ 'v*' ]
 
 env:
   REGISTRY: ghcr.io
@@ -122,9 +120,9 @@ jobs:
         cache-to: type=gha,mode=max
 ```
 
-**Reference:** See `assets/deploy-workflow.yml`
+**参考：** 见 `assets/deploy-workflow.yml`
 
-### Pattern 3: Deploy to Kubernetes
+### Pattern 3: 部署到 Kubernetes
 
 ```yaml
 name: Deploy to Kubernetes
@@ -163,7 +161,7 @@ jobs:
         kubectl describe deployment my-app -n production
 ```
 
-### Pattern 4: Matrix Build
+### Pattern 4: Matrix 构建
 
 ```yaml
 name: Matrix Build
@@ -196,20 +194,20 @@ jobs:
       run: pytest
 ```
 
-**Reference:** See `assets/matrix-build.yml`
+**参考：** 见 `assets/matrix-build.yml`
 
-## Workflow Best Practices
+## Workflow 最佳实践
 
-1. **Use specific action versions** (@v4, not @latest)
-2. **Cache dependencies** to speed up builds
-3. **Use secrets** for sensitive data
-4. **Implement status checks** on PRs
-5. **Use matrix builds** for multi-version testing
-6. **Set appropriate permissions**
-7. **Use reusable workflows** for common patterns
-8. **Implement approval gates** for production
-9. **Add notification steps** for failures
-10. **Use self-hosted runners** for sensitive workloads
+1. **用确定的 action 版本**（@v4，不用 @latest）
+2. **缓存依赖**加速构建
+3. 敏感数据**用 secrets**
+4. PR 上**实现 status checks**
+5. 多版本测试**用 matrix 构建**
+6. **设置恰当的 permissions**
+7. 常见模式**用 reusable workflows**
+8. 生产环境**实现审批门**
+9. 失败时**加通知步骤**
+10. 敏感工作负载**用 self-hosted runners**
 
 ## Reusable Workflows
 
@@ -239,7 +237,7 @@ jobs:
     - run: npm test
 ```
 
-**Use reusable workflow:**
+**调用 reusable workflow：**
 ```yaml
 jobs:
   call-test:
@@ -250,7 +248,7 @@ jobs:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 ```
 
-## Security Scanning
+## 安全扫描
 
 ```yaml
 name: Security Scan
@@ -287,7 +285,7 @@ jobs:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 ```
 
-## Deployment with Approvals
+## 带审批的部署
 
 ```yaml
 name: Deploy to Production
@@ -322,20 +320,21 @@ jobs:
           }
 ```
 
-## Reference Files
+## 参考文件
 
-- `assets/test-workflow.yml` - Testing workflow template
-- `assets/deploy-workflow.yml` - Deployment workflow template
-- `assets/matrix-build.yml` - Matrix build template
-- `references/common-workflows.md` - Common workflow patterns
+- `assets/test-workflow.yml` —— 测试 workflow 模板
+- `assets/deploy-workflow.yml` —— 部署 workflow 模板
+- `assets/matrix-build.yml` —— matrix 构建模板
+- `references/common-workflows.md` —— 常用 workflow 模式
 
-## Related Skills
+## 相关技能
 
-- `gitlab-ci-patterns` - For GitLab CI workflows
-- `deployment-pipeline-design` - For pipeline architecture
-- `secrets-management` - For secrets handling
+- `gitlab-ci-patterns` —— GitLab CI workflow
+- `deployment-pipeline-design` —— 流水线架构
+- `secrets-management` —— secrets 管理
 
-## Limitations
-- Use this skill only when the task clearly matches the scope described above.
-- Do not treat the output as a substitute for environment-specific validation, testing, or expert review.
-- Stop and ask for clarification if required inputs, permissions, safety boundaries, or success criteria are missing.
+## 边界
+
+- 仅当任务明确匹配上述范围时使用本技能。
+- 不要把输出当作环境特定验证、测试或专家评审的替代品。
+- 缺少必需输入、权限、安全边界或成功标准时，停下来问清楚。

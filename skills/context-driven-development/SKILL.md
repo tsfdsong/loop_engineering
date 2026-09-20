@@ -6,231 +6,231 @@ description: |
   DETAIL: 本 SKILL.md + 与 writing-skills 配合
 ---
 
-# Context-Driven Development
+# Context-Driven Development（上下文驱动开发）
 
-Guide for implementing and maintaining context as a managed artifact alongside code, enabling consistent AI interactions and team alignment through structured project documentation.
+把项目上下文作为与代码并肩管理的受管工件来实施和维护，通过结构化的项目文档实现一致的 AI 交互与团队对齐。
 
-## Use this skill when
+## 何时使用
 
-- Setting up new projects with Conductor
-- Understanding the relationship between context artifacts
-- Maintaining consistency across AI-assisted development sessions
-- Onboarding team members to an existing Conductor project
-- Deciding when to update context documents
-- Managing greenfield vs brownfield project contexts
+- 用 Conductor 搭建新项目
+- 理解上下文工件之间的关系
+- 跨 AI 辅助开发会话保持一致性
+- 帮新成员 onboard 到既有 Conductor 项目
+- 决定何时更新上下文文档
+- 管理 greenfield 与 brownfield 项目上下文
 
-## Core Philosophy
+## 核心理念
 
-Context-Driven Development treats project context as a first-class artifact managed alongside code. Instead of relying on ad-hoc prompts or scattered documentation, establish a persistent, structured foundation that informs all AI interactions.
+Context-Driven Development 把项目上下文当作与代码并肩管理的一等工件。不依赖临时 prompt 或散落的文档，而是建立一个持久的、结构化的基础来支撑所有 AI 交互。
 
-Key principles:
+关键原则：
 
-1. **Context precedes code**: Define what you're building and how before implementation
-2. **Living documentation**: Context artifacts evolve with the project
-3. **Single source of truth**: One canonical location for each type of information
-4. **AI alignment**: Consistent context produces consistent AI behavior
+1. **上下文先于代码**：实现之前先定义在做什么、怎么做
+2. **活文档**：上下文工件随项目演进
+3. **单一真源**：每类信息只有一个权威位置
+4. **AI 对齐**：一致的上下文产生一致的 AI 行为
 
-## The Workflow
+## 工作流
 
-Follow the **Context → Spec & Plan → Implement** workflow:
+遵循 **Context → Spec & Plan → Implement** 工作流：
 
-1. **Context Phase**: Establish or verify project context artifacts exist and are current
-2. **Specification Phase**: Define requirements and acceptance criteria for work units
-3. **Planning Phase**: Break specifications into phased, actionable tasks
-4. **Implementation Phase**: Execute tasks following established workflow patterns
+1. **Context 阶段**：建立或验证项目上下文工件存在且最新
+2. **Specification 阶段**：为工作单元定义需求与验收标准
+3. **Planning 阶段**：把 spec 拆为分阶段的可执行任务
+4. **Implementation 阶段**：按既定工作流模式执行任务
 
-## Artifact Relationships
+## 工件关系
 
-### product.md - Defines WHAT and WHY
+### product.md —— 定义 WHAT 与 WHY
 
-Purpose: Captures product vision, goals, target users, and business context.
+用途：承载产品愿景、目标、目标用户与业务背景。
 
-Contents:
+内容：
 
-- Product name and one-line description
-- Problem statement and solution approach
-- Target user personas
-- Core features and capabilities
-- Success metrics and KPIs
-- Product roadmap (high-level)
+- 产品名与一句话描述
+- 问题陈述与解法方向
+- 目标用户画像
+- 核心功能与能力
+- 成功指标与 KPI
+- 产品路线图（高层）
 
-Update when:
+何时更新：
 
-- Product vision or goals change
-- New major features are planned
-- Target audience shifts
-- Business priorities evolve
+- 产品愿景或目标变化
+- 规划新的重要功能
+- 目标人群转移
+- 业务优先级演进
 
-### product-guidelines.md - Defines HOW to Communicate
+### product-guidelines.md —— 定义如何沟通
 
-Purpose: Establishes brand voice, messaging standards, and communication patterns.
+用途：确立品牌语调、消息标准与沟通模式。
 
-Contents:
+内容：
 
-- Brand voice and tone guidelines
-- Terminology and glossary
-- Error message conventions
-- User-facing copy standards
-- Documentation style
+- 品牌语调与风格指南
+- 术语表
+- 报错文案规范
+- 面向用户的文案标准
+- 文档风格
 
-Update when:
+何时更新：
 
-- Brand guidelines change
-- New terminology is introduced
-- Communication patterns need refinement
+- 品牌指南变化
+- 引入新术语
+- 沟通模式需要调整
 
-### tech-stack.md - Defines WITH WHAT
+### tech-stack.md —— 定义用什么
 
-Purpose: Documents technology choices, dependencies, and architectural decisions.
+用途：记录技术选型、依赖与架构决策。
 
-Contents:
+内容：
 
-- Primary languages and frameworks
-- Key dependencies with versions
-- Infrastructure and deployment targets
-- Development tools and environment
-- Testing frameworks
-- Code quality tools
+- 主语言与框架
+- 关键依赖及版本
+- 基础设施与部署目标
+- 开发工具与环境
+- 测试框架
+- 代码质量工具
 
-Update when:
+何时更新：
 
-- Adding new dependencies
-- Upgrading major versions
-- Changing infrastructure
-- Adopting new tools or patterns
+- 新增依赖
+- 升级大版本
+- 基础设施变化
+- 采用新工具或新模式
 
-### workflow.md - Defines HOW to Work
+### workflow.md —— 定义怎么干活
 
-Purpose: Establishes development practices, quality gates, and team workflows.
+用途：确立开发实践、质量闸门与团队工作流。
 
-Contents:
+内容：
 
-- Development methodology (TDD, etc.)
-- Git workflow and commit conventions
-- Code review requirements
-- Testing requirements and coverage targets
-- Quality assurance gates
-- Deployment procedures
+- 开发方法论（TDD 等）
+- Git 工作流与 commit 规范
+- 代码评审要求
+- 测试要求与覆盖率目标
+- 质量保证闸门
+- 部署流程
 
-Update when:
+何时更新：
 
-- Team practices evolve
-- Quality standards change
-- New workflow patterns are adopted
+- 团队实践演进
+- 质量标准变化
+- 采用新工作流模式
 
-### tracks.md - Tracks WHAT'S HAPPENING
+### tracks.md —— 记录正在发生什么
 
-Purpose: Registry of all work units with status and metadata.
+用途：全部工作单元的注册表，含状态与元数据。
 
-Contents:
+内容：
 
-- Active tracks with current status
-- Completed tracks with completion dates
-- Track metadata (type, priority, assignee)
-- Links to individual track directories
+- 进行中 track 及当前状态
+- 已完成 track 及完成日期
+- track 元数据（类型、优先级、负责人）
+- 各 track 目录链接
 
-Update when:
+何时更新：
 
-- New tracks are created
-- Track status changes
-- Tracks are completed or archived
+- 新建 track
+- track 状态变化
+- track 完成或归档
 
-## Context Maintenance Principles
+## 上下文维护原则
 
-### Keep Artifacts Synchronized
+### 保持工件同步
 
-Ensure changes in one artifact reflect in related documents:
+一个工件的变化要反映到相关文档：
 
-- New feature in product.md → Update tech-stack.md if new dependencies needed
-- Completed track → Update product.md to reflect new capabilities
-- Workflow change → Update all affected track plans
+- product.md 新增功能 → 若需新依赖则更新 tech-stack.md
+- track 完成 → 更新 product.md 反映新能力
+- workflow 变化 → 更新所有受影响的 track 计划
 
-### Update tech-stack.md When Adding Dependencies
+### 加依赖时更新 tech-stack.md
 
-Before adding any new dependency:
+新增任何依赖之前：
 
-1. Check if existing dependencies solve the need
-2. Document the rationale for new dependencies
-3. Add version constraints
-4. Note any configuration requirements
+1. 检查既有依赖能否满足需求
+2. 记录新依赖的理由
+3. 加版本约束
+4. 注明配置要求
 
-### Update product.md When Features Complete
+### 功能完成时更新 product.md
 
-After completing a feature track:
+完成一个功能 track 后：
 
-1. Move feature from "planned" to "implemented" in product.md
-2. Update any affected success metrics
-3. Document any scope changes from original plan
+1. 在 product.md 中把功能从"planned"移到"implemented"
+2. 更新受影响的成功指标
+3. 记录与原计划的范围偏差
 
-### Verify Context Before Implementation
+### 实现前验证上下文
 
-Before starting any track:
+开始任何 track 之前：
 
-1. Read all context artifacts
-2. Flag any outdated information
-3. Propose updates before proceeding
-4. Confirm context accuracy with stakeholders
+1. 读全部上下文工件
+2. 标记过时信息
+3. 先提出更新再继续
+4. 与相关人确认上下文准确
 
-## Greenfield vs Brownfield Handling
+## Greenfield 与 Brownfield 处理
 
-### Greenfield Projects (New)
+### Greenfield 项目（新建）
 
-For new projects:
+新项目：
 
-1. Run `/conductor:setup` to create all artifacts interactively
-2. Answer questions about product vision, tech preferences, and workflow
-3. Generate initial style guides for chosen languages
-4. Create empty tracks registry
+1. 运行 `/conductor:setup` 交互式创建全部工件
+2. 回答产品愿景、技术偏好、工作流问题
+3. 为选定语言生成初始风格指南
+4. 创建空的 tracks 注册表
 
-Characteristics:
+特征：
 
-- Full control over context structure
-- Define standards before code exists
-- Establish patterns early
+- 完全掌控上下文结构
+- 代码存在之前先定标准
+- 尽早确立模式
 
-### Brownfield Projects (Existing)
+### Brownfield 项目（既有）
 
-For existing codebases:
+既有代码库：
 
-1. Run `/conductor:setup` with existing codebase detection
-2. System analyzes existing code, configs, and documentation
-3. Pre-populate artifacts based on discovered patterns
-4. Review and refine generated context
+1. 运行 `/conductor:setup`（带既有代码库探测）
+2. 系统分析既有代码、配置与文档
+3. 基于发现的模式预填工件
+4. 评审并精化生成的上下文
 
-Characteristics:
+特征：
 
-- Extract implicit context from existing code
-- Reconcile existing patterns with desired patterns
-- Document technical debt and modernization plans
-- Preserve working patterns while establishing standards
+- 从既有代码提取隐性上下文
+- 调和既有模式与期望模式
+- 记录技术债与现代化计划
+- 既确立标准又保留可用模式
 
-## Benefits
+## 收益
 
-### Team Alignment
+### 团队对齐
 
-- New team members onboard faster with explicit context
-- Consistent terminology and conventions across the team
-- Shared understanding of product goals and technical decisions
+- 新成员凭显式上下文更快 onboard
+- 全团队术语与约定一致
+- 对产品目标与技术决策有共同理解
 
-### AI Consistency
+### AI 一致性
 
-- AI assistants produce aligned outputs across sessions
-- Reduced need to re-explain context in each interaction
-- Predictable behavior based on documented standards
+- AI 助手跨会话产出对齐的结果
+- 减少每次交互重复解释上下文
+- 基于文档化标准的可预期行为
 
-### Institutional Memory
+### 组织记忆
 
-- Decisions and rationale are preserved
-- Context survives team changes
-- Historical context informs future decisions
+- 决策与理由被保留
+- 上下文在人员变动中存续
+- 历史上下文为未来决策提供参考
 
-### Quality Assurance
+### 质量保证
 
-- Standards are explicit and verifiable
-- Deviations from context are detectable
-- Quality gates are documented and enforceable
+- 标准显式且可验证
+- 偏离上下文可被检测
+- 质量闸门有文档且可执行
 
-## Directory Structure
+## 目录结构
 
 ```
 conductor/
@@ -253,140 +253,141 @@ conductor/
         └── index.md
 ```
 
-## Context Lifecycle
+## 上下文生命周期
 
-1. **Creation**: Initial setup via `/conductor:setup`
-2. **Validation**: Verify before each track
-3. **Evolution**: Update as project grows
-4. **Synchronization**: Keep artifacts aligned
-5. **Archival**: Document historical decisions
+1. **创建**：经 `/conductor:setup` 初始建立
+2. **验证**：每个 track 前验证
+3. **演进**：随项目成长更新
+4. **同步**：保持工件对齐
+5. **归档**：记录历史决策
 
-## Context Validation Checklist
+## 上下文验证清单
 
-Before starting implementation on any track, validate context:
+在任何 track 上开始实现之前，验证上下文：
 
-### Product Context
+### 产品上下文
 
-- [ ] product.md reflects current product vision
-- [ ] Target users are accurately described
-- [ ] Feature list is up to date
-- [ ] Success metrics are defined
+- [ ] product.md 反映当前产品愿景
+- [ ] 目标用户描述准确
+- [ ] 功能列表最新
+- [ ] 成功指标已定义
 
-### Technical Context
+### 技术上下文
 
-- [ ] tech-stack.md lists all current dependencies
-- [ ] Version numbers are accurate
-- [ ] Infrastructure targets are correct
-- [ ] Development tools are documented
+- [ ] tech-stack.md 列出全部当前依赖
+- [ ] 版本号准确
+- [ ] 基础设施目标正确
+- [ ] 开发工具已记录
 
-### Workflow Context
+### 工作流上下文
 
-- [ ] workflow.md describes current practices
-- [ ] Quality gates are defined
-- [ ] Coverage targets are specified
-- [ ] Commit conventions are documented
+- [ ] workflow.md 描述当前实践
+- [ ] 质量闸门已定义
+- [ ] 覆盖率目标已明确
+- [ ] commit 规范已记录
 
-### Track Context
+### Track 上下文
 
-- [ ] tracks.md shows all active work
-- [ ] No stale or abandoned tracks
-- [ ] Dependencies between tracks are noted
+- [ ] tracks.md 显示全部进行中的工作
+- [ ] 无过期或废弃 track
+- [ ] track 间依赖已标注
 
-## Common Anti-Patterns
+## 常见反模式
 
-Avoid these context management mistakes:
+避免这些上下文管理错误：
 
-### Stale Context
+### 过期上下文
 
-Problem: Context documents become outdated and misleading.
-Solution: Update context as part of each track's completion process.
+问题：上下文文档过时且有误导性。
+解法：把更新上下文纳入每个 track 的完成流程。
 
-### Context Sprawl
+### 上下文蔓延
 
-Problem: Information scattered across multiple locations.
-Solution: Use the defined artifact structure; resist creating new document types.
+问题：信息散落多处。
+解法：用定义好的工件结构；克制创建新文档类型。
 
-### Implicit Context
+### 隐性上下文
 
-Problem: Relying on knowledge not captured in artifacts.
-Solution: If you reference something repeatedly, add it to the appropriate artifact.
+问题：依赖未写入工件的知识。
+解法：反复引用的东西就加进对应工件。
 
-### Context Hoarding
+### 上下文囤积
 
-Problem: One person maintains context without team input.
-Solution: Review context artifacts in pull requests; make updates collaborative.
+问题：一个人维护上下文，无团队输入。
+解法：在 PR 中评审上下文工件；更新协作化。
 
-### Over-Specification
+### 过度规格化
 
-Problem: Context becomes so detailed it's impossible to maintain.
-Solution: Keep artifacts focused on decisions that affect AI behavior and team alignment.
+问题：上下文细到无法维护。
+解法：工件聚焦于影响 AI 行为与团队对齐的决策。
 
-## Integration with Development Tools
+## 与开发工具集成
 
-### IDE Integration
+### IDE 集成
 
-Configure your IDE to display context files prominently:
+配置 IDE 突出显示上下文文件：
 
-- Pin conductor/product.md for quick reference
-- Add tech-stack.md to project notes
-- Create snippets for common patterns from style guides
+- 固定 conductor/product.md 便于速查
+- 把 tech-stack.md 加进项目备注
+- 从风格指南为常见模式建 snippet
 
 ### Git Hooks
 
-Consider pre-commit hooks that:
+考虑 pre-commit hook：
 
-- Warn when dependencies change without tech-stack.md update
-- Remind to update product.md when feature branches merge
-- Validate context artifact syntax
+- 依赖变化但 tech-stack.md 未更新时告警
+- 功能分支 merge 时提醒更新 product.md
+- 校验上下文工件语法
 
-### CI/CD Integration
+### CI/CD 集成
 
-Include context validation in pipelines:
+流水线中加入上下文验证：
 
-- Check tech-stack.md matches actual dependencies
-- Verify links in context documents resolve
-- Ensure tracks.md status matches git branch state
+- 检查 tech-stack.md 与实际依赖一致
+- 验证上下文文档内链接可解析
+- 确保 tracks.md 状态与 git 分支状态一致
 
-## Session Continuity
+## 会话连续性
 
-Conductor supports multi-session development through context persistence:
+Conductor 通过上下文持久化支持多会话开发：
 
-### Starting a New Session
+### 开始新会话
 
-1. Read index.md to orient yourself
-2. Check tracks.md for active work
-3. Review relevant track's plan.md for current task
-4. Verify context artifacts are current
+1. 读 index.md 定位
+2. 查 tracks.md 看进行中工作
+3. 看相关 track 的 plan.md 确定当前任务
+4. 验证上下文工件最新
 
-### Ending a Session
+### 结束会话
 
-1. Update plan.md with current progress
-2. Note any blockers or decisions made
-3. Commit in-progress work with clear status
-4. Update tracks.md if status changed
+1. 用当前进度更新 plan.md
+2. 记录阻塞点与已做决策
+3. 带清晰状态 commit 进行中的工作
+4. 状态变化则更新 tracks.md
 
-### Handling Interruptions
+### 处理中断
 
-If interrupted mid-task:
+任务中被打断时：
 
-1. Mark task as `[~]` with note about stopping point
-2. Commit work-in-progress to feature branch
-3. Document any uncommitted decisions in plan.md
+1. 把任务标记为 `[~]` 并注明停止点
+2. 把进行中的工作 commit 到功能分支
+3. 在 plan.md 中记录未 commit 的决策
 
-## Best Practices
+## 最佳实践
 
-1. **Read context first**: Always read relevant artifacts before starting work
-2. **Small updates**: Make incremental context changes, not massive rewrites
-3. **Link decisions**: Reference context when making implementation choices
-4. **Version context**: Commit context changes alongside code changes
-5. **Review context**: Include context artifact reviews in code reviews
-6. **Validate regularly**: Run context validation checklist before major work
-7. **Communicate changes**: Notify team when context artifacts change significantly
-8. **Preserve history**: Use git to track context evolution over time
-9. **Question staleness**: If context feels wrong, investigate and update
-10. **Keep it actionable**: Every context item should inform a decision or behavior
+1. **先读上下文**：开工前永远先读相关工件
+2. **小步更新**：增量改上下文，不大规模重写
+3. **关联决策**：实现选型时引用上下文
+4. **上下文随代码入库**：上下文改动与代码改动一起 commit
+5. **评审上下文**：代码评审中包含上下文工件评审
+6. **定期验证**：大工作前跑上下文验证清单
+7. **同步变更**：上下文工件显著变化时通知团队
+8. **保留历史**：用 git 跟踪上下文演进
+9. **质疑过期**：上下文感觉不对就调查并更新
+10. **保持可操作性**：每条上下文都应能指导一个决策或行为
 
-## Limitations
-- Use this skill only when the task clearly matches the scope described above.
-- Do not treat the output as a substitute for environment-specific validation, testing, or expert review.
-- Stop and ask for clarification if required inputs, permissions, safety boundaries, or success criteria are missing.
+## 边界
+
+- 仅当任务明确匹配上述范围时使用本技能。
+- 不要把输出当作环境特定验证、测试或专家评审的替代品。
+- 缺少必需输入、权限、安全边界或成功标准时，停下来问清楚。
