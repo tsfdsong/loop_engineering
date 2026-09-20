@@ -1,38 +1,23 @@
-# Shape vocabulary & search
+# 形状词汇与搜索
 
-Read this when a diagram needs a **specific shape** — a cloud-provider icon
-(AWS/Azure/GCP), a network/Cisco/Kubernetes symbol, a UML/BPMN/ER element, an
-electrical or P&ID part — or any time you'd otherwise *guess* a `style=` string.
+图表需要**特定形状**时读本文——云厂商图标（AWS/Azure/GCP）、网络/Cisco/Kubernetes 符号、UML/BPMN/ER 元件、电气或 P&ID 部件——或任何你本来要*猜* `style=` 串的时刻。
 
-There are two ways to get a style:
+拿 style 有两条路：
 
-1. **Search the official shape index** (`scripts/shapesearch.py`) — 10,446 real
-   draw.io palette shapes with their exact `style`, `w`, `h`. Use this for
-   branded/vendor icons and anything non-trivial. **Always prefer a searched
-   style over a hand-written `shape=mxgraph.*` guess** — guessed stencil names
-   silently render as a blank box if the name is wrong.
-2. **The cheatsheet below** — the common built-in shapes whose style strings are
-   short and stable enough to write by hand (rectangles, flowchart symbols,
-   UML primitives, containers, edges).
+1. **搜官方形状索引**（`scripts/shapesearch.py`）——10,446 个真实 draw.io 调色板形状，带精确 `style`、`w`、`h`。品牌/厂商图标与任何非平凡形状用它。**搜索到的 style 永远优先于手写的 `shape=mxgraph.*` 猜测**——猜错的模板名会静默渲染成空白框。
+2. **下方速查表**——常见内置形状，其 style 串足够短且稳定、可以手写（矩形、流程图符号、UML 原语、容器、边）。
 
-## Searching shapes
+## 搜索形状
 
 ```bash
 python3 <this-skill-dir>/scripts/shapesearch.py "aws lambda" --limit 5
 python3 <this-skill-dir>/scripts/shapesearch.py "uml actor" --json
 ```
 
-- Query is space-separated keywords; matching is tag-based with Soundex
-  fuzziness and `camelCase`/`digit` splitting (`"pid2valve"` → `pid valve`).
-- Prints each match as `Title (WxH)` followed by its full `style=` string. With
-  `--json`, emits `[{style,w,h,title}]` for programmatic use.
-- Copy the `style` verbatim into an `mxCell`, and use the reported `w`/`h` as the
-  `mxGeometry` width/height (vendor icons are drawn at a fixed aspect ratio).
-- Results are ranked by tag relevance, with shapes whose **title** contains the
-  query terms bubbled to the top of each score tier. Ranking is still a
-  heuristic, though, and many shapes share a title (three `Lambda` variants:
-  `aws3`/`aws4`/`aws3d`) — so run with `--limit 5` and pick the row whose title
-  and size match what you actually want rather than blindly taking #1.
+- 查询为空格分隔关键词；匹配基于 tag，带 Soundex 模糊与 `camelCase`/数字拆分（`"pid2valve"` → `pid valve`）。
+- 每个命中打印 `Title (WxH)` 加完整 `style=` 串。`--json` 时输出 `[{style,w,h,title}]` 供程序化使用。
+- 把 `style` 逐字复制进 `mxCell`，用报告的 `w`/`h` 作 `mxGeometry` 宽/高（厂商图标按固定纵横比绘制）。
+- 结果按 tag 相关度排序，**标题**含查询词的形状在各分数层冒泡置顶。但排序仍是启发式，且很多形状共用标题（三个 `Lambda` 变体：`aws3`/`aws4`/`aws3d`）——用 `--limit 5` 跑，按标题和尺寸挑你要的那行，不要盲取第 1。
 
 ```xml
 <mxCell id="2" value="Lambda" style="<paste the searched style here>" vertex="1" parent="1">
@@ -40,18 +25,11 @@ python3 <this-skill-dir>/scripts/shapesearch.py "uml actor" --json
 </mxCell>
 ```
 
-Covered libraries: AWS (`aws3`/`aws4`), Azure, GCP, Cisco, Kubernetes, UML,
-BPMN, ER, electrical, P&ID, mockup/wireframe, flowchart, network, and the
-general/basic sets. The bundled index (`data/shape-index.json.gz`) is the
-upstream draw.io shape data — see `data/SHAPE-INDEX-NOTICE.md` for attribution.
+覆盖库：AWS（`aws3`/`aws4`）、Azure、GCP、Cisco、Kubernetes、UML、BPMN、ER、电气、P&ID、mockup/线框、流程图、网络、通用/基础集。内置索引（`data/shape-index.json.gz`）为上游 draw.io 形状数据——归属见 `data/SHAPE-INDEX-NOTICE.md`。
 
-## AI / LLM brand logos
+## AI / LLM 品牌 logo
 
-draw.io's bundled libraries have **no** modern AI/LLM brand logos, so an "LLM app
-architecture" otherwise renders as generic boxes. `scripts/aiicons.py` resolves a
-brand name (OpenAI, Claude, Gemini, Mistral, Llama, HuggingFace, Ollama,
-LangChain, …321 brands) to a draw.io `image` style backed by the
-[lobe-icons](https://github.com/lobehub/lobe-icons) set (MIT).
+draw.io 内置库**没有**现代 AI/LLM 品牌 logo，"LLM 应用架构"否则只能渲染成通用方框。`scripts/aiicons.py` 把品牌名（OpenAI、Claude、Gemini、Mistral、Llama、HuggingFace、Ollama、LangChain 等 321 个）解析为 [lobe-icons](https://github.com/lobehub/lobe-icons)（MIT）支撑的 draw.io `image` style。
 
 ```bash
 python3 <this-skill-dir>/scripts/aiicons.py "claude" --json        # CDN reference
@@ -59,93 +37,81 @@ python3 <this-skill-dir>/scripts/aiicons.py "openai" --embed        # self-conta
 python3 <this-skill-dir>/scripts/aiicons.py --list                  # all brands
 ```
 
-- Picks the `-color` variant when it exists, else the mono logo (e.g. OpenAI is
-  mono-only). Returns a square `image` style; use the reported `--size` (default
-  48) for both width and height.
-- **Default references the icon by CDN URL** — the SVG lives on unpkg, not in
-  this repo, so **draw.io needs network access when the diagram is rendered or
-  opened**; an offline export draws a blank box. Pass `--embed` to fetch the SVG
-  once and inline it as a data URI (portable, renders offline, larger XML).
-- Logos are trademarks of their respective owners, referenced for identification
-  only — the same basis on which draw.io ships AWS/Azure icons.
-- **Data stores** common in RAG/LLM apps that lobe lacks (Qdrant, Redis,
-  Postgres, Mongo, Elasticsearch, Milvus, Supabase, Neo4j, ClickHouse, Kafka,
-  Snowflake, Databricks, …) resolve via the [simple-icons](https://simpleicons.org)
-  CDN (CC0) as an automatic fallback — same command, same output shape. A brand
-  in neither set has no logo; use a cylinder (`shape=cylinder3;`, see below) or
-  `scripts/shapesearch.py "<name> database"`.
+- 存在 `-color` 变体则选之，否则用单色 logo（如 OpenAI 仅单色）。返回正方形 `image` style；宽高都用报告的 `--size`（默认 48）。
+- **默认经 CDN URL 引用图标**——SVG 在 unpkg 上、不在本仓库，故**渲染或打开图时 draw.io 需要网络**；离线导出画出空白框。传 `--embed` 一次性抓取 SVG 并内联为 data URI（可移植、离线可渲染、XML 更大）。
+- Logo 为各所有者的商标，仅作识别引用——与 draw.io 附带 AWS/Azure 图标同一依据。
+- lobe 缺少的 RAG/LLM 应用常见**数据存储**（Qdrant、Redis、Postgres、Mongo、Elasticsearch、Milvus、Supabase、Neo4j、ClickHouse、Kafka、Snowflake、Databricks 等）经 [simple-icons](https://simpleicons.org) CDN（CC0）自动兜底解析——同命令、同输出形态。两个集合都没有的品牌无 logo；用圆柱（`shape=cylinder3;`，见下）或 `scripts/shapesearch.py "<name> database"`。
 
-## Cheatsheet — hand-writable styles
+## 速查表 —— 可手写的 style
 
-These are stable enough to write without searching. Combine with `whiteSpace=wrap;html=1;`.
+以下足够稳定、无需搜索。搭配 `whiteSpace=wrap;html=1;` 使用。
 
-### Common shapes (`shape=` keyword)
+### 常用形状（`shape=` 关键字）
 
-| Need | style |
+| 需求 | style |
 |---|---|
-| Rectangle / rounded box | `rounded=0;` / `rounded=1;` |
-| Circle / ellipse | `ellipse;` (`aspect=fixed;` for a true circle) |
-| Diamond (decision) | `rhombus;` |
-| Cylinder (database) | `shape=cylinder3;` |
-| Cloud | `cloud;` |
-| Cube (3D) | `shape=cube;` |
-| Sticky note | `shape=note;` |
-| Document (curled bottom) | `shape=document;` |
-| Folder | `shape=folder;` |
-| Card (cut corner) | `shape=card;` |
-| Process (double border) | `shape=process;` |
-| Step / chevron | `shape=step;` |
-| Parallelogram (I/O) | `shape=parallelogram;perimeter=parallelogramPerimeter;` |
-| Trapezoid | `shape=trapezoid;perimeter=trapezoidPerimeter;` |
-| Hexagon | `shape=hexagon;perimeter=hexagonPerimeter2;` |
-| Manual input | `shape=manualInput;` |
-| Data storage | `shape=dataStorage;` |
-| Off-page connector | `shape=offPageConnector;` |
-| Delay | `shape=delay;` |
-| OR / XOR gate | `shape=or;` / `shape=xor;` |
-| Block arrow | `shape=singleArrow;` / `shape=doubleArrow;` |
-| Callout (speech bubble) | `shape=callout;` |
+| 矩形 / 圆角框 | `rounded=0;` / `rounded=1;` |
+| 圆 / 椭圆 | `ellipse;`（正圆加 `aspect=fixed;`） |
+| 菱形（判断） | `rhombus;` |
+| 圆柱（数据库） | `shape=cylinder3;` |
+| 云 | `cloud;` |
+| 立方体（3D） | `shape=cube;` |
+| 便利贴 | `shape=note;` |
+| 文档（卷底） | `shape=document;` |
+| 文件夹 | `shape=folder;` |
+| 卡片（切角） | `shape=card;` |
+| 处理（双边框） | `shape=process;` |
+| 步骤 / 人字纹 | `shape=step;` |
+| 平行四边形（I/O） | `shape=parallelogram;perimeter=parallelogramPerimeter;` |
+| 梯形 | `shape=trapezoid;perimeter=trapezoidPerimeter;` |
+| 六边形 | `shape=hexagon;perimeter=hexagonPerimeter2;` |
+| 手工输入 | `shape=manualInput;` |
+| 数据存储 | `shape=dataStorage;` |
+| 页外连接符 | `shape=offPageConnector;` |
+| 延迟 | `shape=delay;` |
+| OR / XOR 门 | `shape=or;` / `shape=xor;` |
+| 块状箭头 | `shape=singleArrow;` / `shape=doubleArrow;` |
+| 标注（气泡） | `shape=callout;` |
 
-### UML primitives
+### UML 原语
 
-| Element | style |
+| 元素 | style |
 |---|---|
-| Actor (stick figure) | `shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;` |
-| Boundary | `shape=umlBoundary;` |
-| Control | `shape=umlControl;` |
-| Entity | `shape=umlEntity;` |
-| Lifeline | `shape=umlLifeline;perimeter=lifelinePerimeter;container=1;` |
-| Frame | `shape=umlFrame;` |
-| Provided interface (lollipop) | `shape=lollipop;direction=south;` |
-| Required interface | `shape=requires;direction=north;` |
-| Component | `shape=component;` |
+| 角色（小人） | `shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;` |
+| 边界 | `shape=umlBoundary;` |
+| 控制 | `shape=umlControl;` |
+| 实体 | `shape=umlEntity;` |
+| 生命线 | `shape=umlLifeline;perimeter=lifelinePerimeter;container=1;` |
+| 帧 | `shape=umlFrame;` |
+| 提供接口（棒棒糖） | `shape=lollipop;direction=south;` |
+| 需求接口 | `shape=requires;direction=north;` |
+| 组件 | `shape=component;` |
 
-### Containers (parent-child; children use relative coords)
+### 容器（父子；子元素用相对坐标）
 
-| Type | style | When |
+| 类型 | style | 何时 |
 |---|---|---|
-| Invisible group | `group;pointerEvents=0;` | No border, no own connections |
-| Titled swimlane | `swimlane;startSize=30;` | Visible title bar / has connections |
-| Any shape as container | append `container=1;pointerEvents=0;` | Box without own connections |
+| 不可见组 | `group;pointerEvents=0;` | 无边框、自身无连接 |
+| 带标题 swimlane | `swimlane;startSize=30;` | 可见标题栏 / 有连接 |
+| 任意形状作容器 | 追加 `container=1;pointerEvents=0;` | 装箱但自身无连接 |
 
-### Edges
+### 边
 
-| Need | add to style |
+| 需求 | 加进 style |
 |---|---|
-| Orthogonal routing | `edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;` |
-| Curved | `curved=1;` |
-| No arrowhead | `endArrow=none;` |
-| Open/thin arrow | `endArrow=open;` / `endArrow=classicThin;` |
-| Dashed | `dashed=1;` (pattern via `dashPattern=8 8;`) |
-| Flow animation | `flowAnimation=1;` |
-| Label background | `labelBackgroundColor=#ffffff;` |
+| 正交路由 | `edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;` |
+| 曲线 | `curved=1;` |
+| 无箭头 | `endArrow=none;` |
+| 开口/细箭头 | `endArrow=open;` / `endArrow=classicThin;` |
+| 虚线 | `dashed=1;`（图案用 `dashPattern=8 8;`） |
+| 流动动画 | `flowAnimation=1;` |
+| 标签背景 | `labelBackgroundColor=#ffffff;` |
 
-### Useful property knobs
+### 实用属性旋钮
 
-- `fontStyle` is a bitmask: `1`=bold, `2`=italic, `4`=underline (add to combine: `3`=bold+italic).
-- `direction=north|south|east|west` rotates a shape in 90° steps; `rotation=<deg>` for free rotation.
-- `gradientColor=#RRGGBB;` + `gradientDirection=north;` for a gradient fill.
-- `sketch=1;` gives a hand-drawn look (set globally via a style preset instead when possible).
+- `fontStyle` 是位掩码：`1`=粗体、`2`=斜体、`4`=下划线（相加组合：`3`=粗+斜）。
+- `direction=north|south|east|west` 按 90° 旋转形状；自由旋转用 `rotation=<deg>`。
+- `gradientColor=#RRGGBB;` + `gradientDirection=north;` 做渐变填充。
+- `sketch=1;` 手绘风（可能的话经样式预设全局设置）。
 
-For richer per-shape detail, the upstream source is jgraph/drawio-mcp's
-`shared/style-reference.md` (Apache-2.0).
+更丰富的逐形状细节，上游源为 jgraph/drawio-mcp 的 `shared/style-reference.md`（Apache-2.0）。

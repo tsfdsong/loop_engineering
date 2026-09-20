@@ -1,34 +1,34 @@
-# Style Extraction — agent reference
+# Style Extraction —— agent 参考
 
-Loaded on demand by `SKILL.md` when the user asks to learn a style ("learn my style from `<path>` as `<name>`") or when the agent needs to render a sample after extraction.
+用户要求学习样式（"learn my style from `<path>` as `<name>`"）或提取后需要渲染样张时，由 `SKILL.md` 按需加载。
 
-## Sample diagram (for approval render)
+## 样图（用于批准渲染）
 
-After extracting a candidate preset, render this seven-node sample using the candidate's palette/shapes/fonts/edges. Each role appears exactly once; six edges, one dashed, exercise `edges.arrow`, `edges.style`, and `edges.dashedFor`.
+提取出候选预设后，用候选的调色板/形状/字体/边渲染这个七节点样张。每个角色恰好出现一次；六条边、其中一条虚线，演练 `edges.arrow`、`edges.style` 与 `edges.dashedFor`。
 
-**Layout (TB):**
-- Row 1 (y=40): `gateway` centered at x=340
-- Row 2 (y=180): `security` (x=80), `service` (x=340), `queue` (x=600)
-- Row 3 (y=340): `database` (x=80), `external` (x=340), `error` (x=600)
+**布局（TB）：**
+- 行 1（y=40）：`gateway` 居中于 x=340
+- 行 2（y=180）：`security`（x=80）、`service`（x=340）、`queue`（x=600）
+- 行 3（y=340）：`database`（x=80）、`external`（x=340）、`error`（x=600）
 
-**Template — substitute `{{...}}` placeholders from the candidate preset.**
+**模板 —— 用候选预设替换 `{{...}}` 占位符。**
 
-The vertex style for role `R` is built as:
+角色 `R` 的 vertex style 构造为：
 `<shapes[R]>;whiteSpace=wrap;html=1;fillColor=<palette[roles[R]].fillColor>;strokeColor=<palette[roles[R]].strokeColor>;fontFamily=<font.fontFamily>;fontSize=<font.fontSize>`
-- If `extras.sketch=true`, append `;sketch=1` to every vertex style AND every edge style.
-- If `extras.globalStrokeWidth !== 1` (i.e., any value other than the drawio default of 1, including `0.5`), append `;strokeWidth=<n>` to every vertex style AND every edge style.
+- `extras.sketch=true` 时，每个 vertex style 与每个 edge style 追加 `;sketch=1`。
+- `extras.globalStrokeWidth !== 1`（即非 drawio 默认 1 的任何值，含 `0.5`）时，每个 vertex style 与每个 edge style 追加 `;strokeWidth=<n>`。
 
-The edge style is built as:
+边 style 构造为：
 `<edges.style>;<edges.arrow>`
-- Per-edge routing keys (`exitX/entryX/...`) are added as literals below.
-- Edge 15 exercises `edges.dashedFor`:
-  - If `edges.dashedFor` is **non-empty**, use its first entry as the edge's `value` (label) AND append `;dashed=1` to the edge style.
-  - If `edges.dashedFor` is empty (`[]`), use the label `cross-call` and do NOT append `;dashed=1` — the preset has no dashed convention, so the sample must not fake one.
+- 逐边路由键（`exitX/entryX/...`）按下方字面量加入。
+- 边 15 演练 `edges.dashedFor`：
+  - `edges.dashedFor` **非空**时，用其第一个条目作边的 `value`（标签）**并**给边 style 追加 `;dashed=1`。
+  - `edges.dashedFor` 为空（`[]`）时，用标签 `cross-call` 且**不**追加 `;dashed=1`——预设没有虚线约定，样张不得伪造。
 
-**Placeholder expansion (applied when filling the XML):**
-- `{{VSTYLE:<role>}}` expands to the vertex-style formula above with `R = <role>`. Write the result as a literal string; do not URL-encode.
-- `{{ESTYLE}}` expands to the edge-style formula above.
-- `{{EDGE15_LABEL}}` and `{{EDGE15_DASH}}` follow the Edge-15 rule above.
+**占位符展开（填 XML 时应用）：**
+- `{{VSTYLE:<role>}}` 展开为上述 vertex-style 公式（`R = <role>`）。结果写字面串；不做 URL 编码。
+- `{{ESTYLE}}` 展开为上述边 style 公式。
+- `{{EDGE15_LABEL}}` 与 `{{EDGE15_DASH}}` 遵循上面的边 15 规则。
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -92,164 +92,164 @@ The edge style is built as:
 </mxfile>
 ```
 
-### Rendering the sample
+### 渲染样张
 
-1. Write the filled XML to `/tmp/drawio-preset-<name>.drawio`.
-2. Run the same `drawio -x -f png -e -s 2 -o <preset-name>-sample.png <tmp>.drawio` command the main workflow uses (substitute the binary name you resolved in SKILL.md Step 1 if it isn't `drawio`).
-3. Repair the IEND chunk: `python3 <this-skill-dir>/scripts/repair_png.py <preset-name>-sample.png` — the `-e` flag truncates the PNG the same way the main workflow's step 7 does, so the sample needs the same fix to be readable.
-4. Save the PNG as `./preset-<name>-sample.png` (the user's working directory).
-5. Show the user: preset summary table + PNG path + provenance/confidence line.
+1. 填好的 XML 写到 `/tmp/drawio-preset-<name>.drawio`。
+2. 跑主工作流同款命令 `drawio -x -f png -e -s 2 -o <preset-name>-sample.png <tmp>.drawio`（二进制不叫 `drawio` 时替换为 SKILL.md Step 1 解析的名字）。
+3. 修 IEND chunk：`python3 <this-skill-dir>/scripts/repair_png.py <preset-name>-sample.png` —— `-e` 会像主工作流步骤 7 那样截断 PNG，样张需要同样修复才可读。
+4. PNG 存为 `./preset-<name>-sample.png`（用户工作目录）。
+5. 给用户看：预设摘要表 + PNG 路径 + 溯源/置信度行。
 
-### Approval loop
+### 批准循环
 
-- "save" / "looks good" → write candidate to `~/.drawio-skill/styles/<name>.json`; delete tempfile and sample PNG.
-- "change <field> to <value>" → edit the in-memory candidate; re-render; re-ask.
-- "cancel" → delete tempfile and sample PNG; no save.
+- "save" / "looks good" → 候选写入 `~/.drawio-skill/styles/<name>.json`；删临时文件与样张 PNG。
+- "change <field> to <value>" → 改内存中的候选；重渲染；重新问。
+- "cancel" → 删临时文件与样张 PNG；不保存。
 
-### If sample render fails (draw.io CLI missing / export error)
+### 样张渲染失败时（draw.io CLI 缺失 / 导出报错）
 
-Still show the summary table and the provenance line. Note: *"Could not render sample PNG (CLI unavailable). Save anyway on your OK."* Do not block.
+照常展示摘要表与溯源行，注明：*"样张 PNG 渲染失败（CLI 不可用）。你确认后仍可保存。"* 不阻塞。
 
-## XML extraction path
+## XML 提取路径
 
-Input: a `.drawio` file path. Output: candidate preset JSON. Deterministic, no LLM inference.
+输入：`.drawio` 文件路径。输出：候选预设 JSON。确定性的，无 LLM 推断。
 
-### Steps
+### 步骤
 
-1. **Parse the file.** Read the XML, collect every `<mxCell>` with a `style=` attribute, split into vertices (`vertex="1"`) and edges (`edge="1"`).
-2. **Tokenize each `style=` string** on `;`. Each element is either `key=value` or a bare keyword (e.g., `rhombus`, `ellipse`, `rounded=1`).
-3. **Extract palette.** For every vertex, take the `(fillColor, strokeColor)` pair (skip vertices with neither). Count frequency. Keep the top ≤7 pairs.
-4. **Extract shape vocabulary + role mapping.** For each vertex determine a shape class by precedence:
-   `cylinder3 > ellipse > rhombus > swimlane > rounded=1 > rounded=0`.
-   Then infer the semantic role from the vertex's shape class and its `value` (label) attribute. **Evaluate the rules below in order; first match wins.**
+1. **解析文件。** 读 XML，收集每个带 `style=` 属性的 `<mxCell>`，分成 vertex（`vertex="1"`）与 edge（`edge="1"`）。
+2. **逐个 `style=` 串按 `;` 切词。** 每个元素要么是 `key=value` 要么是裸关键字（如 `rhombus`、`ellipse`、`rounded=1`）。
+3. **提取调色板。** 对每个 vertex 取 `(fillColor, strokeColor)` 对（两者皆无则跳过）。计频。保留前 ≤7 对。
+4. **提取形状词汇 + 角色映射。** 对每个 vertex 按优先级判定形状类：
+   `cylinder3 > ellipse > rhombus > swimlane > rounded=1 > rounded=0`。
+   然后从 vertex 的形状类与 `value`（标签）属性推断语义角色。**按序评估下列规则；首个命中胜。**
    - `cylinder3` → `database`
    - `rhombus` → `decision`
    - `swimlane` → `container`
-   - `dashed=1` present + **grey-family fill** (hex where the R, G, and B channels all fall within ±16 of each other, i.e., near-achromatic) → `external`
-   - label matches `/queue|bus|kafka|rabbit/i` → `queue`
-   - label matches `/gateway|api|lb|load/i` → `gateway`
-   - label matches `/auth|login|jwt|oauth/i` → `security`
-   - label matches `/error|fail|alert/i` → `error`
-   - everything else → `service`
+   - 有 `dashed=1` + **灰色系填充**（R、G、B 三通道彼此都在 ±16 内，即近消色差）→ `external`
+   - 标签匹配 `/queue|bus|kafka|rabbit/i` → `queue`
+   - 标签匹配 `/gateway|api|lb|load/i` → `gateway`
+   - 标签匹配 `/auth|login|jwt|oauth/i` → `security`
+   - 标签匹配 `/error|fail|alert/i` → `error`
+   - 其余 → `service`
 
-   For each **role that has a canonical palette slot** — `service`, `database`, `queue`, `gateway`, `error`, `external`, `security` — the most frequent `(role, color-pair)` mapping wins. The pair goes into the role's canonical palette slot:
-   `service→primary, database→success, queue→warning, gateway→accent, error→danger, external→neutral, security→secondary`.
-   Set `roles[role]` to that slot name.
+   对每个**有规范调色板槽的角色**——`service`、`database`、`queue`、`gateway`、`error`、`external`、`security`——最高频的 `(角色, 颜色对)` 映射胜。该对进入角色的规范调色板槽：
+   `service→primary, database→success, queue→warning, gateway→accent, error→danger, external→neutral, security→secondary`。
+   把 `roles[role]` 设为该槽名。
 
-   **Decision and container shapes do not get a `roles[...]` entry** — they are recorded only in `shapes.decision` and `shapes.container`. Any color pairs observed on decision/container vertices still participate in the palette (they can fill leftover slots) but are not tied to a semantic role.
+   **判断与容器形状不生成 `roles[...]` 条目**——只记录在 `shapes.decision` 与 `shapes.container`。在判断/容器 vertex 上观察到的颜色对仍参与调色板（可填剩余槽）但不绑定语义角色。
 
-   Leftover color pairs (not claimed by any role-slot mapping) fill remaining empty palette slots in descending-frequency order.
+   剩余颜色对（未被任何角色-槽映射认领）按频率降序填入其余空调色板槽。
 
-   Record the shape class string used per role in `shapes[role]`. The six named shape keys are `service`, `database`, `queue`, `decision`, `external`, `container` — `gateway`, `error`, and `security` roles inherit `shapes.service` and do not get their own `shapes[...]` entry. Example: `shapes.database = "shape=cylinder3"`.
+   每个角色使用的形状类串记录进 `shapes[role]`。六个命名形状键为 `service`、`database`、`queue`、`decision`、`external`、`container` —— `gateway`、`error`、`security` 角色继承 `shapes.service`，不生成自己的 `shapes[...]` 条目。示例：`shapes.database = "shape=cylinder3"`。
 
-5. **Extract fonts.** Compute modal `fontFamily` and `fontSize` across vertices; emit them as `font.fontFamily` and `font.fontSize`. Also track `fontStyle` per vertex as a **working variable** (not an output field — the schema has no top-level `font.fontStyle`). If a distinguishable subset of vertices uses a larger `fontSize` combined with `fontStyle=1` (bold), treat that subset as titles: set `font.titleFontSize` to their modal size and `font.titleBold: true`. Otherwise omit both title fields.
+5. **提取字体。** 跨 vertex 计算众数 `fontFamily` 与 `fontSize`，输出为 `font.fontFamily` 与 `font.fontSize`。同时把逐 vertex 的 `fontStyle` 记为**工作变量**（非输出字段——schema 无顶层 `font.fontStyle`）。若一个可区分的 vertex 子集用了更大 `fontSize` 且 `fontStyle=1`（粗体），把该子集视为标题：`font.titleFontSize` 设为其众数尺寸并设 `font.titleBold: true`。否则省略两个标题字段。
 
-6. **Extract edge defaults.** Take the modal edge style string, but strip these per-edge coordinate keys before counting: `entryX`, `entryY`, `exitX`, `exitY`, `entryDx`, `entryDy`, `exitDx`, `exitDy`. Record arrow style from `endArrow`/`endFill` separately in `edges.arrow`.
-   If any edges have `dashed=1`, collect their `value` (label) attributes. If ≥2 share a common token (e.g., all are labeled "async" or "optional"), add that token to `edges.dashedFor`.
+6. **提取边默认值。** 取众数边 style 串，但计数前剥离这些逐边坐标键：`entryX`、`entryY`、`exitX`、`exitY`、`entryDx`、`entryDy`、`exitDx`、`exitDy`。箭头样式从 `endArrow`/`endFill` 单独记入 `edges.arrow`。
+   若有边带 `dashed=1`，收集其 `value`（标签）属性。若 ≥2 条共享一个公共词（如都标 "async" 或 "optional"），把该词加入 `edges.dashedFor`。
 
-7. **Extract extras.** `sketch=1` seen on any vertex or edge → `extras.sketch = true`. Modal `strokeWidth` across vertices → `extras.globalStrokeWidth` (default `1`).
+7. **提取附加项。** 任何 vertex 或边出现 `sketch=1` → `extras.sketch = true`。跨 vertex 的众数 `strokeWidth` → `extras.globalStrokeWidth`（默认 `1`）。
 
-8. **Set provenance.**
+8. **设溯源。**
    ```json
    {
-     "source": { "type": "xml", "path": "<input absolute path>", "extracted_at": "YYYY-MM-DD" },
+     "source": { "type": "xml", "path": "<输入绝对路径>", "extracted_at": "YYYY-MM-DD" },
      "confidence": "high"
    }
    ```
 
-### XML edge cases
+### XML 边界情况
 
-| Situation | Behavior |
+| 情况 | 行为 |
 |---|---|
-| Source has <3 distinct color pairs | Leave unfilled slots as `null`. Downgrade `confidence` to `"medium"`. Summary warns the user. |
-| Source has >7 color pairs | Keep the top 7 by frequency. Summary warns that some colors were dropped. |
-| Non-standard `shape=` keywords (e.g., `shape=mxgraph.aws4.*`) | These do not match the Step 4 precedence ladder, so the vertex falls through to `rounded=0` for shape-class purposes. Iconography is lost; color, label, and edge style are still captured. Role inference still runs via the label-regex rules. Summary notes: *"Non-standard shape library detected — iconography not preserved in preset (color and label captured)."* |
-| Non-English labels | The English-keyword regexes in step 4 will mostly miss; most vertices collapse to `service`. Palette/shapes/font/edges still captured correctly (they don't depend on label text). `confidence` stays `"high"`. Summary notes: *"Role labels not in English — `service`/`database`/`decision`/`container`/`external` inferred from shape class; other roles not mapped."* |
-| File has no `<mxCell vertex="1">` at all | Stop. Refuse to save. Message: *"Nothing to learn from — source file has no shapes."* |
+| 源颜色对 <3 组 | 未填的槽留 `null`。`confidence` 降为 `"medium"`。摘要警告用户。 |
+| 源颜色对 >7 组 | 按频率保留前 7。摘要警告部分颜色被丢弃。 |
+| 非标准 `shape=` 关键字（如 `shape=mxgraph.aws4.*`） | 不匹配步骤 4 的优先级梯，vertex 形状类落到 `rounded=0`。图标语义丢失；颜色、标签、边样式仍被捕获。角色推断仍走标签正则。摘要注明：*"检测到非标准形状库——预设不保留图标（颜色与标签已捕获）。"* |
+| 非英文标签 | 步骤 4 的英文关键词正则大多落空；多数 vertex 塌缩为 `service`。调色板/形状/字体/边仍正确捕获（不依赖标签文字）。`confidence` 保持 `"high"`。摘要注明：*"角色标签非英文——`service`/`database`/`decision`/`container`/`external` 由形状类推断；其他角色未映射。"* |
+| 文件完全没有 `<mxCell vertex="1">` | 停。拒绝保存。消息：*"没有可学的东西——源文件没有形状。"* |
 
-## Image extraction path
+## 图像提取路径
 
-Input: path to a PNG/JPG (or any vision-readable image format). Output: candidate preset JSON. Inference-based; `confidence: "medium"` at best.
+输入：PNG/JPG（或任何 vision 可读图像格式）路径。输出：候选预设 JSON。基于推断；`confidence` 顶多 `"medium"`。
 
-**Prerequisite:** the agent's vision capability must be available (same mechanism the main workflow's self-check uses). If vision is not available, stop and tell the user:
-*"Image-based learning needs a vision-enabled model (Claude Sonnet or Opus). Re-run on such a model, or provide the `.drawio` source file instead."*
+**前置：** agent 的 vision 能力必须可用（与主工作流自检同机制）。vision 不可用则停下并告诉用户：
+*"基于图像的学习需要 vision 模型（Claude Sonnet 或 Opus）。换此类模型重跑，或改提供 `.drawio` 源文件。"*（实际执行时用用户语言表达同义信息。）
 
-### Steps
+### 步骤
 
-1. **Read the image.** Use the agent's vision input — the same path the main workflow's step 5 uses to read exported PNGs during self-check.
+1. **读图。** 用 agent 的 vision 输入——与主工作流步骤 5 自检读导出 PNG 同路。
 
-2. **Extract palette by visual inspection.** Identify distinct fill-color regions on shape bodies.
+2. **目检提取调色板。** 识别形状主体上的不同填充色区域。
 
-   For each distinct fill:
-   - `fillColor` — quantize each RGB channel to the nearest multiple of 16. If the resulting HSL lightness is below 0.75, raise it to 0.85 (keep hue and saturation; set L=0.85; HSL→RGB round-trip). Emit as `#RRGGBB`. Drawio-standard pastels occupy L≈0.85–0.96; below 0.75 reads as "too dark for a fill color" and this step lifts it back into that range.
-   - `strokeColor` — read the matching border. If unreadable, derive from fill by darkening ~25% (match HSL, drop L by 0.25).
+   对每个不同填充：
+   - `fillColor` —— 每个 RGB 通道量化到最近的 16 的倍数。若所得 HSL 亮度低于 0.75，抬到 0.85（保色调与饱和度；设 L=0.85；HSL→RGB 往返）。输出 `#RRGGBB`。drawio 标准浅彩占据 L≈0.85–0.96；低于 0.75 读作"对填充色太暗"，此步把它抬回该区间。
+   - `strokeColor` —— 读匹配边框。不可读时由填充加深 ~25% 推导（匹配 HSL，L 降 0.25）。
 
-   Map each `(fillColor, strokeColor)` pair to a named slot using this decision order:
+   每个 `(fillColor, strokeColor)` 对按此决策序映射到命名槽：
 
-   1. **Grey check first.** If the fill has R, G, and B channels all within ±16 of each other (same definition as the XML path's grey-family rule), OR HSL saturation < 0.20, classify as `neutral`. This check wins regardless of hue angle.
-   2. **Hue band otherwise.** Use these explicit HSL hue ranges:
-      - 180°–260° → `primary` (blue)
-      - 80°–170° → `success` (green)
-      - 45°–65° → `warning` (yellow)
-      - 20°–44° → `accent` (orange)
-      - 0°–19° or 320°–360° → `danger` (red/pink)
-      - 260°–320° → `secondary` (purple)
-   3. **No band matched** (gap regions at 65°–80° or 170°–180°) → spill to the nearest band by angular distance.
+   1. **先查灰。** 填充的 R、G、B 三通道彼此在 ±16 内（与 XML 路径灰色系规则同定义），或 HSL 饱和度 < 0.20，归 `neutral`。此检查无视色调角，优先胜出。
+   2. **否则按色调带。** 用这些显式 HSL 色调区间：
+      - 180°–260° → `primary`（蓝）
+      - 80°–170° → `success`（绿）
+      - 45°–65° → `warning`（黄）
+      - 20°–44° → `accent`（橙）
+      - 0°–19° 或 320°–360° → `danger`（红/粉）
+      - 260°–320° → `secondary`（紫）
+   3. **无带命中**（65°–80° 或 170°–180° 的间隙区）→ 按角距溢到最近带。
 
-   **Collision rule.** If ≥2 distinct fills land in the same slot, sort them by total pixel area covered in the image (descending). The largest keeps the canonical slot. Remaining fills spill to the **nearest empty slot** measured by hue-band angular distance — first to adjacent bands on either side, then farther out. If every slot is already filled, drop the extras and warn in the summary.
+   **碰撞规则。** ≥2 个不同填充落同一槽时，按图中覆盖像素总面积降序排。最大者保规范槽。其余填充按色调带角距溢到**最近的空槽**——先两侧相邻带、再向外。全部槽已满则丢弃多余并在摘要警告。
 
-3. **Extract shape vocabulary.** Classify every visible shape by silhouette:
-   - rounded rectangle → `rounded=1`
-   - sharp rectangle → `rounded=0`
-   - circle / oval → `ellipse`
-   - diamond → `rhombus`
-   - cylinder (rectangle with curved top/bottom) → `shape=cylinder3`
-   - titled container (header bar + nested children inside) → `swimlane;startSize=30`
-   - dashed-bordered rectangle → `rounded=1;dashed=1`
+3. **提取形状词汇。** 按轮廓分类每个可见形状：
+   - 圆角矩形 → `rounded=1`
+   - 直角矩形 → `rounded=0`
+   - 圆 / 椭圆 → `ellipse`
+   - 菱形 → `rhombus`
+   - 圆柱（上下边弯曲的矩形）→ `shape=cylinder3`
+   - 带标题容器（标题栏 + 内嵌子元素）→ `swimlane;startSize=30`
+   - 虚线边框矩形 → `rounded=1;dashed=1`
 
-   Role assignment uses the **same label-text + shape rules as the XML path step 4**. Visible labels are read via vision.
+   角色指派用**与 XML 路径步骤 4 相同的标签文字 + 形状规则**。可见标签经 vision 读取。
 
-4. **Extract fonts.** Best-effort. Distinguishable categories:
-   - clearly serif → `fontFamily: "Georgia"`
-   - clearly monospaced → `fontFamily: "Courier New"`
-   - otherwise → `fontFamily: "Helvetica"`
+4. **提取字体。** 尽力而为。可区分类别：
+   - 明显衬线 → `fontFamily: "Georgia"`
+   - 明显等宽 → `fontFamily: "Courier New"`
+   - 其余 → `fontFamily: "Helvetica"`
 
-   Size by relative appearance:
-   - small → `fontSize: 11`
-   - medium → `fontSize: 12`
-   - large → `fontSize: 14`
+   尺寸按相对观感：
+   - 小 → `fontSize: 11`
+   - 中 → `fontSize: 12`
+   - 大 → `fontSize: 14`
 
-   If titles/container headers are distinctly larger or bolder → set `titleFontSize` accordingly and `titleBold: true`.
+   标题/容器头明显更大或更粗 → 相应设 `titleFontSize` 并 `titleBold: true`。
 
-5. **Extract edge defaults.**
-   - Right-angle orthogonal arrows → `edges.style = "edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1"`.
-   - Curved arrows → append `;curved=1` to `edges.style`.
-   - Filled triangle arrowheads → `edges.arrow = "endArrow=classic;endFill=1"`.
-   - Open V-shaped arrowheads → `edges.arrow = "endArrow=open;endFill=0"`.
-   - Any dashed arrows near labels like "optional", "async", "fallback", "secondary" → add those label tokens to `edges.dashedFor`.
+5. **提取边默认值。**
+   - 直角正交箭头 → `edges.style = "edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1"`。
+   - 曲线箭头 → `edges.style` 追加 `;curved=1`。
+   - 实心三角箭头 → `edges.arrow = "endArrow=classic;endFill=1"`。
+   - 开口 V 形箭头 → `edges.arrow = "endArrow=open;endFill=0"`。
+   - 标签旁有 "optional"、"async"、"fallback"、"secondary" 类虚线箭头 → 把这些标签词加入 `edges.dashedFor`。
 
-6. **Extract extras.**
-   - Visibly hand-drawn / rough / sketch look (wavy strokes, uneven fills) → `extras.sketch = true`.
-   - Heavy strokes (clearly >1.5× normal) → `extras.globalStrokeWidth = 2`.
-   - Otherwise default: `extras = { "sketch": false, "globalStrokeWidth": 1 }`.
+6. **提取附加项。**
+   - 明显手绘 / 粗糙 / 素描风（波浪笔触、不均匀填充）→ `extras.sketch = true`。
+   - 粗笔触（明显 >1.5 倍正常）→ `extras.globalStrokeWidth = 2`。
+   - 否则默认：`extras = { "sketch": false, "globalStrokeWidth": 1 }`。
 
-7. **Set provenance and confidence.**
+7. **设溯源与置信度。**
    ```json
    {
-     "source": { "type": "image", "path": "<input absolute path>", "extracted_at": "YYYY-MM-DD" },
+     "source": { "type": "image", "path": "<输入绝对路径>", "extracted_at": "YYYY-MM-DD" },
      "confidence": "medium"
    }
    ```
-   Adjustments:
-   - <3 distinct shapes identifiable → `confidence: "low"`.
-   - Image path stays at `"medium"` by default. The only path to `"high"` is a strictly-verifiable signal: the source image was exported from drawio itself (recognizable drawio default chrome, grid, or a visible drawio watermark), **and** all seven palette slots are filled, **and** all seven roles are labeled. This preserves the semantic gap between inference-based (image) and parse-based (XML) provenance.
+   调整：
+   - 可识别形状 <3 个 → `confidence: "low"`。
+   - 图像路径默认停在 `"medium"`。通往 `"high"` 的唯一路径是严格可验证的信号：源图本身由 drawio 导出（可辨认的 drawio 默认界面、网格或可见水印），**且**七个调色板槽全填，**且**七个角色都有标签。这保住了推断式（图像）与解析式（XML）溯源之间的语义差距。
 
-### Image edge cases
+### 图像边界情况
 
-| Situation | Behavior |
+| 情况 | 行为 |
 |---|---|
-| Vision unavailable | Stop as described above — do not fall back to guessing. |
-| Image has <3 identifiable shapes | Continue; mark `confidence: "low"`; summary explicitly warns the user that the preset is a loose approximation. |
-| Image has no visible labels | Role assignment collapses to shape-class only: cylinders → `database`, diamonds → `decision`, swimlanes → `container`, dashed-bordered rectangles with grey fill → `external`, everything else → `service`. Palette/font/edges still captured. Summary notes: *"No labels readable — semantic roles beyond shape-class not inferred."* |
-| Two palette slots would land in the same hue family | Keep the more frequent one in its canonical slot; spill the other to the adjacent empty slot (rule in step 2). |
-| Image has more than 7 distinct fills | Keep the 7 most area-covering fills per the Step 2 collision rule. Summary warns that some colors were dropped. |
+| vision 不可用 | 按上述停下——不退回瞎猜。 |
+| 图中可识别形状 <3 个 | 继续；标 `confidence: "low"`；摘要明确警告该预设是粗略近似。 |
+| 图中无可见标签 | 角色指派塌缩为仅形状类：圆柱 → `database`、菱形 → `decision`、swimlane → `container`、灰填充虚线框 → `external`、其余 → `service`。调色板/字体/边仍捕获。摘要注明：*"无可读标签——未推断形状类之外的语义角色。"* |
+| 两个调色板槽会落同一色系 | 较高频者保规范槽；另一个溢到相邻空槽（步骤 2 规则）。 |
+| 图中不同填充 >7 个 | 按步骤 2 碰撞规则保留覆盖面积最大的 7 个。摘要警告部分颜色被丢弃。 |
