@@ -4,9 +4,6 @@ description: |
   TRIGGER: 设计数据库 schema / 索引 / 迁移 / 选 SQL/NoSQL/ORM/serverless / '数据库' / 'SQL' / '表设计' / '索引' / 'schema' / 'migration'（不用于：应用代码用 python-web-development，纯架构用 software-architecture）
   RULE: no specific rule（方法论 skill · 数据库设计方法论）
   DETAIL: 本 SKILL.md（schema/索引/迁移/选型）
-risk: safe
-source: community
-date_added: "2026-02-27"
 ---
 
 # Database Design
@@ -19,12 +16,26 @@ date_added: "2026-02-27"
 
 | File | Description | When to Read |
 |------|-------------|--------------|
-| `database-selection.md` | PostgreSQL vs Neon vs Turso vs SQLite | Choosing database |
-| `orm-selection.md` | Drizzle vs Prisma vs Kysely | Choosing ORM |
-| `schema-design.md` | Normalization, PKs, relationships | Designing schema |
-| `indexing.md` | Index types, composite indexes | Performance tuning |
-| `optimization.md` | N+1, EXPLAIN ANALYZE | Query optimization |
-| `migrations.md` | Safe migrations, serverless DBs | Schema changes |
+| `references/database-selection.md` | PostgreSQL vs Neon vs Turso vs SQLite | Choosing database |
+| `references/orm-selection.md` | Drizzle vs Prisma vs Kysely | Choosing ORM |
+| `references/schema-design.md` | Normalization, PKs, relationships | Designing schema |
+| `references/indexing.md` | Index types, composite indexes | Performance tuning |
+| `references/optimization.md` | N+1, EXPLAIN ANALYZE | Query optimization |
+| `references/migrations.md` | Safe migrations, serverless DBs | Schema changes |
+
+## 决策示例
+
+需求：电商订单，查询模式 = 按用户列订单 + 按状态统计未完成单。
+
+**反选项**（红线 R1.1）：
+- 单表全字段（含商品快照 50 列）→ 否决：商品信息冗余膨胀、更新异常
+- 订单 + 订单项 1:N（order_items 存商品快照）→ ✅ 采用
+
+**关键决策**：
+- PK 用 `BIGINT GENERATED ALWAYS AS IDENTITY` 而非 UUIDv4（B-tree 索引膨胀 2-3x）
+- `(user_id, created_at DESC)` 复合索引覆盖"按用户列订单"；状态统计走部分索引 `(status, created_at) WHERE status != 'COMPLETED'`
+
+→ PK 取舍见 `references/schema-design.md`，索引设计见 `references/indexing.md`。
 
 ---
 

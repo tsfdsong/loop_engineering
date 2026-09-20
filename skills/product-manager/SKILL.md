@@ -4,12 +4,6 @@ description: |
   TRIGGER: 创建 PRD / 产品规格 / 需求文档 / RICE/Kano/MoSCoW 优先级 / 用户故事 / 'PRD' / '需求' / 'RICE' / 'Kano' / '用户故事' / 'product spec'（不用于：纯头脑风暴用 brainstorming，技术实施用 spec-driven-development）
   RULE: no specific rule（方法论 skill · 产品方法论）
   DETAIL: 本 SKILL.md（PRD + 优先级框架）
-risk: safe
-version: "1.0.0"
-author: "Digidai"
-tags: ["product-management", "saas", "frameworks", "metrics", "strategy"]
-source: "Digidai/product-manager-skills (MIT)"
-date_added: "2026-03-06"
 ---
 
 # Product Manager Skills
@@ -59,7 +53,7 @@ GitHub: https://github.com/Digidai/product-manager-skills
 
 ## §N. PRD 合成流程（吸收原 to-prd · v2.0 合并 · D2.0）
 
-> **来源**：`mattpocock/skills` (MIT) · author: Matt Pocock · date_added: 2026-06-19 · D2.0 合并于此。
+> **来源**：`mattpocock/skills` (MIT) · author: Matt Pocock · 打包来源：`Digidai/product-manager-skills` (MIT) · date_added: 2026-06-19 · D2.0 合并于此。
 > **使用场景**：把当前对话/讨论合成成一份正式 PRD 并发布到项目 issue tracker —— 不采访用户，只综合已知信息。
 
 ### When to Use

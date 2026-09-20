@@ -4,26 +4,11 @@ description: |
   TRIGGER: 设置 CI/CD pipeline / GitHub Actions workflow / 自动化测试构建部署 / 'CI/CD' / '部署' / '流水线' / 'GitHub Actions' / 'workflow'（不用于：纯部署策略用 production-readiness，非 CI 自动化）
   RULE: no specific rule（方法论 skill · CI/CD 模板库）
   DETAIL: 本 SKILL.md（GitHub Actions 模板）
-risk: critical
-source: community
-date_added: "2026-02-27"
 ---
 
 # GitHub Actions Templates
 
 Production-ready GitHub Actions workflow patterns for testing, building, and deploying applications.
-
-## Do not use this skill when
-
-- The task is unrelated to github actions templates
-- You need a different domain or tool outside this scope
-
-## Instructions
-
-- Clarify goals, constraints, and required inputs.
-- Apply relevant best practices and validate outcomes.
-- Provide actionable steps and verification.
-- If detailed examples are required, open `resources/implementation-playbook.md`.
 
 ## Purpose
 

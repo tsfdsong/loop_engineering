@@ -4,26 +4,11 @@ description: |
   TRIGGER: 实施或维护项目上下文（CLAUDE.md / AGENTS.md / 结构化文档）/ 'AI 上下文' / '项目文档' / 'context management'（不用于：纯文档用 writing-skills，onboarding 用 using-loopengine）
   RULE: no specific rule（方法论 skill · 上下文管理方法论）
   DETAIL: 本 SKILL.md + 与 writing-skills 配合
-risk: unknown
-source: community
-date_added: '2026-02-27'
 ---
 
 # Context-Driven Development
 
 Guide for implementing and maintaining context as a managed artifact alongside code, enabling consistent AI interactions and team alignment through structured project documentation.
-
-## Do not use this skill when
-
-- The task is unrelated to context-driven development
-- You need a different domain or tool outside this scope
-
-## Instructions
-
-- Clarify goals, constraints, and required inputs.
-- Apply relevant best practices and validate outcomes.
-- Provide actionable steps and verification.
-- If detailed examples are required, open `resources/implementation-playbook.md`.
 
 ## Use this skill when
 

@@ -51,3 +51,15 @@ description: |
 - "前端反复纠正"（用户痛点信号）
 - "建立设计系统" / "design token"
 - 涉及 CSS/Tailwind/styled-components/CSS Module 改动
+
+## 重构闭环示例
+
+任务："卡片组件间距 16px → 12px，视觉更紧凑"。
+
+1. **改前**：agent-browser 截图商品列表页（baseline.png，含移动/平板/桌面 3 个 viewport）
+2. **改动**：design token `--spacing-md: 16px → 12px`（单一真源，禁止逐组件硬编码）
+3. **改后**：同命令截同页面（after.png）
+4. **对比**：visual-diff 发现购物车图标与卡片边缘重叠 2px —— 纯 code review 看不出的像素回归
+5. **迭代**：图标容器加 `--spacing-xs` 内边距 → 重截 → diff 清零 → 完成
+
+关键：改动只落在 token 一处；回归靠截图 diff，不靠肉眼。
