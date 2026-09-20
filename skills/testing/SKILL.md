@@ -336,6 +336,12 @@ test('user can register and login', async ({ page }) => {
 
 - [references/tdd-full.md](references/tdd-full.md)
 
+### 好测试可证伪性纪律（2026-09-20 引入 · 源自 superpowers v6.2.0）
+
+写/评审测试时三条硬规则：**说出哪个生产变更会弄红它**（治 string-presence trap）/ **期望值独立于被测代码推导**（治照抄实现陷阱）/ **关键路径做 mutation check**（改坏生产代码确认测试真的红）。
+
+→ 完整规则、反例与清单见 [references/writing-good-tests.md](references/writing-good-tests.md)
+
 ---
 
 ## 整合使用流程
