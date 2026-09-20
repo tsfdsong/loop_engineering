@@ -237,6 +237,26 @@ def _check_skill_structure(skill_md: str, name: str) -> List[AuditResult]:
                 f"{name}/SKILL.md 疑似未填占位符 {len(hits)} 处: {hits[:2]}",
             )
         )
+
+    # references 附属文件不得带 YAML frontmatter（2026-09-20 加入：
+    # 同根残留两次被抓——framework-migration-full.md 与 tdd-full.md 均带
+    # 独立技能时代的 frontmatter/risk/source/date_added 导入残留）
+    for sub in ("references", "resources"):
+        sub_dir = os.path.join(skill_dir, sub)
+        if not os.path.isdir(sub_dir):
+            continue
+        for fn in sorted(os.listdir(sub_dir)):
+            if not fn.endswith(".md"):
+                continue
+            with open(os.path.join(sub_dir, fn), encoding="utf-8") as f:
+                if f.readline().strip() == "---":
+                    results.append(
+                        AuditResult(
+                            "B", "warning", "all",
+                            f"{name}/{sub}/{fn} 带 frontmatter（附属参考文件"
+                            "不应有——独立技能/社区导入残留风险）",
+                        )
+                    )
     return results
 
 
@@ -273,6 +293,10 @@ def dimension_b_skill_integrity(
                     "B", "info", "all", f"{name}/SKILL.md 无 frontmatter"
                 )
             )
+        # 接线结构完整性检查（2026-09-20：发现该函数自 fcb0344 引入后
+        # 从未被主流程调用——500 行/死链/占位符/references-frontmatter
+        # 检查实际从未在真实 audit 运行中生效）
+        results.extend(_check_skill_structure(skill_md, name))
     results.append(
         AuditResult(
             "B",

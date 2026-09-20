@@ -157,6 +157,16 @@ NO SKILL WITHOUT A FAILING TEST FIRST
 
 **REQUIRED BACKGROUND：** superpowers:test-driven-development 技能解释了这为什么重要。同样原则适用于文档。
 
+## 受限环境的降级验证协议（2026-09-20 引入）
+
+Iron Law 要求编辑技能前先看失败，但 subagent 压力测试环境可能不可用（认证/限额等，见 lessons L#006）。此时按本协议降级，**并在交付物中如实标注**：
+
+1. **结构等价验证**（替代行为验证）：改动前后 `##`/`###` 标题数量对照（`git show HEAD:<file>` vs 当前）——翻译/重写类编辑的头号丢失模式就是丢节（2026-09-20 全库中文化中拦截 4 处）；列表条数增量必须可解释。
+2. **audit 结构套件**：`pytest tests/test_audit_tools.py`（frontmatter/死链/占位符/行数/references 残留，25+ 项机械检查）。
+3. **声明义务**：verdict / commit message 注明"未做 subagent 压力测试，验证为结构级"——环境恢复后补压测，不得宣称行为级结论。
+
+**禁止**：以降级验证冒充压力测试宣称"技能有效"；以"环境不可用"为由跳过 1/2（机械检查永远可跑）。
+
 ## Testing All Skill Types — 要点
 
 不同 skill 类型测不同维度：

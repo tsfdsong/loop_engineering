@@ -84,7 +84,7 @@ loop 在任何需要用户确认的地方，**必须且只能**使用以下交�
    ```
    export LOOPENGINE_BRIDGES=alpha
    /loop --reviewer=subagent-dd ...
-   └─ G9 = subagent-dd 三阶段循环
+   └─ G9 = subagent-dd 两阶段循环（implementer → task reviewer）
         (implementer → spec reviewer → code quality reviewer)
    └─ 桥接失败自动降级到 code-reviewer
    └─ 详见 shared/references/g9-g10-coordination.md

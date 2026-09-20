@@ -247,3 +247,30 @@ class TestSkillStructureCheck(unittest.TestCase):
             path = self._make_skill(tmp, "body\n", fm=fm)
             results = _check_skill_structure(path, "t-skill")
             self.assertTrue(any("1024" in r.message for r in results))
+
+    def test_reference_file_with_frontmatter_flagged(self):
+        """references 附属文件带 frontmatter = 独立技能/社区导入残留（2026-09-20 同根 ×2）。"""
+        from audit_tools import _check_skill_structure
+        import os
+        with tempfile.TemporaryDirectory() as tmp:
+            d = os.path.join(tmp, "t-skill", "references")
+            os.makedirs(d)
+            with open(os.path.join(d, "stale.md"), "w", encoding="utf-8") as f:
+                f.write("---\nname: old-skill\nrisk: unknown\n---\n\n# Stale\n")
+            path = self._make_skill(tmp, "body\n")
+            results = _check_skill_structure(path, "t-skill")
+            self.assertTrue(
+                any("frontmatter" in r.message and "stale.md" in r.message for r in results)
+            )
+
+    def test_clean_reference_file_not_flagged(self):
+        from audit_tools import _check_skill_structure
+        import os
+        with tempfile.TemporaryDirectory() as tmp:
+            d = os.path.join(tmp, "t-skill", "references")
+            os.makedirs(d)
+            with open(os.path.join(d, "clean.md"), "w", encoding="utf-8") as f:
+                f.write("# Clean\n\n正文\n")
+            path = self._make_skill(tmp, "body\n")
+            results = _check_skill_structure(path, "t-skill")
+            self.assertFalse(any("frontmatter（附属" in r.message for r in results))

@@ -156,6 +156,6 @@ G1 是所有非纯文档任务的**强制前置**:
 - 自愈 A/B/C/🎨 分级触发
 - stagnated/exhausted 终态处理
 
-**桥接说明**（v6.1 opt-in）：当 `LOOPENGINE_BRIDGES=alpha` 启用 + `loop` 命令带 `--reviewer=subagent-dd` 时，G9 可由 `subagent-dd` 的三阶段循环替代。详见 `shared/references/g9-g10-coordination.md`。
+**桥接说明**（v6.1 opt-in）：当 `LOOPENGINE_BRIDGES=alpha` 启用 + `loop` 命令带 `--reviewer=subagent-dd` 时，G9 可由 `subagent-dd` 的两阶段循环（implementer → task reviewer 双 verdict）替代（v1.1 起）。详见 `shared/references/g9-g10-coordination.md`。
 
 **向后兼容**：本文件原有内容**全部保留**，共享 spec 是**增量引用**而非修改。
