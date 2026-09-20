@@ -10,52 +10,52 @@ hidden: true
 
 # agent-browser
 
-Fast browser automation CLI for AI agents. Chrome/Chromium via CDP with
-accessibility-tree snapshots and compact `@eN` element refs.
+面向 AI agent 的快速浏览器自动化 CLI。通过 CDP 驱动 Chrome/Chromium，
+提供 accessibility-tree 快照与紧凑的 `@eN` 元素引用。
 
-Install: `npm i -g agent-browser && agent-browser install`
+安装：`npm i -g agent-browser && agent-browser install`
 
-## Start here
+## 从这里开始
 
-This file is a discovery stub, not the usage guide. Before running any
-`agent-browser` command, load the actual workflow content from the CLI:
-
-```bash
-agent-browser skills get core             # start here — workflows, common patterns, troubleshooting
-agent-browser skills get core --full      # include full command reference and templates
-```
-
-The CLI serves skill content that always matches the installed version,
-so instructions never go stale. The content in this stub cannot change
-between releases, which is why it just points at `skills get core`.
-
-## Specialized skills
-
-Load a specialized skill when the task falls outside browser web pages:
+本文件是发现桩（discovery stub），不是使用指南。运行任何 `agent-browser`
+命令之前，先从 CLI 加载真正的工作流内容：
 
 ```bash
-agent-browser skills get electron          # Electron desktop apps (VS Code, Slack, Discord, Figma, ...)
-agent-browser skills get slack             # Slack workspace automation
-agent-browser skills get dogfood           # Exploratory testing / QA / bug hunts
-agent-browser skills get vercel-sandbox    # agent-browser inside Vercel Sandbox microVMs
-agent-browser skills get agentcore         # AWS Bedrock AgentCore cloud browsers
+agent-browser skills get core             # 从这里开始 — 工作流、常见模式、故障排查
+agent-browser skills get core --full      # 含完整命令参考与模板
 ```
 
-Run `agent-browser skills list` to see everything available on the
-installed version.
+CLI 提供的 skill 内容始终与已安装版本匹配，指令永不过时。本桩文件的
+内容不会随版本变化，所以它只指向 `skills get core`。
 
-## Why agent-browser
+## 专用技能
 
-- Fast native Rust CLI, not a Node.js wrapper
-- Works with any AI agent (Cursor, Claude Code, Codex, Continue, Windsurf, etc.)
-- Chrome/Chromium via CDP with no Playwright or Puppeteer dependency
-- Accessibility-tree snapshots with element refs for reliable interaction
-- Sessions, authentication vault, state persistence, video recording
-- Specialized skills for Electron apps, Slack, exploratory testing, cloud providers
+任务超出浏览器网页范围时，按需加载专用技能：
 
-## Observability Dashboard
+```bash
+agent-browser skills get electron          # Electron 桌面应用（VS Code、Slack、Discord、Figma 等）
+agent-browser skills get slack             # Slack 工作区自动化
+agent-browser skills get dogfood           # 探索性测试 / QA / bug 猎捕
+agent-browser skills get vercel-sandbox    # Vercel Sandbox microVM 内的 agent-browser
+agent-browser skills get agentcore         # AWS Bedrock AgentCore 云浏览器
+```
 
-The dashboard runs independently of browser sessions on port 4848 and can also be opened through a proxied or forwarded URL such as `https://dashboard.agent-browser.localhost`. Agents should stay on the dashboard origin: session tabs, status, and stream traffic are proxied internally, so session ports do not need to be exposed.
+运行 `agent-browser skills list` 查看已安装版本的全部可用技能。
+
+## 为什么用 agent-browser
+
+- 快速原生 Rust CLI，不是 Node.js 封装
+- 兼容任意 AI agent（Cursor、Claude Code、Codex、Continue、Windsurf 等）
+- 通过 CDP 驱动 Chrome/Chromium，不依赖 Playwright 或 Puppeteer
+- accessibility-tree 快照 + 元素引用，交互可靠
+- 会话、认证保险库、状态持久化、视频录制
+- 面向 Electron 应用、Slack、探索性测试、云厂商的专用技能
+
+## 可观测性仪表盘
+
+仪表盘独立于浏览器会话运行于 4848 端口，也可通过代理/转发 URL 打开（如
+`https://dashboard.agent-browser.localhost`）。agent 应停留在仪表盘 origin 内：
+会话标签页、状态与流量都在内部代理，无需暴露会话端口。
 
 ---
 

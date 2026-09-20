@@ -6,35 +6,35 @@ description: |
   DETAIL: 本 SKILL.md（头脑风暴方法论）
 ---
 
-# Brainstorming Ideas Into Designs
+# Brainstorming：把想法变成设计
 
-Help turn ideas into fully formed designs and specs through natural collaborative dialogue.
+通过自然的协作对话，帮助把想法变成成形的设计与 spec。
 
-Start by understanding the current project context, then ask questions one at a time to refine the idea. Once you understand what you're building, present the design and get user approval.
+先理解当前项目上下文，再逐个提问打磨想法。理解了要构建什么之后，呈现设计并取得用户批准。
 
 <HARD-GATE>
-Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
+在呈现设计并获得用户批准之前，禁止调用任何实现类技能、写任何代码、脚手架任何项目、采取任何实现动作。这适用于每一个项目，无论它看起来多简单。
 </HARD-GATE>
 
-## Anti-Pattern: "This Is Too Simple To Need A Design"
+## 反模式："这太简单了不需要设计"
 
-Every project goes through this process. A todo list, a single-function utility, a config change — all of them. "Simple" projects are where unexamined assumptions cause the most wasted work. The design can be short (a few sentences for truly simple projects), but you MUST present it and get approval.
+每个项目都走这个流程。待办清单、单函数工具、配置改动——全都算。"简单"的项目恰恰是未经检验的假设浪费最多工作的地方。设计可以很短（真正简单的项目几句话即可），但必须呈现并取得批准。
 
-## Checklist
+## 清单
 
-You MUST create a task for each of these items and complete them in order:
+必须为以下每一项创建任务并按序完成：
 
-1. **Explore project context** — check files, docs, recent commits
-2. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
-3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
-4. **Propose 2-3 approaches** — with trade-offs and your recommendation
-5. **Present design** — in sections scaled to their complexity, get user approval after each section
-6. **Write design doc** — save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit（**含 Loop Execution Contract · spec 级字段**，见下文）
-7. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope, **acceptance 可判定性** (see below)；**若满足下文「对抗审讯触发条件」任一条，先触发 grilling 审讯、修订写回后再进第 8 步**
-8. **User reviews written spec** — ask user to review the spec file before proceeding
-9. **Transition to implementation** — invoke **spec-driven-development** skill（writing-plans 继任）to create implementation plan
+1. **探索项目上下文** —— 查文件、文档、最近 commit
+2. **提供可视化伴侣**（若主题涉及视觉问题）—— 单独一条消息，不与澄清问题合并。见下文 Visual Companion 节。
+3. **提澄清问题** —— 一次一个，理解目的/约束/成功标准
+4. **提出 2-3 个方案** —— 带 trade-off 与你的推荐
+5. **呈现设计** —— 按复杂度伸缩的分节呈现，每节后取得用户认可
+6. **写设计文档** —— 保存至 `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` 并 commit（**含 Loop Execution Contract · spec 级字段**，见下文）
+7. **Spec 自审** —— 快速内联检查占位符、矛盾、歧义、范围、**acceptance 可判定性**（见下文）；**若满足下文「对抗审讯触发条件」任一条，先触发 grilling 审讯、修订写回后再进第 8 步**
+8. **用户审阅书面 spec** —— 请用户在继续前审阅 spec 文件
+9. **转入实现** —— 调用 **spec-driven-development** 技能（writing-plans 继任）创建实施计划
 
-## Process Flow
+## 流程图
 
 ```dot
 digraph brainstorming {
@@ -66,60 +66,59 @@ digraph brainstorming {
 }
 ```
 
-**The terminal state is invoking spec-driven-development.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill. The ONLY skill you invoke after brainstorming is spec-driven-development.
+**终态是调用 spec-driven-development。** 禁止调用 frontend-design、mcp-builder 或任何其他实现类技能。brainstorming 之后唯一调用的技能是 spec-driven-development。
 
-## The Process
+## 流程
 
-**Understanding the idea:**
+**理解想法：**
 
-- Check out the current project state first (files, docs, recent commits)
-- Before asking detailed questions, assess scope: if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
-- If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then brainstorm the first sub-project through the normal design flow. Each sub-project gets its own spec → plan → implementation cycle.
-- For appropriately-scoped projects, ask questions one at a time to refine the idea
-- Prefer multiple choice questions when possible, but open-ended is fine too
-- Only one question per message - if a topic needs more exploration, break it into multiple questions
-- Focus on understanding: purpose, constraints, success criteria
+- 先看当前项目状态（文件、文档、最近 commit）
+- 提详细问题之前先评估范围：若请求描述了多个独立子系统（如"建一个带聊天、文件存储、计费和分析的平台"），立即标记。不要把提问浪费在需要先分解的项目细节上。
+- 若项目大到单个 spec 装不下，帮用户分解为子项目：独立部分是什么、如何关联、按什么顺序建？然后对第一个子项目走正常设计流程。每个子项目有自己的 spec → plan → 实现循环。
+- 范围合适的项目，一次一个问题地打磨想法
+- 尽量用选择题，开放式也可以
+- 每条消息只问一个问题——一个主题需要深挖就拆成多个问题
+- 聚焦理解：目的、约束、成功标准
 
-**Exploring approaches:**
+**探索方案：**
 
-- Propose 2-3 different approaches with trade-offs
-- Present options conversationally with your recommendation and reasoning
-- Lead with your recommended option and explain why
+- 提出 2-3 个不同方案及其 trade-off
+- 以对话方式呈现选项，附你的推荐与理由
+- 推荐项先行并解释为什么
 
-**Presenting the design:**
+**呈现设计：**
 
-- Once you believe you understand what you're building, present the design
-- Scale each section to its complexity: a few sentences if straightforward, up to 200-300 words if nuanced
-- Ask after each section whether it looks right so far
-- Cover: architecture, components, data flow, error handling, testing
-- **Cover: Loop Execution Contract（spec 级）** — Goal、Acceptance Contract、Non-goals、Stop Escalation（详见 `skills/shared/references/loop-execution-contract.md`）
-- Be ready to go back and clarify if something doesn't make sense
+- 确认理解了要构建什么后，呈现设计
+- 每节按复杂度伸缩：简单几句话，微妙处最多 200-300 字
+- 每节后询问目前是否没问题
+- 覆盖：架构、组件、数据流、错误处理、测试
+- **覆盖：Loop Execution Contract（spec 级）** —— Goal、Acceptance Contract、Non-goals、Stop Escalation（详见 `skills/shared/references/loop-execution-contract.md`）
+- 有地方讲不通就回去澄清
 
-**Design for isolation and clarity:**
+**为隔离与清晰而设计：**
 
-- Break the system into smaller units that each have one clear purpose, communicate through well-defined interfaces, and can be understood and tested independently
-- For each unit, you should be able to answer: what does it do, how do you use it, and what does it depend on?
-- Can someone understand what a unit does without reading its internals? Can you change the internals without breaking consumers? If not, the boundaries need work.
-- Smaller, well-bounded units are also easier for you to work with - you reason better about code you can hold in context at once, and your edits are more reliable when files are focused. When a file grows large, that's often a signal that it's doing too much.
+- 把系统拆成较小单元：每个单元一个明确目的、通过定义良好的接口通信、可独立理解与测试
+- 每个单元应能回答：它做什么、怎么用、依赖什么？
+- 别人不读内部实现能理解单元做什么吗？改内部实现不会破坏使用方吗？不能，边界就有问题。
+- 较小、边界清晰的单元也更利于你工作——你对能整个装进上下文的代码推理最好，对聚焦文件的编辑更可靠。文件变大往往说明它承担太多。
 
-**Working in existing codebases:**
+**在既有代码库中工作：**
 
-- Explore the current structure before proposing changes. Follow existing patterns.
-- Where existing code has problems that affect the work (e.g., a file that's grown too large, unclear boundaries, tangled responsibilities), include targeted improvements as part of the design - the way a good developer improves code they're working in.
-- Don't propose unrelated refactoring. Stay focused on what serves the current goal.
+- 提改动前先探索现有结构，遵循既有模式
+- 既有代码的问题影响到当前工作（如文件过大、边界不清、职责纠缠）时，把针对性改进纳入设计——像好开发者改进自己工作区代码那样
+- 不提无关重构。聚焦服务于当前目标。
 
-## After the Design
+## 设计之后
 
-**Documentation:**
+**文档：**
 
-- Write the validated design (spec) to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
-  - (User preferences for spec location override this default)
-- Use elements-of-style:writing-clearly-and-concisely skill if available
-- Commit the design document to git
+- 把验证过的设计（spec）写入 `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
+  - （用户的 spec 位置偏好覆盖此默认）
+- commit 设计文档到 git
 
 **Spec 必含章节（Loop Execution Contract · spec 级）**
 
-> 单点真源：`skills/shared/references/loop-execution-contract.md` §2  
+> 单点真源：`skills/shared/references/loop-execution-contract.md` §2
 > **只写可判定性**；禁止复制 `loop` 的 G0–G9、自愈轮次、Goal→loop 降级链。
 
 每个 design spec **必须**包含以下四节（简单项目可各 1–3 句，不可省略标题）：
@@ -141,16 +140,16 @@ digraph brainstorming {
 
 **Acceptance 硬规则**：禁止「正常工作」「体验良好」；每条应能映射到未来 verification 命令或检查动作。
 
-**Spec Self-Review:**
-After writing the spec document, look at it with fresh eyes:
+**Spec 自审：**
+写完 spec 文档后，以新鲜视角复查：
 
-1. **Placeholder scan:** Any "TBD", "TODO", incomplete sections, or vague requirements? Fix them.
-2. **Internal consistency:** Do any sections contradict each other? Does the architecture match the feature descriptions?
-3. **Scope check:** Is this focused enough for a single implementation plan, or does it need decomposition?
-4. **Ambiguity check:** Could any requirement be interpreted two different ways? If so, pick one and make it explicit.
-5. **Acceptance contract:** Every acceptance item observable and pass/fail? Non-goals present? Stop Escalation lists real blockers? No gate-matrix copy-paste?
+1. **占位符扫描：** 有 "TBD"、"TODO"、未完成小节或含糊要求吗？修掉。
+2. **内部一致性：** 各节相互矛盾吗？架构与功能描述匹配吗？
+3. **范围检查：** 聚焦到单个实施计划装得下吗，还是需要分解？
+4. **歧义检查：** 任何要求可能被解读成两种意思吗？选定一种并写明确。
+5. **Acceptance contract：** 每条验收可观察、可判 pass/fail？Non-goals 在？Stop Escalation 列的是真实阻塞点？没有 gate-matrix 复制粘贴？
 
-Fix any issues inline. No need to re-review — just fix and move on.
+发现问题就地修。不必重审——修完继续。
 
 **对抗审讯（条件触发 · grilling）：**
 
@@ -162,44 +161,44 @@ Fix any issues inline. No need to re-review — just fix and move on.
 
 三条全不满足 → 跳过本步，直接进入 User Review Gate。触发时调用 **grilling** 技能对 spec 做穷尽式审讯（frontier 决策树 + AskUserQuestion 轮次；术语沉淀并行走 domain-modeling），修订写回本文件后再进入 User Review Gate。
 
-**User Review Gate:**
-After the spec review loop passes, ask the user to review the written spec before proceeding:
+**User Review Gate：**
+spec 评审循环通过后，请用户审阅书面 spec 再继续：
 
-> "Spec written and committed to `<path>`. Please review it and let me know if you want to make any changes before we start writing out the implementation plan."
+> "Spec 已写入并 commit 到 `<path>`。开始写实施计划之前，请审阅并告知是否需要修改。"
 
-Wait for the user's response. If they request changes, make them and re-run the spec review loop. Only proceed once the user approves.
+等待用户回应。要求修改则改完重跑 spec 评审循环。用户批准后才继续。
 
-**Implementation:**
+**实现：**
 
-- Invoke the **spec-driven-development** skill to create a detailed implementation plan（plan 须含 Verification / Termination / Escalation · 见共享契约 §3）
-- Do NOT invoke any other skill. spec-driven-development is the next step.
+- 调用 **spec-driven-development** 技能创建详细实施计划（plan 须含 Verification / Termination / Escalation · 见共享契约 §3）
+- 不调用任何其他技能。spec-driven-development 是下一步。
 
-## Key Principles
+## 关键原则
 
-- **One question at a time** - Don't overwhelm with multiple questions
-- **Multiple choice preferred** - Easier to answer than open-ended when possible
-- **YAGNI ruthlessly** - Remove unnecessary features from all designs
-- **Explore alternatives** - Always propose 2-3 approaches before settling
-- **Incremental validation** - Present design, get approval before moving on
-- **Be flexible** - Go back and clarify when something doesn't make sense
+- **一次一个问题** —— 不用多个问题轰炸用户
+- **优先选择题** —— 可能时比开放式更易回答
+- **YAGNI 无情** —— 从所有设计中删掉不必要的功能
+- **探索备选** —— 敲定前永远提出 2-3 个方案
+- **增量验证** —— 呈现设计，逐段取得批准再前进
+- **保持灵活** —— 讲不通就回头澄清
 
-## Visual Companion
+## Visual Companion（可视化伴侣）
 
-A browser-based companion for showing mockups, diagrams, and visual options during brainstorming. Available as a tool — not a mode. Accepting the companion means it's available for questions that benefit from visual treatment; it does NOT mean every question goes through the browser.
+brainstorming 期间展示 mockup、图表与视觉选项的浏览器伴侣。它是一个工具——不是一种模式。接受伴侣意味着视觉类问题可以用它；**不**意味着每个问题都走浏览器。
 
-**Offering the companion:** When you anticipate that upcoming questions will involve visual content (mockups, layouts, diagrams), offer it once for consent:
-> "Some of what we're working on might be easier to explain if I can show it to you in a web browser. I can put together mockups, diagrams, comparisons, and other visuals as we go. This feature is still new and can be token-intensive. Want to try it? (Requires opening a local URL)"
+**提供伴侣：** 预感接下来会有视觉内容（mockup、布局、图表）时，征求一次同意：
+> "我们接下来的一些内容，如果能直接在浏览器里展示给你看，可能更容易讲清楚。我可以边聊边做 mockup、图表、对比等可视化。这个功能还比较新、可能比较费 token。要试试吗？（需要打开一个本地 URL）"
 
-**This offer MUST be its own message.** Do not combine it with clarifying questions, context summaries, or any other content. The message should contain ONLY the offer above and nothing else. Wait for the user's response before continuing. If they decline, proceed with text-only brainstorming.
+**这条提议必须单独成一条消息。** 不与澄清问题、上下文小结或任何其他内容合并。消息只含上述提议，别无其他。等用户回应再继续。若拒绝，纯文字头脑风暴。
 
-**Per-question decision:** Even after the user accepts, decide FOR EACH QUESTION whether to use the browser or the terminal. The test: **would the user understand this better by seeing it than reading it?**
+**逐问题决策：** 用户接受后，每个问题仍单独决定用浏览器还是终端。判断标准：**这个问题看图比读字更容易懂吗？**
 
-- **Use the browser** for content that IS visual — mockups, wireframes, layout comparisons, architecture diagrams, side-by-side visual designs
-- **Use the terminal** for content that is text — requirements questions, conceptual choices, tradeoff lists, A/B/C/D text options, scope decisions
+- **用浏览器**：内容本身是视觉的 —— mockup、线框、布局对比、架构图、并排视觉方案
+- **用终端**：内容本身是文字的 —— 需求问题、概念选择、trade-off 清单、A/B/C/D 文字选项、范围决策
 
-A question about a UI topic is not automatically a visual question. "What does personality mean in this context?" is a conceptual question — use the terminal. "Which wizard layout works better?" is a visual question — use the browser.
+UI 主题的问题不自动等于视觉问题。"这个语境里'个性化'指什么？"是概念问题——用终端。"哪种向导布局更好？"是视觉问题——用浏览器。
 
-If they agree to the companion, read the detailed guide before proceeding:
+用户同意使用伴侣后，先读详细指南再继续：
 `skills/brainstorming/visual-companion.md`
 
 ---
